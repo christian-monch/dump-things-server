@@ -1,15 +1,19 @@
+import logging
 from collections import defaultdict
 from itertools import count
 from typing import Annotated
 
+from yaml import (
+    SafeLoader,
+    load,
+)
 from fastapi import FastAPI, Form
 
-from model import build_model, get_classes
+from .model import build_model, get_classes
+from .storage import store_data
 
 
-schema_sources = {
-    'trr379': ['https://concepts.trr379.de/s/base/unreleased.yaml'],
-}
+schema_sources = ['https://concepts.trr379.de/s/base/unreleased.yaml']
 
 
 _endpoint_template = """
@@ -19,25 +23,27 @@ def {name}(data: Annotated[model.{type}, Form(), {info}]):
 """
 
 
+lgr = logging.getLogger('uvicorn')
+
 models = defaultdict(dict)
 
 # Create pydantic models
-for schema_name, schema_urls in schema_sources.items():
-    for schema_url in schema_urls:
-        model = build_model(schema_url)
-        classes = get_classes(model)
-        models[schema_name][model.version] = model, classes
+for schema_source in schema_sources:
+    lgr.info('Building model from %s.', schema_source)
+    model = build_model(schema_source)
+    classes = get_classes(model)
+    models[model.linkml_meta['name']][model.version] = model, classes
 
 
 app = FastAPI()
 
 
 # Create endpoints for all applications, all versions, and all classes
+lgr.info('Creating dynamic endpoints...')
 serial_number = count()
 for application, app_info in models.items():
     for version, (model, classes) in app_info.items():
         for type_name in classes:
-
             # Create an endpoint to dump data of type `type_name` in version
             # `version` of schema `application`.
             endpoint_name = f'_endpoint_{next(serial_number)}'
@@ -57,6 +63,7 @@ for application, app_info in models.items():
                 response_model=getattr(model, type_name)
             )
 
+lgr.info('Creation of %d endpoints completed.', next(serial_number))
 
 app.openapi_schema = None
 app.setup()
