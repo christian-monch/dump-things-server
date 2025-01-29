@@ -1,10 +1,13 @@
 from __future__ import annotations
 
 import enum
+import hashlib
+from functools import partial
 from pathlib import Path
 from typing import (
     Literal,
     Optional,
+    Union,
 )
 
 import yaml
@@ -15,6 +18,9 @@ from yaml import (
 )
 
 from .utils import read_url, create_unique_directory
+
+
+YAML = Union[int, float, str, dict, list, None]
 
 
 config_file_name = '.dumpthings.yaml'
@@ -43,34 +49,72 @@ class CollectionConfig(BaseModel):
     schema_version: Optional[str] = ''
 
 
+def mapping_digest_sha1_p3(data: str, suffix: str) -> Path:
+    hash_context = hashlib.sha1(data.encode())
+    hex_digest = hash_context.hexdigest()
+    return Path(hex_digest[:3]) / (hex_digest[3:] + '.' + suffix)
+
+
+def mapping_digest_sha1(data: str, suffix: str) -> Path:
+    hash_context = hashlib.sha1(data.encode())
+    hex_digest = hash_context.hexdigest()
+    return Path(hex_digest + '.' + suffix)
+
+
+def mapping_digest_md5_p3(data: str, suffix: str) -> Path:
+    hash_context = hashlib.md5(data.encode())
+    hex_digest = hash_context.hexdigest()
+    return Path(hex_digest[:3]) / (hex_digest[3:] + '.' + suffix)
+
+
+def mapping_digest_md5(data: str, suffix: str) -> Path:
+    hash_context = hashlib.md5(data.encode())
+    hex_digest = hash_context.hexdigest()
+    return Path(hex_digest + '.' + suffix)
+
+
+def not_implemented(method: str, data: str, suffix: str) -> Path:
+    msg = f'Mapping method {method} not yet implemented'
+    raise NotImplementedError(msg)
+
+
+mapping_functions = {
+    MappingMethod.digest_md5: mapping_digest_md5,
+    MappingMethod.digest_md5_p3: mapping_digest_md5_p3,
+    MappingMethod.digest_sha1: mapping_digest_sha1,
+    MappingMethod.digest_sha1_p3: mapping_digest_sha1_p3,
+    MappingMethod.after_last_colon: partial(not_implemented, 'after_last_colon'),
+}
+
+
 class Storage:
-    def __init__(self, root: Path) -> None:
-        self.root = root
+    def __init__(self, root: str | Path) -> None:
+        self.root = Path(root)
         self.global_config = GlobalConfig(**(self.get_config(self.root) or dict()))
         self.collections = self._get_collections()
 
     @staticmethod
-    def get_config(path: Path) -> dict|list|str|int|None:
+    def get_config(path: Path) -> YAML:
         return yaml.load(
             (path / config_file_name).read_text(),
             Loader=SafeLoader
         )
 
+    @staticmethod
+    def _read_schema(schema_id: str) -> YAML:
+        schema_definition = read_url(schema_id)
+        return load(schema_definition, Loader=SafeLoader)
+
     def create_schema_collection(
         self,
-        schema_url: str,
-        mapping_method: MappingMethod = MappingMethod.digest_md5,
+        schema_id: str,
+        mapping_method: MappingMethod = MappingMethod.digest_sha1_p3,
     ) -> None:
         # Read the schema
-        schema_definition = read_url(schema_url)
-        schema = load(schema_definition, Loader=SafeLoader)
+        schema = self._read_schema(schema_id)
 
-        # Check whether a collection for this schema-name and schema-version
-        # already exists
-        if any([
-            config.schema_name == schema['name'] and config.schema_version == schema['version']
-            for path, config in self.collections
-        ]):
+        # Check whether a collection for this schema-id already exists
+        if any([config.schema == id for _, config in self.collections]):
             return
 
         # Generate a final directory name and write the config file
@@ -79,7 +123,7 @@ class Storage:
             data={
                 'type': 'records',
                 'version': 1,
-                'schema': schema_url,
+                'schema': schema_id,
                 'format': 'yaml',
                 'idfx': mapping_method.value,
                 'schema_name': schema['name'],
@@ -101,23 +145,39 @@ class Storage:
 
     def _get_collection_for_schema(
         self,
-        schema_name: str,
-        schema_version: str,
+        schema_id: str,
     ) -> tuple[Path, CollectionConfig] | None:
         return ([
             (path, config)
             for path, config in self.collections
-            if config.schema_name == schema_name and config.schema_version == schema_version
+            if config.schema == schema_id
         ] or [None])[0]
 
     def store_record(
         self,
-        schema_url: str,
-        schema_name: str,
-        schema_version: str,
-        record: dict,
+        *,
+        record: BaseModel,
+        schema_id: str,
     ):
-        collection = self._get_collection_for_schema(schema_name, schema_version)
+        # Get the collection, if it does not yet exist, create it
+        collection = self._get_collection_for_schema(schema_id)
         if collection is None:
-            self.create_schema_collection(schema_url)
-            raise ValueError('No collection found for schema.')
+            self.create_schema_collection(schema_id)
+
+        # Generate the class directory
+        path, config = collection
+        record_root = path / type(record).__name__
+        record_root.mkdir(exist_ok=True)
+
+        # Get the yaml document representing the record
+        data = yaml.dump(data=record.model_dump(), sort_keys=False)
+
+        # Apply the mapping function to get the final storage path
+        storage_path = record_root / mapping_functions[config.idfx](
+            data=data,
+            suffix=config.format
+        )
+
+        # Ensure all intermediate directories exist and save the yaml document
+        storage_path.parent.mkdir(parents=True, exist_ok=True)
+        storage_path.write_text(data)
