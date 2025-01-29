@@ -88,8 +88,16 @@ mapping_functions = {
 
 
 class Storage:
-    def __init__(self, root: str | Path) -> None:
+    def __init__(
+        self,
+        root: str | Path,
+        *,
+        create_new_ok: bool = False
+    ) -> None:
         self.root = Path(root)
+        if not self.root.exists() and create_new_ok:
+            self.root.mkdir(parents=True)
+            (self.root / config_file_name).write_text('type: collections\nversion: 1\n')
         self.global_config = GlobalConfig(**(self.get_config(self.root) or dict()))
         self.collections = self._get_collections()
 
@@ -109,31 +117,32 @@ class Storage:
         self,
         schema_id: str,
         mapping_method: MappingMethod = MappingMethod.digest_sha1_p3,
-    ) -> None:
-        # Read the schema
-        schema = self._read_schema(schema_id)
+    ) -> tuple[Path, CollectionConfig]:
+        # If the collection does not already exists, create it
+        collection = self._get_collection_for_schema(schema_id)
+        if collection is None:
+            # Read the schema
+            schema = self._read_schema(schema_id)
 
-        # Check whether a collection for this schema-id already exists
-        if any([config.schema == id for _, config in self.collections]):
-            return
+            # Generate a final directory name and write the config file
+            final_directory = create_unique_directory(self.root)
+            (final_directory / config_file_name).write_text(yaml.dump(
+                data={
+                    'type': 'records',
+                    'version': 1,
+                    'schema': schema_id,
+                    'format': 'yaml',
+                    'idfx': mapping_method.value,
+                    'schema_name': schema['name'],
+                    'schema_version': schema['version']
+                },
+                sort_keys=False,
+            ))
 
-        # Generate a final directory name and write the config file
-        final_directory = create_unique_directory(self.root)
-        (final_directory / config_file_name).write_text(yaml.dump(
-            data={
-                'type': 'records',
-                'version': 1,
-                'schema': schema_id,
-                'format': 'yaml',
-                'idfx': mapping_method.value,
-                'schema_name': schema['name'],
-                'schema_version': schema['version']
-            },
-            sort_keys=False,
-        ))
+            # Update our knowledge of existing collections
+            self.collections = self._get_collections()
 
-        # Update our knowledge of existing collections
-        self.collections = self._get_collections()
+        return self._get_collection_for_schema(schema_id)
 
     def _get_collections(self) -> list[tuple[Path, CollectionConfig]]:
         # read all record collections
@@ -162,7 +171,7 @@ class Storage:
         # Get the collection, if it does not yet exist, create it
         collection = self._get_collection_for_schema(schema_id)
         if collection is None:
-            self.create_schema_collection(schema_id)
+            collection = self.create_schema_collection(schema_id)
 
         # Generate the class directory
         path, config = collection
