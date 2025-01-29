@@ -1,5 +1,5 @@
 import logging
-from collections import defaultdict
+import os
 from itertools import count
 from typing import Annotated
 
@@ -12,11 +12,16 @@ from .storage import Storage
 schema_ids = ['https://concepts.trr379.de/s/base/unreleased.yaml']
 
 
-global_storage = Storage('/home/cristian/tmp/dat/root', create_new_ok=True)
+# Instantiate the global storage object
+storage_path = os.environ.get('DUMP_THINGS_STORAGE_PATH', None)
+if storage_path is None:
+    msg = 'The environment variable DUMP_THINGS_STORAGE_PATH must be set.'
+    raise RuntimeError(msg)
+global_storage = Storage(storage_path, create_new_ok=True)
 
 
 _endpoint_template = """
-def {name}(data: Annotated[model.{type}, Form(), {info}]):
+async def {name}(data: Annotated[model.{type}, Form(), {info}]):
     print('endpoint[{name}]:', data.model_dump())
     lgr.info('endpoint[{name}]: %s', data)
     global_storage.store_record(record=data, schema_id='{id}')
