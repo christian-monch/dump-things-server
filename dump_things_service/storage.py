@@ -52,18 +52,18 @@ def get_hex_digest(hasher: Callable, data: str) -> str:
     return hash_context.hexdigest()
 
 
-def mapping_digest_p3(hasher: Callable, data: str, suffix: str) -> Path:
+def mapping_digest_p3(hasher: Callable, identifier: str, data: str, suffix: str) -> Path:
     hex_digest = get_hex_digest(hasher, data)
     return Path(hex_digest[:3]) / (hex_digest[3:] + '.' + suffix)
 
 
-def mapping_digest(hasher: Callable, data: str, suffix: str) -> Path:
+def mapping_digest(hasher: Callable, identifier: str, data: str, suffix: str) -> Path:
     hex_digest = get_hex_digest(hasher, data)
     return Path(hex_digest + '.' + suffix)
 
 
-def mapping_after_last_colon(method: str, data: str, suffix: str) -> Path:
-    return Path(data.split(':')[-1] + '.' + suffix)
+def mapping_after_last_colon(identifier: str, data: str, suffix: str) -> Path:
+    return Path(identifier.split(':')[-1] + '.' + suffix)
 
 
 mapping_functions = {
@@ -120,6 +120,7 @@ class Storage:
         # Apply the mapping function to get the final storage path
         config = self.collections[label]
         storage_path = record_root / mapping_functions[config.idfx](
+            identifier=record.id,
             data=data,
             suffix=config.format
         )
