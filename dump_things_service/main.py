@@ -112,10 +112,12 @@ async def read_item(
     identifier: str,
     x_dumpthings_token: Annotated[str | None, Header()] = None
 ):
-    if token is not None:
-        record = token_storages[x_dumpthings_token].get_record(label, identifier)
-        if record:
-            return record
+    if x_dumpthings_token is not None:
+        store = token_storages.get(x_dumpthings_token, None)
+        if store:
+            record = store.get_record(label, identifier)
+            if record:
+                return record
     return global_storage.get_record(label, identifier)
 
 
