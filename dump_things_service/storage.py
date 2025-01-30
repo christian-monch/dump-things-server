@@ -128,3 +128,10 @@ class Storage:
         # Ensure all intermediate directories exist and save the yaml document
         storage_path.parent.mkdir(parents=True, exist_ok=True)
         storage_path.write_text(data)
+
+    def get_record(self, label: str, identifier: str) -> dict | None:
+        for path in (self.root / label).rglob('*'):
+            if path.is_file() and path.name != config_file_name:
+                record = yaml.load(path.read_text(), Loader=SafeLoader)
+                if record['id'] == identifier:
+                    return record

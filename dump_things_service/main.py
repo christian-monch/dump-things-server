@@ -1,7 +1,12 @@
+from __future__ import annotations
+
 import logging
 import os
 from itertools import count
-from typing import Annotated
+from typing import (
+    Annotated,
+    Any,
+)
 
 import yaml
 from fastapi import (
@@ -9,6 +14,7 @@ from fastapi import (
     Form,
     Header,
 )
+from pydantic import BaseModel
 
 from dump_things_service.model import build_model, get_classes
 from dump_things_service.storage import Storage
@@ -30,14 +36,24 @@ for token, path in config['token_stores'].items():
 _endpoint_template = """
 async def {name}(
         data: Annotated[{model_var_name}.{type}, Form(), {info}],
-        X_DUMPTHINGS_TOKEN: Annotated[str | None, Header()] = None
+        x_dumpthings_token: Annotated[str | None, Header()] = None
 ):
     print('endpoint[{name}]:', data.model_dump())
-    print('Token:', X_DUMPTHINGS_TOKEN)
+    print('Token:', x_dumpthings_token)
     lgr.info('endpoint[{name}]: %s', data)
-    global_storage.store_record(record=data, label='{label}')
-    return data
+    return handle_record('{label}', data, x_dumpthings_token)
 """
+
+
+def handle_record(
+    label: str,
+    data: BaseModel,
+    token: str | None,
+) -> Any:
+    if token is None:
+        return None
+    token_storages[token].store_record(record=data, label=label)
+    return data
 
 
 lgr = logging.getLogger('uvicorn')
@@ -88,6 +104,20 @@ for label, (model, classes, model_var_name) in model_info.items():
         )
 
 lgr.info('Creation of %d endpoints completed.', next(serial_number))
+
+
+@app.get('/{label}/get/{identifier}')
+async def read_item(
+    label: str,
+    identifier: str,
+    x_dumpthings_token: Annotated[str | None, Header()] = None
+):
+    if token is not None:
+        record = token_storages[x_dumpthings_token].get_record(label, identifier)
+        if record:
+            return record
+    return global_storage.get_record(label, identifier)
+
 
 app.openapi_schema = None
 app.setup()
