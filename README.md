@@ -38,3 +38,12 @@ Once a configuration file is created, the service can be run with the following 
 
 ```bash
 hatch run fastapi:dev
+
+
+#### Restrictions
+
+The current implementation has the following restrictions:
+
+- support only YAML format for dumped data objects
+- does not yet support the mapping method: `after-last-colon`
+- does not yet support extraction of inlined records
