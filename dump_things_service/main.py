@@ -4,22 +4,36 @@ from itertools import count
 from typing import Annotated
 
 import yaml
-from fastapi import FastAPI, Form
+from fastapi import (
+    FastAPI,
+    Form,
+    Header,
+)
 
 from dump_things_service.model import build_model, get_classes
 from dump_things_service.storage import Storage
 
 
-storage_path = os.environ.get('DUMP_THINGS_STORAGE_PATH', None)
-if storage_path is None:
-    msg = 'The environment variable DUMP_THINGS_STORAGE_PATH must be set.'
-    raise RuntimeError(msg)
-global_storage = Storage(storage_path)
+# load config
+config_file = os.environ.get('DUMPTHINGS_CONFIG_FILE', './dumpthings_conf.yaml')
+with open(config_file, 'rt') as f:
+    config = yaml.safe_load(f)
+
+
+# Instantiate storage objects
+token_storages = {}
+global_storage = Storage(config['global_store'])
+for token, path in config['token_stores'].items():
+    token_storages[token] = Storage(path)
 
 
 _endpoint_template = """
-async def {name}(data: Annotated[{model_var_name}.{type}, Form(), {info}]):
+async def {name}(
+        data: Annotated[{model_var_name}.{type}, Form(), {info}],
+        X_DUMPTHINGS_TOKEN: Annotated[str | None, Header()] = None
+):
     print('endpoint[{name}]:', data.model_dump())
+    print('Token:', X_DUMPTHINGS_TOKEN)
     lgr.info('endpoint[{name}]: %s', data)
     global_storage.store_record(record=data, label='{label}')
     return data
