@@ -1,0 +1,77 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "dump-things-service"
+dynamic = ["version"]
+description = ''
+readme = "README.md"
+requires-python = ">=3.8"
+license = "MIT"
+keywords = []
+authors = [
+    { name = "Christian Mönch", email = "christian.moench@web.de" },
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: Implementation :: CPython",
+    "Programming Language :: Python :: Implementation :: PyPy",
+]
+dependencies = [
+    "fastapi[standard]",
+    "aiohttp",
+    "fsspec",
+    "linkml",
+    "pydantic==2.8.0",
+    "PyYAML",
+    "requests",
+]
+
+[project.urls]
+Documentation = "https://github.com/christian-monch/dump-things-server"
+Issues = "https://github.com/christian-monch/dump-things-server/issues"
+Source = "https://github.com/christian-monch/dump-things-server"
+
+[tool.hatch.build.targets.wheel]
+packages = ["dump_things_service"]
+
+[tool.hatch.version]
+path = "dump_things_service/__about__.py"
+
+[tool.hatch.envs.types]
+extra-dependencies = [
+    "mypy>=1.0.0",
+]
+[tool.hatch.envs.types.scripts]
+check = "mypy --install-types --non-interactive {args:src tests}"
+
+[tool.coverage.run]
+source_pkgs = ["dump_things_service", "tests"]
+branch = true
+parallel = true
+omit = ["dump_things_service/__about__.py"]
+
+[tool.coverage.paths]
+src = ["dump_things_service"]
+tests = ["tests"]
+
+[tool.coverage.report]
+exclude_lines = [
+    "no cov",
+    "if __name__ == .__main__.:",
+    "if TYPE_CHECKING:",
+]
+
+[tool.hatch.envs.fastapi]
+description = "fastapi dev environment"
+
+[tool.hatch.envs.fastapi.scripts]
+post-install-command = ["{root}/tools/patch_linkmk"]
+dev = "fastapi dev dump_things_service/main.py"
