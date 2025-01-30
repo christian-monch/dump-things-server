@@ -34,7 +34,7 @@ An example for a valid configuration file is:
 
 #### Running the service
 
-The service can be run with the following command:
+Once a configuration file is created, the service can be run with the following command:
 
 ```bash
 hatch run fastapi:dev
