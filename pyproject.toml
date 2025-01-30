@@ -74,4 +74,4 @@ description = "fastapi dev environment"
 
 [tool.hatch.envs.fastapi.scripts]
 post-install-command = ["{root}/tools/patch_linkmk"]
-dev = "fastapi dev dump_things_service/main.py"
+dev = "export DUMP_THINGS_STORAGE_PATH={args}; fastapi dev dump_things_service/main.py"
