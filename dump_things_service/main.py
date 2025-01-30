@@ -10,23 +10,18 @@ from dump_things_service.model import build_model, get_classes
 from dump_things_service.storage import Storage
 
 
-config_file = os.environ.get('DUMPTHINGS_CONFIG_FILE', './dumpthings_conf.yaml')
-with open(config_file, 'rt') as f:
-    config = yaml.safe_load(f)
-
-
-schema_ids = config['schema_ids']
-storage_path = config['storage_path']
-
-
-global_storage = Storage(storage_path, create_new_ok=True)
+storage_path = os.environ.get('DUMP_THINGS_STORAGE_PATH', None)
+if storage_path is None:
+    msg = 'The environment variable DUMP_THINGS_STORAGE_PATH must be set.'
+    raise RuntimeError(msg)
+global_storage = Storage(storage_path)
 
 
 _endpoint_template = """
-async def {name}(data: Annotated[model.{type}, Form(), {info}]):
+async def {name}(data: Annotated[{model_var_name}.{type}, Form(), {info}]):
     print('endpoint[{name}]:', data.model_dump())
     lgr.info('endpoint[{name}]: %s', data)
-    global_storage.store_record(record=data, schema_id='{id}')
+    global_storage.store_record(record=data, label='{label}')
     return data
 """
 
@@ -34,13 +29,17 @@ async def {name}(data: Annotated[model.{type}, Form(), {info}]):
 lgr = logging.getLogger('uvicorn')
 
 
-# Create pydantic models from schema sources
-models = {}
-for schema_id in schema_ids:
-    lgr.info('Building model from %s.', schema_id)
-    model = build_model(schema_id)
+# Create pydantic models from schema sources and add them to globals
+model_info = {}
+model_counter = count()
+for label, configuration in global_storage.collections.items():
+    schema_location = configuration.schema
+    lgr.info(f'Building model for {label} from {schema_location}.')
+    model = build_model(schema_location)
     classes = get_classes(model)
-    models[schema_id] = model.linkml_meta['name'], model.version, model, classes
+    model_var_name = f'model_{next(model_counter)}'
+    model_info[label] = model, classes, model_var_name
+    globals()[model_var_name] = model
 
 
 app = FastAPI()
@@ -51,22 +50,23 @@ lgr.info('Creating dynamic endpoints...')
 serial_number = count()
 
 
-for schema_id, (name, version, model, classes) in models.items():
+for label, (model, classes, model_var_name) in model_info.items():
     for type_name in classes:
         # Create an endpoint to dump data of type `type_name` in version
         # `version` of schema `application`.
         endpoint_name = f'_endpoint_{next(serial_number)}'
         exec(_endpoint_template.format(
             name=endpoint_name,
+            model_var_name=model_var_name,
             type=type_name,
-            id=schema_id,
-            info=f"'endpoint for {name}/{version}/{type_name}'"
+            label=label,
+            info=f"'endpoint for {label}/{type_name}'"
         ))
         endpoint = locals()[endpoint_name]
 
         # Create an API route for the endpoint
         app.add_api_route(
-            path=f'/dump/{name}/{version}/{type_name}',
+            path=f'/{label}/record/{type_name}',
             endpoint=locals()[endpoint_name],
             methods=['POST'],
             name=f'handle "{type_name}" of schema "{model.linkml_meta["id"]}" objects',
