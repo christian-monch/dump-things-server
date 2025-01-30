@@ -16,20 +16,8 @@ The endpoints support POST-requests, data object have to be URL-encoded. For exa
 
 #### Configuration
 
-The service is configured by a YAML-file. If no file is provided, `./dumpthings-conf.yaml` is used. An alternative configuration file path can be specified vie the environment variable `DUMPTHINGS_CONF`.
-
-The configuration currently supports the following keys:
-
-* `schemas`: a list of schema-ids, i.e. IRIs
-* `storage_path`: a path where objects should be stored (if no store exists, it will be created)
-
-Both keys are mandatory.
-An example for a valid configuration file is:
-
-    schema_ids:
-        - "https://concepts.trr379.de/s/base/unreleased.yaml"
-
-    storage_path: /tmp/root5
+The service is configured by specifying the root of a data store.
+This id done via the environment variable `DUMP_THINGS_STORAGE_PATH`.
 
 
 #### Running the service
@@ -38,12 +26,11 @@ Once a configuration file is created, the service can be run with the following 
 
 ```bash
 hatch run fastapi:dev
-
+```
 
 #### Restrictions
 
 The current implementation has the following restrictions:
 
-- support only YAML format for dumped data objects
-- does not yet support the mapping method: `after-last-colon`
+- does not yet support any other data format than `yaml`
 - does not yet support extraction of inlined records
