@@ -9,8 +9,8 @@ Data objects must conform to a given schema. The service supports an arbitrary n
 
 ##### URLs for endpoints
 
-The URL-path for a data object of class `<Class>` of schema `<Schema>` with the schema version `<Version>` is `/dump/<Schema>/<Version>/<Class>`.
-If the server runs for example on network address `http://localhost:8080`, the URL would be `http://localhost:8080/dump/<Schema>/<Version>/<Class>`.
+The URL-path for a data object of class `<Class>` of collection `<Label>` is `/<Label>/record/<Class>`.
+If the server runs for example on network address `http://localhost:8080`, the URL would be `http://localhost:8080/<Label>/record/<Class>`.
 
 The endpoints support POST-requests, data object have to be URL-encoded. For example, and object with JSON-representation `{"name": "Alice", "age": 43}` would be encoded as `name=Alice&age=43`.
 
