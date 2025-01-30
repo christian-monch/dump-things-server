@@ -3,20 +3,22 @@ import os
 from itertools import count
 from typing import Annotated
 
+import yaml
 from fastapi import FastAPI, Form
 
-from .model import build_model, get_classes
-from .storage import Storage
+from dump_things_service.model import build_model, get_classes
+from dump_things_service.storage import Storage
 
 
-schema_ids = ['https://concepts.trr379.de/s/base/unreleased.yaml']
+config_file = os.environ.get('DUMPTHINGS_CONFIG_FILE', './dumpthings_conf.yaml')
+with open(config_file, 'rt') as f:
+    config = yaml.safe_load(f)
 
 
-# Instantiate the global storage object
-storage_path = os.environ.get('DUMP_THINGS_STORAGE_PATH', None)
-if storage_path is None:
-    msg = 'The environment variable DUMP_THINGS_STORAGE_PATH must be set.'
-    raise RuntimeError(msg)
+schema_ids = config['schema_ids']
+storage_path = config['storage_path']
+
+
 global_storage = Storage(storage_path, create_new_ok=True)
 
 
