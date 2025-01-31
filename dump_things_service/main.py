@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 import os
+from http.client import HTTPException
 from itertools import count
 from typing import (
     Annotated,
@@ -13,6 +14,7 @@ from fastapi import (
     FastAPI,
     Form,
     Header,
+    HTTPException,
 )
 from pydantic import BaseModel
 
@@ -38,21 +40,19 @@ async def {name}(
         data: Annotated[{model_var_name}.{type}, Form(), {info}],
         x_dumpthings_token: Annotated[str | None, Header()]
 ):
-    print('endpoint[{name}]:', data.model_dump())
-    print('Token:', x_dumpthings_token)
-    lgr.info('endpoint[{name}]: %s', data)
-    return handle_record('{label}', data, x_dumpthings_token)
+    lgr.info('{name}(%s, %s)', repr(data.model_dump()), repr(x_dumpthings_token))
+    return store_record('{label}', data, x_dumpthings_token)
 """
 
 
-def handle_record(
+def store_record(
     label: str,
     data: BaseModel,
     token: str | None,
 ) -> Any:
     if token is None:
-        return None
-    token_storages[token].store_record(record=data, label=label)
+        raise HTTPException(status_code=401, detail='Token missing.')
+    _get_store_for_token(token).store_record(record=data, label=label)
     return data
 
 
@@ -112,12 +112,11 @@ async def read_item(
     identifier: str,
     x_dumpthings_token: Annotated[str | None, Header()] = None
 ):
-    if x_dumpthings_token is not None:
-        store = token_storages.get(x_dumpthings_token, None)
-        if store:
-            record = store.get_record(label, identifier)
-            if record:
-                return record
+    store = _get_store_for_token(x_dumpthings_token)
+    if store:
+        record = store.get_record(label, identifier)
+        if record:
+            return record
     return global_storage.get_record(label, identifier)
 
 
@@ -128,14 +127,22 @@ def read_item(
     x_dumpthings_token: Annotated[str | None, Header()] = None
 ):
     records = {}
-    if x_dumpthings_token is not None:
-        store = token_storages.get(x_dumpthings_token, None)
-        if store:
-            for record in store.get_all_records(label, type_name):
-                records[record['id']] = record
+    store = _get_store_for_token(x_dumpthings_token)
+    if store:
+        for record in store.get_all_records(label, type_name):
+            records[record['id']] = record
     for record in global_storage.get_all_records(label, type_name):
         records[record['id']] = record
     yield from records.values()
+
+
+def _get_store_for_token(token: str|None):
+    if token is None:
+        return None
+    store = token_storages.get(token, None)
+    if store:
+        return store
+    raise HTTPException(status_code=401, detail='Invalid token.')
 
 
 app.openapi_schema = None
