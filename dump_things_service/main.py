@@ -36,7 +36,7 @@ for token, path in config['token_stores'].items():
 _endpoint_template = """
 async def {name}(
         data: Annotated[{model_var_name}.{type}, Form(), {info}],
-        x_dumpthings_token: Annotated[str | None, Header()] = None
+        x_dumpthings_token: Annotated[str | None, Header()]
 ):
     print('endpoint[{name}]:', data.model_dump())
     print('Token:', x_dumpthings_token)
