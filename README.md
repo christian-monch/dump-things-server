@@ -51,11 +51,11 @@ The service provides the following endpoints:
  In order to `POST` an object to the service, you MUST provide a valid token in the HTTP-header `X-DumpThings-Token`. This token has to correspond to a token value defined in the configuration file.
 
 
-- `GET /<schema-label>/record/<class>`: retrieve all objects of type `<class>` of schema `<schema-label>` that are stored in the global storage space of the service.
+- `GET /<schema-label>/records/<class>`: retrieve all objects of type `<class>` of schema `<schema-label>` that are stored in the global storage space of the service.
  If a token is provided, all matching objects from the token storage space are returned in addition.
 
 
-- `GET /<schema-label>/find/<id>`: retrieve an object with the id `<id>` from the global storage of the service. If a token is provided, the object is also searched in the token storage space. Only objects with a type defined in the schema `<schema-label>` are considered.
+- `GET /<schema-label>/record/<id>`: retrieve an object with the id `<id>` from the global storage of the service. If a token is provided, the object is also searched in the token storage space. Only objects with a type defined in the schema `<schema-label>` are considered.
 
 
 - `GET /docs`: provides information about the endpoint

@@ -106,7 +106,7 @@ for label, (model, classes, model_var_name) in model_info.items():
 lgr.info('Creation of %d endpoints completed.', next(serial_number))
 
 
-@app.get('/{label}/find/{identifier}')
+@app.get('/{label}/record/{identifier}')
 async def read_item(
     label: str,
     identifier: str,
@@ -120,7 +120,7 @@ async def read_item(
     return global_storage.get_record(label, identifier)
 
 
-@app.get('/{label}/record/{type_name}')
+@app.get('/{label}/records/{type_name}')
 def read_item(
     label: str,
     type_name: str,
