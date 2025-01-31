@@ -106,7 +106,7 @@ for label, (model, classes, model_var_name) in model_info.items():
 lgr.info('Creation of %d endpoints completed.', next(serial_number))
 
 
-@app.get('/{label}/get/{identifier}')
+@app.get('/{label}/find/{identifier}')
 async def read_item(
     label: str,
     identifier: str,
@@ -119,6 +119,19 @@ async def read_item(
             if record:
                 return record
     return global_storage.get_record(label, identifier)
+
+
+@app.get('/{label}/record/{type_name}')
+def read_item(
+    label: str,
+    type_name: str,
+    x_dumpthings_token: Annotated[str | None, Header()] = None
+):
+    if x_dumpthings_token is not None:
+        store = token_storages.get(x_dumpthings_token, None)
+        if store:
+            yield from store.get_all_records(label, type_name)
+    yield from global_storage.get_all_records(label, type_name)
 
 
 app.openapi_schema = None

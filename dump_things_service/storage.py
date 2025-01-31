@@ -24,6 +24,7 @@ YAML = Union[int, float, str, dict, list, None]
 
 
 config_file_name = '.dumpthings.yaml'
+ignored_files = {'.', '..', config_file_name}
 
 
 class GlobalConfig(BaseModel):
@@ -131,7 +132,12 @@ class Storage:
 
     def get_record(self, label: str, identifier: str) -> dict | None:
         for path in (self.root / label).rglob('*'):
-            if path.is_file() and path.name != config_file_name:
+            if path.is_file() and path.name not in ignored_files:
                 record = yaml.load(path.read_text(), Loader=SafeLoader)
                 if record['id'] == identifier:
                     return record
+
+    def get_all_records(self, label: str, type_name: str) -> list[dict]:
+        for path in (self.root / label / type_name).rglob('*'):
+            if path.is_file() and path.name not in ignored_files:
+                yield(yaml.load(path.read_text(), Loader=SafeLoader))
