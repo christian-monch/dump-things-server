@@ -17,13 +17,42 @@ The endpoints support POST-requests, data object have to be URL-encoded. For exa
 
 #### Running the service
 
+The basic service configuration is done via a YAML-file that contains two top level keys:
+
+- `global_store`: the value is the path of the record store for token-less access
+- `token_stores`: a dictionary with token values as keys and the corresponding record store paths as values
+
+A configuration file could look like this:
+
+```yaml
+global_store: /data-storage/global_store
+token_stores:
+  token1: /data-storage/token1_store
+  token2: /data-storage/token2_store
+  ...
+```
+
 Once a configuration file is created, the service can be run with the following command:
 
 ```bash
-hatch run fastapi:dev <path-to-metadata-root> 
+hatch run fastapi:run <path-to-config-file> 
 ```
 
-Note: if the service is not started via `hatch` the root of the data store has to be passed in the environment variable `DUMP_THINGS_STORAGE_PATH`.
+Note: if the service is not started via `hatch` the configuration file name can be passed in the environment variable `DUMPTHINGS_CONFIG_FILE`.
+If this environment variable is not set, the service will look for the file `./dumpthings_conf.yaml`.
+If no such file is found, the service will not start.
+
+
+#### Endpoints
+
+The service provides the following endpoints:
+
+- `POST /<schema-label>/record/<class>`: an object of type `<class>` of schema `<schema-label>` can be posted to this endpoint. The object-content must be form-encoded.
+ In order to `POST` an object to the service, you have to provide a valid token in the HTTP-header `X-DumpThings-Token`. This token has to correspond to a token value defined in the configuration file.
+- `GET /<schema-label>/record/<class>`: retrieve all objects of type `<class>` of schema `<schema-label>` that are stored in the global storage space of the service.
+ If a token is provided, all matching objects from the token storage space are returned in addition.
+- `GET /<schema-label>/find/<id>`: retrieve an object with the id `<id>` from the global storage of the service. If a token is provided, the object is also searched in the token storage space. Only objects with a type defined in the schema `<schema-label>` are considered.
+- `GET /docs`: provides information about the endpoint
 
 
 #### Restrictions
