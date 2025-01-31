@@ -140,4 +140,4 @@ class Storage:
     def get_all_records(self, label: str, type_name: str) -> list[dict]:
         for path in (self.root / label / type_name).rglob('*'):
             if path.is_file() and path.name not in ignored_files:
-                yield(yaml.load(path.read_text(), Loader=SafeLoader))
+                yield yaml.load(path.read_text(), Loader=SafeLoader)
