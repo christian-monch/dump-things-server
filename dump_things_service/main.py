@@ -127,11 +127,15 @@ def read_item(
     type_name: str,
     x_dumpthings_token: Annotated[str | None, Header()] = None
 ):
+    records = {}
     if x_dumpthings_token is not None:
         store = token_storages.get(x_dumpthings_token, None)
         if store:
-            yield from store.get_all_records(label, type_name)
-    yield from global_storage.get_all_records(label, type_name)
+            for record in store.get_all_records(label, type_name):
+                records[record['id']] = record
+    for record in global_storage.get_all_records(label, type_name):
+        records[record['id']] = record
+    yield from records.values()
 
 
 app.openapi_schema = None
