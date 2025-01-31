@@ -45,16 +45,16 @@ Most endpoints require an *interoperability-label*. This can be provided by the 
 
 The service provides the following endpoints:
 
-- `POST /<schema-label>/record/<class>`: an object of type `<class>` (defined by the schema associated with `<schema-label>`) can be posted to this endpoint.
+- `POST /<interoperability-label>/record/<class>`: an object of type `<class>` (defined by the schema associated with `<interoperability-label>`) can be posted to this endpoint.
  The object-content must be form-encoded.
  In order to `POST` an object to the service, you MUST provide a valid token in the HTTP-header `X-DumpThings-Token`. This token has to correspond to a token value defined in the configuration file.
 
 
-- `GET /<schema-label>/records/<class>`: retrieve all objects of type `<class>` (defined by the schema associated with `<schema-label>`) that are stored in the global storage space of the service.
+- `GET /<interoperability-label>/records/<class>`: retrieve all objects of type `<class>` (defined by the schema associated with `<interoperability-label>`) that are stored in the global storage space of the service.
  If a token is provided, all matching objects from the token storage space are returned in addition.
 
 
-- `GET /<schema-label>/record/<id>`: retrieve an object with the id `<id>` from the global storage of the service. If a token is provided, the object is also searched in the token storage space. Only objects with a type defined by the schema associated with `<schema-label>` are considered.
+- `GET /<interoperability-label>/record/<id>`: retrieve an object with the id `<id>` from the global storage of the service. If a token is provided, the object is also searched in the token storage space. Only objects with a type defined by the schema associated with `<interoperability-label>` are considered.
 
 
 - `GET /docs`: provides information about the endpoint
