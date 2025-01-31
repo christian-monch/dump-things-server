@@ -25,7 +25,6 @@ global_store: /data-storage/global_store
 token_stores:
   token1: /data-storage/token1_store
   token2: /data-storage/token2_store
-  ...
 ```
 
 Once a configuration file is created, the service can be run with the following command:
