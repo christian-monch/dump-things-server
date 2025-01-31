@@ -11,6 +11,7 @@ from typing import (
 )
 
 import yaml
+from fastapi import HTTPException
 from pydantic import BaseModel
 from yaml import (
     SafeLoader,
@@ -112,7 +113,7 @@ class Storage:
         label: str,
     ):
         # Generate the class directory
-        record_root = self.root / label / type(record).__name__
+        record_root = self._get_label_path(label) / type(record).__name__
         record_root.mkdir(exist_ok=True)
 
         # Get the yaml document representing the record
@@ -130,14 +131,20 @@ class Storage:
         storage_path.parent.mkdir(parents=True, exist_ok=True)
         storage_path.write_text(data)
 
+    def _get_label_path(self, label: str) -> Path:
+        label_path = self.root / label
+        if not label_path.exists() or not label_path.is_dir():
+            raise HTTPException(status_code=404, detail=f'Application {label} not found.')
+        return label_path
+
     def get_record(self, label: str, identifier: str) -> dict | None:
-        for path in (self.root / label).rglob('*'):
+        for path in self._get_label_path(label).rglob('*'):
             if path.is_file() and path.name not in ignored_files:
                 record = yaml.load(path.read_text(), Loader=SafeLoader)
                 if record['id'] == identifier:
                     return record
 
     def get_all_records(self, label: str, type_name: str) -> list[dict]:
-        for path in (self.root / label / type_name).rglob('*'):
+        for path in (self._get_label_path(label) / type_name).rglob('*'):
             if path.is_file() and path.name not in ignored_files:
                 yield yaml.load(path.read_text(), Loader=SafeLoader)
