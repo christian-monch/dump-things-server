@@ -16,7 +16,7 @@ The basic service configuration is done via a YAML-file that contains two top le
 
 - `token_stores`: a dictionary with token values as keys and the corresponding record store paths as values
 
-The store themselve have to be structured as described in the [Dump Things Service](https://concepts.datalad.org/dump-things/) documentation.
+The stores themselves have to be structured as described in the [Dump Things Service](https://concepts.datalad.org/dump-things/) documentation.
 
 A configuration file could look like this:
 
@@ -40,7 +40,7 @@ If no such file is found, the service will not start.
 
 ### Endpoints
 
-Most endpoints require an *interoperability-label*. This can be provided by the entity that hosts the service.
+Most endpoints require an *interoperability-label*. These correspond to the names of the "data record collection"-directories (see [Dump Things Service](https://concepts.datalad.org/dump-things/)) in the stores.
 
 The service provides the following endpoints:
 
@@ -56,7 +56,7 @@ The service provides the following endpoints:
 - `GET /<interoperability-label>/record/<id>`: retrieve an object with the id `<id>` from the global storage of the service. If a token is provided, the object is also searched in the token storage space. Only objects with a type defined by the schema associated with `<interoperability-label>` are considered.
 
 
-- `GET /docs`: provides information about the endpoint
+- `GET /docs`: provides information about the API of the service, i.e. about all endpoints.
 
 
 #### Restrictions
