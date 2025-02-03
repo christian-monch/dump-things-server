@@ -28,6 +28,7 @@ dependencies = [
     "fastapi[standard]",
     "aiohttp",
     "fsspec",
+    "httpx",
     "linkml",
     "pydantic==2.8.0",
     "PyYAML",
