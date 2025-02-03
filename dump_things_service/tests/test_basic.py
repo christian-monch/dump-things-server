@@ -46,7 +46,7 @@ def test_store_record():
         response = client.post(
             f'/schema_{i}/record/InstantaneousEvent',
             headers={'x-dumpthings-token': 'token_1'},
-            data={'id': 'aaaa'}
+            json={'id': 'aaaa'}
         )
         assert response.status_code == 200
 
@@ -59,7 +59,7 @@ def test_global_store_fails():
     for i in range(1, 6):
         response = client.post(
             f'/schema_{i}/record/InstantaneousEvent',
-            data={'id': 'aaaa'}
+            json={'id': 'aaaa'}
         )
         assert response.status_code == 422
 
@@ -68,7 +68,7 @@ def test_token_store_adding():
     response = client.post(
         '/schema_1/record/InstantaneousEvent',
         headers={'x-dumpthings-token': 'david_bowie'},
-        data={'id': 'aaaa'}
+        json={'id': 'aaaa'}
     )
     assert response.status_code == 401
 
@@ -77,6 +77,6 @@ def test_token_store_adding():
     response = client.post(
         '/schema_1/record/InstantaneousEvent',
         headers={'x-dumpthings-token': 'david_bowie'},
-        data={'id': 'aaaa'}
+        json={'id': 'aaaa'}
     )
     assert response.status_code == 200
