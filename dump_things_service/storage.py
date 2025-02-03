@@ -146,7 +146,11 @@ class TokenStorage(Storage):
         record_root.mkdir(exist_ok=True)
 
         # Get the yaml document representing the record
-        data = yaml.dump(data=record.model_dump(exclude_none=True), sort_keys=False)
+        data = yaml.dump(
+            data=record.model_dump(exclude_none=True),
+            default_style='"',
+            sort_keys=False,
+        )
 
         # Apply the mapping function to get the final storage path
         config = self.canonical_store.collections[label]
