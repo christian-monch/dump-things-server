@@ -13,7 +13,6 @@ from typing import (
 import uvicorn
 from fastapi import (
     FastAPI,
-    Form,
     Header,
     HTTPException,
 )
@@ -46,7 +45,7 @@ token_stores = {
 
 _endpoint_template = """
 async def {name}(
-        data: Annotated[{model_var_name}.{type}, Form(), {info}],
+        data: Annotated[{model_var_name}.{type}, {info}],
         x_dumpthings_token: Annotated[str | None, Header()]
 ):
     lgr.info('{name}(%s, %s)', repr(data.model_dump()), repr(x_dumpthings_token))
