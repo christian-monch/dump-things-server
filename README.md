@@ -16,8 +16,9 @@ The following parameters are supported:
  `global_store` should be the root of a dump-thing-service store, as described in [Dump Things Service](https://concepts.datalad.org/dump-things).
  `token_stores` should contain zero or more subdirectories.
  The names of these subdirectories act as token values.
- Each of these subdirectories should contain a dumpt-things-service store with the same configuration as `global_store`, i.e. it should have the same `.dumpthings.yaml` files.
-The following shows an example for stores that are location as `data-storage/store`:
+ If a respective token value is used, data will be stored in the token store.
+ Configuration values, for example mapping function settings, are read from the global store.
+The following shows an example for a store that are location as `data-storage/store` and has a single token store, named `token_1`:
 
 ```
 /data-storage/store
@@ -34,16 +35,6 @@ The following shows an example for stores that are location as `data-storage/sto
 │   │           └── dfa3142add5791dc6fe45209206fd.yaml
 └── token_stores
     └── token_1
-        ├── .dumpthings.yaml
-        ├── schema_1
-        │   ├── .dumpthings.yaml
-        │   └── Person
-        │       └── f2cdfa3142add5791dc6fe45209206fd.yaml
-        └── schema_2
-            ├── .dumpthings.yaml
-            └── Person
-                └── f2c
-                    └── dfa3142add5791dc6fe45209206fd.yaml
 ```
 
 - `--host` (optional): the IP address of the host the service should run on
@@ -54,10 +45,15 @@ The following shows an example for stores that are location as `data-storage/sto
 The service can be started via `hatch` like this:
 
 ```bash
+hatch run fastapi:run /data-storage/store
+```
+In this example the service will run on the network location `0.0.0.0:8000` and provide access to the stores under `/data-storage/store`.
+
+To run the service on a specific host and port, use the command line options `--host` and `--port`, for example:
+
+```bash
 hatch run fastapi:run /data-storage/store --host 127.0.0.1 --port 8000
 ```
-
-In this example the service will run on the network location `127.0.0.1:8000` and provide access to the stores under `/data-storage/store`.
 
 ### Endpoints
 
