@@ -3,6 +3,7 @@ fastapi[standard]==0.113.0
 fsspec
 hatch
 hatch-vcs
+httpx
 linkml
 pydantic==2.8.0
 PyYAML
