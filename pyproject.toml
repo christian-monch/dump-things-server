@@ -73,7 +73,6 @@ exclude_lines = [
 description = "fastapi dev environment"
 
 [tool.hatch.envs.fastapi.scripts]
-post-install-command = ["{root}/tools/patch_linkmk"]
 run = "python -m dump_things_service.main {args}"
 
 [tool.hatch.envs.test]
