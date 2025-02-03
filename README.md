@@ -57,7 +57,7 @@ hatch run fastapi:run /data-storage/store --host 127.0.0.1 --port 8000
 
 ### Endpoints
 
-Most endpoints require an *interoperability-label*. These correspond to the names of the "data record collection"-directories (see [Dump Things Service](https://concepts.datalad.org/dump-things/)) in the stores.
+Most endpoints require an *interoperability-label*. These correspond to the names of the "data record collection"-directories (for example `myschema-v3-fmta` in [Dump Things Service](https://concepts.datalad.org/dump-things/)) in the stores.
 
 The service provides the following endpoints:
 
