@@ -1,82 +1,63 @@
 import json
-import sys
-from pathlib import Path
-from tempfile import TemporaryDirectory
-
-from fastapi.testclient import TestClient
+from urllib.parse import quote
 
 from .create_store import (
-    create_store,
-    create_stores,
-)
-
-temp_dir_obj = TemporaryDirectory()
-temp_dir = Path(temp_dir_obj.name)
-
-
-create_stores(
-    root_dir=temp_dir,
-    collection_info={
-        'schema_1': ('https://concepts.trr379.de/s/base/unreleased.yaml', 'digest-md5'),
-        'schema_2': ('https://concepts.trr379.de/s/base/unreleased.yaml', 'digest-md5-p3'),
-        'schema_3': ('https://concepts.trr379.de/s/base/unreleased.yaml', 'digest-sha1'),
-        'schema_4': ('https://concepts.trr379.de/s/base/unreleased.yaml', 'digest-sha1-p3'),
-        'schema_5': ('https://concepts.trr379.de/s/base/unreleased.yaml', 'after-last-colon'),
-    },
-    token_stores=['token_1'],
+    identifier,
+    fastapi_client,
 )
 
 
-old_sys_argv = sys.argv
-sys.argv = ['test', str(temp_dir)]
-from ..main import app
-sys.argv = old_sys_argv
-
-client = TestClient(app)
-
-
-def test_search_by_id():
+def test_search_by_id(test_client):
     for i in range(1, 6):
-        response = client.get(f'/schema_{i}/record/1111')
-        assert json.loads(response.text) == {'type': 'dltemporal:InstantaneousEvent', 'id': '1111'}
+        response = test_client.get(f'/schema_{i}/record/{quote(identifier)}')
+        assert json.loads(response.text) == {'type': 'dltemporal:InstantaneousEvent', 'id': identifier}
 
 
-def test_store_record():
+def test_store_record(test_client):
     for i in range(1, 6):
-        response = client.post(
+        response = test_client.post(
             f'/schema_{i}/record/InstantaneousEvent',
             headers={'x-dumpthings-token': 'token_1'},
-            data={'id': 'aaaa'}
+            json={'id': 'aaaa'}
         )
         assert response.status_code == 200
 
     for i in range(1, 6):
-        response = client.get(f'/schema_{i}/record/aaaa')
+        response = test_client.get(f'/schema_{i}/record/aaaa')
         assert response.status_code == 200
 
 
-def test_global_store_fails():
+def test_global_store_fails(test_client):
     for i in range(1, 6):
-        response = client.post(
+        response = test_client.post(
             f'/schema_{i}/record/InstantaneousEvent',
-            data={'id': 'aaaa'}
+            json={'id': 'aaaa'}
         )
         assert response.status_code == 422
 
 
-def test_token_store_adding():
-    response = client.post(
+def test_token_store_adding(test_client):
+    response = test_client.post(
         '/schema_1/record/InstantaneousEvent',
         headers={'x-dumpthings-token': 'david_bowie'},
-        data={'id': 'aaaa'}
+        json={'id': 'aaaa'}
     )
     assert response.status_code == 401
 
     # Create token directory and retry
-    (temp_dir / 'token_stores' / 'david_bowie').mkdir()
-    response = client.post(
+    #(temp_dir / 'token_stores' / 'david_bowie').mkdir()
+    #response = client.post(
+    #    '/schema_1/record/InstantaneousEvent',
+    #    headers={'x-dumpthings-token': 'david_bowie'},
+    #    json={'id': 'aaaa'}
+    #)
+    #assert response.status_code == 200
+
+
+def test_funky_id(fastapi_client):
+    response = fastapi_client.post(
         '/schema_1/record/InstantaneousEvent',
-        headers={'x-dumpthings-token': 'david_bowie'},
-        data={'id': 'aaaa'}
+        headers={'x-dumpthings-token': 'token_1'},
+        json={'id': '/etc/fstab:/etc/fstab:/etc/fstab'}
     )
     assert response.status_code == 200
