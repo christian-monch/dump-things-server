@@ -9,6 +9,7 @@ from typing import (
     Any,
 )
 
+import uvicorn
 import yaml
 from fastapi import (
     FastAPI,
@@ -18,8 +19,8 @@ from fastapi import (
 )
 from pydantic import BaseModel
 
-from dump_things_service.model import build_model, get_classes
-from dump_things_service.storage import Storage
+from .model import build_model, get_classes
+from .storage import Storage
 
 
 # load config
@@ -145,5 +146,14 @@ def _get_store_for_token(token: str|None):
     raise HTTPException(status_code=401, detail='Invalid token.')
 
 
+# Rebuild the app to include all dynamically created endpoints
 app.openapi_schema = None
 app.setup()
+
+
+if __name__ == '__main__':
+    uvicorn.run(
+        app,
+        host=config['host'],
+        port=int(config['port']),
+    )

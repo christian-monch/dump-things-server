@@ -9,7 +9,13 @@ Data objects must conform to a given schema. The service supports an arbitrary n
 
 ### Running the service
 
-The basic service configuration is done via a YAML-file that contains two top level keys:
+The basic service configuration is done via a YAML-file that contains the following top level keys:
+
+- `host`: the value is the IP address of the host the service should run on
+
+
+- `port`: the value is the port the service should listen on
+
 
 - `global_store`: the value is the path of the record store for token-less access
 
@@ -21,21 +27,24 @@ The stores themselves have to be structured as described in the [Dump Things Ser
 A configuration file could look like this:
 
 ```yaml
-global_store: /data-storage/global_store
+host: 127.0.0.1
+port: 8000
+global_store: /data-storage/store
 token_stores:
   token1: /data-storage/token1_store
   token2: /data-storage/token2_store
 ```
 
-Once a configuration file is created, the service can be run with the following command:
+Once a configuration file is created, the service has to be informed about the location of the config file.
+This is done via the environment variable `DUMPTHINGS_CONFIG_FILE`, which should contain the path of the config file that should be used.
+If this environment variable is not set, the service will look for the file `./dumpthings_conf.yaml`.
+If no such file is found, the service will not start successfully.
+
+The service can be started with the following command:
 
 ```bash
 hatch run fastapi:run <path-to-config-file> 
 ```
-
-Note: if the service is not started via `hatch` the configuration file name can be passed in the environment variable `DUMPTHINGS_CONFIG_FILE`.
-If this environment variable is not set, the service will look for the file `./dumpthings_conf.yaml`.
-If no such file is found, the service will not start.
 
 
 ### Endpoints
