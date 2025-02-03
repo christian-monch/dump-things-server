@@ -28,7 +28,6 @@ dependencies = [
     "fastapi[standard]",
     "aiohttp",
     "fsspec",
-    "httpx",
     "linkml",
     "pydantic==2.8.0",
     "PyYAML",
@@ -75,5 +74,16 @@ description = "fastapi dev environment"
 
 [tool.hatch.envs.fastapi.scripts]
 post-install-command = ["{root}/tools/patch_linkmk"]
-dev = "export DUMPTHINGS_CONFIG_FILE={args}; fastapi dev dump_things_service/main.py"
-run = "export DUMPTHINGS_CONFIG_FILE={args}; fastapi run dump_things_service/main.py"
+run = "python -m dump_things_service.main {args}"
+
+[tool.hatch.envs.test]
+default-args = ["dump_things_service"]
+extra-dependencies = [
+    "dump_things_service",
+    "httpx",
+    "pytest",
+    "pytest-cov",
+]
+
+[tool.hatch.envs.tests.scripts]
+run = 'python -m pytest {args}'

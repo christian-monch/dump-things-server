@@ -1,3 +1,4 @@
+from __future__ import annotations
 
 from pathlib import Path
 
@@ -28,6 +29,21 @@ id: '1111'
 """
 
 
+def create_stores(
+    root_dir: Path,
+    collection_info: dict[str, tuple[str, str]],
+    token_stores: list[str] | None = None,
+):
+    global_store = root_dir / 'global_store'
+    global_store.mkdir()
+    token_store_dir = root_dir / 'token_stores'
+    token_store_dir.mkdir()
+
+    create_store(global_store, collection_info)
+    for token in token_stores or []:
+        create_store(token_store_dir / token, collection_info)
+
+
 def create_store(
     temp_dir: Path,
     collection_info: dict[str, tuple[str, str]]
@@ -52,7 +68,7 @@ def create_store(
 
         # Add a test record
         mapping_function = mapping_functions[MappingMethod(mapping_function)]
-        record_path = collection_dir / mapping_function(
+        record_path = collection_dir / 'InstantaneousEvent' / mapping_function(
             identifier='1111',
             data=test_record,
             suffix='yaml'
