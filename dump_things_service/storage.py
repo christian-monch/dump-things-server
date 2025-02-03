@@ -65,8 +65,10 @@ def mapping_digest(hasher: Callable, identifier: str, data: str, suffix: str) ->
 
 
 def mapping_after_last_colon(identifier: str, data: str, suffix: str) -> Path:
-    return Path(identifier.split(':')[-1] + '.' + suffix)
-
+    plain_result = identifier.split(':')[-1]
+    # Escape any colons and slashes in the identifier
+    escaped_result = plain_result.replace('_', '__').replace('/', '_s').replace('.', '_d')
+    return Path(escaped_result + '.' + suffix)
 
 mapping_functions = {
     MappingMethod.digest_md5: partial(mapping_digest, hashlib.md5),
@@ -159,6 +161,12 @@ class TokenStorage(Storage):
             data=data,
             suffix=config.format
         )
+
+        # Ensure that the storage path is within the record root
+        try:
+            storage_path.relative_to(record_root)
+        except ValueError:
+            raise HTTPException(status_code=400, detail='Invalid identifier.')
 
         # Ensure all intermediate directories exist and save the yaml document
         storage_path.parent.mkdir(parents=True, exist_ok=True)
