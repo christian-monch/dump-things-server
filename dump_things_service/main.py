@@ -1,16 +1,16 @@
 from __future__ import annotations
 
+import argparse
 import logging
-import os
 from http.client import HTTPException
 from itertools import count
+from pathlib import Path
 from typing import (
     Annotated,
     Any,
 )
 
 import uvicorn
-import yaml
 from fastapi import (
     FastAPI,
     Form,
@@ -23,17 +23,22 @@ from .model import build_model, get_classes
 from .storage import Storage
 
 
-# load config
-config_file = os.environ.get('DUMPTHINGS_CONFIG_FILE', './dumpthings_conf.yaml')
-with open(config_file, 'rt') as f:
-    config = yaml.safe_load(f)
+parser = argparse.ArgumentParser()
+parser.add_argument('--host', default='0.0.0.0')
+parser.add_argument('--port', default=8000, type=int)
+parser.add_argument('store', help='The root of the data stores, it should contain a global_store and token_stores.')
+
+arguments = parser.parse_args()
 
 
 # Instantiate storage objects
-token_storages = {}
-global_storage = Storage(config['global_store'])
-for token, path in config['token_stores'].items():
-    token_storages[token] = Storage(path)
+store = Path(arguments.store)
+global_store = Storage(store / 'global_store')
+token_stores = {
+    element.name : Storage(Path(element))
+    for element in (store / 'token_stores').glob('*')
+    if element.is_dir()
+}
 
 
 _endpoint_template = """
@@ -63,7 +68,7 @@ lgr = logging.getLogger('uvicorn')
 # Create pydantic models from schema sources and add them to globals
 model_info = {}
 model_counter = count()
-for label, configuration in global_storage.collections.items():
+for label, configuration in global_store.collections.items():
     schema_location = configuration.schema
     lgr.info(f'Building model for {label} from {schema_location}.')
     model = build_model(schema_location)
@@ -118,7 +123,7 @@ async def read_item(
         record = store.get_record(label, identifier)
         if record:
             return record
-    return global_storage.get_record(label, identifier)
+    return global_store.get_record(label, identifier)
 
 
 @app.get('/{label}/records/{type_name}')
@@ -132,7 +137,7 @@ def read_item(
     if store:
         for record in store.get_all_records(label, type_name):
             records[record['id']] = record
-    for record in global_storage.get_all_records(label, type_name):
+    for record in global_store.get_all_records(label, type_name):
         records[record['id']] = record
     yield from records.values()
 
@@ -140,10 +145,23 @@ def read_item(
 def _get_store_for_token(token: str|None):
     if token is None:
         return None
-    store = token_storages.get(token, None)
-    if store:
-        return store
-    raise HTTPException(status_code=401, detail='Invalid token.')
+    if token not in token_stores:
+        _update_token_stores(store, token_stores)
+    if token not in token_stores:
+        raise HTTPException(status_code=401, detail='Invalid token.')
+    return token_stores[token]
+
+
+def _update_token_stores(
+        store: Path,
+        token_stores: dict,
+) -> int:
+    added = 0
+    for element in (store / 'token_stores').glob('*'):
+        if element.is_dir and element.name not in token_stores:
+            token_stores[element.name] = Storage(Path(element))
+            added += 1
+    return added
 
 
 # Rebuild the app to include all dynamically created endpoints
@@ -154,6 +172,6 @@ app.setup()
 if __name__ == '__main__':
     uvicorn.run(
         app,
-        host=config['host'],
-        port=int(config['port']),
+        host=arguments.host,
+        port=arguments.port,
     )

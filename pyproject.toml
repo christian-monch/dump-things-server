@@ -75,4 +75,4 @@ description = "fastapi dev environment"
 
 [tool.hatch.envs.fastapi.scripts]
 post-install-command = ["{root}/tools/patch_linkmk"]
-run = "export DUMPTHINGS_CONFIG_FILE={args}; python -m dump_things_service.main"
+run = "python -m dump_things_service.main {args}"
