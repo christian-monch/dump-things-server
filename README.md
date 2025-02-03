@@ -5,7 +5,7 @@ This is an implementation of a service that stores data as described in
 [Dump Things Service](https://concepts.datalad.org/dump-things).
 
 It provides a HTTP-base API that receives the data objects.
-Data objects must conform to a given schema. The service supports an arbitrary number of schemas.
+Data objects must conform to a given schema. The service supports an arbitrary number of schemas. Objects must be JSON-encoded.
 
 ### Running the service
 
@@ -18,7 +18,7 @@ The following parameters are supported:
  The names of these subdirectories act as token values.
  If a respective token value is used, data will be stored in the token store.
  Configuration values, for example mapping function settings, are read from the global store.
-The following shows an example for a store that are location as `data-storage/store` and has a single token store, named `token_1`:
+The following shows an example for a store that is at location `data-storage/store`, has two record collections, `schema_1` and `schema_2`, and a single token store, named `token_1` (both record collections contains the same object of type `Person`, but they have a different file-system layout because they use different mapping functions):
 
 ```
 /data-storage/store
@@ -62,7 +62,7 @@ Most endpoints require an *interoperability-label*. These correspond to the name
 The service provides the following endpoints:
 
 - `POST /<interoperability-label>/record/<class>`: an object of type `<class>` (defined by the schema associated with `<interoperability-label>`) can be posted to this endpoint.
- The object-content must be form-encoded.
+ The object-content must be JSON-encoded.
  In order to `POST` an object to the service, you MUST provide a valid token in the HTTP-header `X-DumpThings-Token`. This token has to correspond to a token value defined in the configuration file.
 
 
