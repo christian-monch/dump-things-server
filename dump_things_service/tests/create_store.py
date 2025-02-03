@@ -41,7 +41,7 @@ def create_stores(
 
     create_store(global_store, collection_info)
     for token in token_stores or []:
-        create_store(token_store_dir / token, collection_info)
+        (token_store_dir / token).mkdir()
 
 
 def create_store(

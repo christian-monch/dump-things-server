@@ -20,7 +20,10 @@ from fastapi import (
 from pydantic import BaseModel
 
 from .model import build_model, get_classes
-from .storage import Storage
+from .storage import (
+    Storage,
+    TokenStorage,
+)
 
 
 parser = argparse.ArgumentParser()
@@ -35,7 +38,7 @@ arguments = parser.parse_args()
 store = Path(arguments.store)
 global_store = Storage(store / 'global_store')
 token_stores = {
-    element.name : Storage(Path(element))
+    element.name : TokenStorage(element, global_store)
     for element in (store / 'token_stores').glob('*')
     if element.is_dir()
 }
@@ -158,8 +161,8 @@ def _update_token_stores(
 ) -> int:
     added = 0
     for element in (store / 'token_stores').glob('*'):
-        if element.is_dir and element.name not in token_stores:
-            token_stores[element.name] = Storage(Path(element))
+        if element.is_dir() and element.name not in token_stores:
+            token_stores[element.name] = TokenStorage(element, global_store)
             added += 1
     return added
 

@@ -72,12 +72,8 @@ def test_token_store_adding():
     )
     assert response.status_code == 401
 
-    create_store(
-        temp_dir / 'token_stores' / 'david_bowie',
-        {
-            'schema_1': ('https://concepts.trr379.de/s/base/unreleased.yaml', 'digest-md5'),
-        },
-    )
+    # Create token directory and retry
+    (temp_dir / 'token_stores' / 'david_bowie').mkdir()
     response = client.post(
         '/schema_1/record/InstantaneousEvent',
         headers={'x-dumpthings-token': 'david_bowie'},

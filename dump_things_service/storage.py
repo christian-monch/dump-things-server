@@ -83,8 +83,9 @@ class Storage:
         root: str | Path,
     ) -> None:
         self.root = Path(root)
-        self.global_config = GlobalConfig(**(self.get_config(self.root)))
-        self.collections = self._get_collections()
+        if not isinstance(self, TokenStorage):
+            self.global_config = GlobalConfig(**(self.get_config(self.root)))
+            self.collections = self._get_collections()
 
     @staticmethod
     def get_config(path: Path) -> YAML:
@@ -106,21 +107,49 @@ class Storage:
             if path.is_dir() and path not in (Path('.'), Path('.'))
         }
 
-    def store_record(
+    def get_label_path(self, label: str) -> Path:
+        label_path = self.root / label
+        if not label_path.exists() or not label_path.is_dir():
+            raise HTTPException(status_code=404, detail=f'Application {label} not found.')
+        return label_path
+
+    def get_record(self, label: str, identifier: str) -> dict | None:
+        for path in self.get_label_path(label).rglob('*'):
+            if path.is_file() and path.name not in ignored_files:
+                record = yaml.load(path.read_text(), Loader=SafeLoader)
+                if record['id'] == identifier:
+                    return record
+
+    def get_all_records(self, label: str, type_name: str) -> list[dict]:
+        for path in (self.get_label_path(label) / type_name).rglob('*'):
+            if path.is_file() and path.name not in ignored_files:
+                yield yaml.load(path.read_text(), Loader=SafeLoader)
+
+
+class TokenStorage(Storage):
+    def __init__(
         self,
-        *,
-        record: BaseModel,
-        label: str,
+        root: str | Path,
+        canonical_store: Storage,
+    ) -> None:
+        super().__init__(root)
+        self.canonical_store = canonical_store
+
+    def store_record(
+            self,
+            *,
+            record: BaseModel,
+            label: str,
     ):
         # Generate the class directory
-        record_root = self._get_label_path(label) / type(record).__name__
+        record_root = self.get_label_path(label) / type(record).__name__
         record_root.mkdir(exist_ok=True)
 
         # Get the yaml document representing the record
         data = yaml.dump(data=record.model_dump(exclude_none=True), sort_keys=False)
 
         # Apply the mapping function to get the final storage path
-        config = self.collections[label]
+        config = self.canonical_store.collections[label]
         storage_path = record_root / mapping_functions[config.idfx](
             identifier=record.id,
             data=data,
@@ -131,20 +160,12 @@ class Storage:
         storage_path.parent.mkdir(parents=True, exist_ok=True)
         storage_path.write_text(data)
 
-    def _get_label_path(self, label: str) -> Path:
+    def get_label_path(self, label: str) -> Path:
         label_path = self.root / label
-        if not label_path.exists() or not label_path.is_dir():
-            raise HTTPException(status_code=404, detail=f'Application {label} not found.')
+        if not label_path.exists():
+            # This will raise if the canonical store does not have the label
+            self.canonical_store.get_label_path(label)
+            label_path.mkdir(parents=True)
+        elif not label_path.is_dir():
+            raise HTTPException(status_code=404, detail=f'{label_path} is not a directory.')
         return label_path
-
-    def get_record(self, label: str, identifier: str) -> dict | None:
-        for path in self._get_label_path(label).rglob('*'):
-            if path.is_file() and path.name not in ignored_files:
-                record = yaml.load(path.read_text(), Loader=SafeLoader)
-                if record['id'] == identifier:
-                    return record
-
-    def get_all_records(self, label: str, type_name: str) -> list[dict]:
-        for path in (self._get_label_path(label) / type_name).rglob('*'):
-            if path.is_file() and path.name not in ignored_files:
-                yield yaml.load(path.read_text(), Loader=SafeLoader)
