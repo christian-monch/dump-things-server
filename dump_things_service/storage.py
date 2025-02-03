@@ -83,8 +83,9 @@ class Storage:
         root: str | Path,
     ) -> None:
         self.root = Path(root)
-        self.global_config = GlobalConfig(**(self.get_config(self.root)))
-        self.collections = self._get_collections()
+        if not isinstance(self, TokenStorage):
+            self.global_config = GlobalConfig(**(self.get_config(self.root)))
+            self.collections = self._get_collections()
 
     @staticmethod
     def get_config(path: Path) -> YAML:
@@ -125,13 +126,13 @@ class Storage:
                 yield yaml.load(path.read_text(), Loader=SafeLoader)
 
 
-class TokenStorage:
+class TokenStorage(Storage):
     def __init__(
         self,
         root: str | Path,
         canonical_store: Storage,
     ) -> None:
-        self.root = Path(root)
+        super().__init__(root)
         self.canonical_store = canonical_store
 
     def store_record(
@@ -168,15 +169,3 @@ class TokenStorage:
         elif not label_path.is_dir():
             raise HTTPException(status_code=404, detail=f'{label_path} is not a directory.')
         return label_path
-
-    def get_record(self, label: str, identifier: str) -> dict | None:
-        for path in self.get_label_path(label).rglob('*'):
-            if path.is_file() and path.name not in ignored_files:
-                record = yaml.load(path.read_text(), Loader=SafeLoader)
-                if record['id'] == identifier:
-                    return record
-
-    def get_all_records(self, label: str, type_name: str) -> list[dict]:
-        for path in (self.get_label_path(label) / type_name).rglob('*'):
-            if path.is_file() and path.name not in ignored_files:
-                yield yaml.load(path.read_text(), Loader=SafeLoader)
