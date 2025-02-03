@@ -87,4 +87,3 @@ The current implementation has the following restrictions:
 - does not yet support any other data format than `yaml`
 - does not yet support extraction of inlined records
 - does not yet find subclasses of a searched class
-- token storage should have the same configuration as the global storage, this is currently not enforced or verified
