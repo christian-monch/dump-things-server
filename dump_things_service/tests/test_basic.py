@@ -5,8 +5,10 @@ from tempfile import TemporaryDirectory
 
 from fastapi.testclient import TestClient
 
-from .create_store import create_stores
-
+from .create_store import (
+    create_store,
+    create_stores,
+)
 
 temp_dir_obj = TemporaryDirectory()
 temp_dir = Path(temp_dir_obj.name)
@@ -60,3 +62,25 @@ def test_global_store_fails():
             data={'id': 'aaaa'}
         )
         assert response.status_code == 422
+
+
+def test_token_store_adding():
+    response = client.post(
+        '/schema_1/record/InstantaneousEvent',
+        headers={'x-dumpthings-token': 'david_bowie'},
+        data={'id': 'aaaa'}
+    )
+    assert response.status_code == 401
+
+    create_store(
+        temp_dir / 'token_stores' / 'david_bowie',
+        {
+            'schema_1': ('https://concepts.trr379.de/s/base/unreleased.yaml', 'digest-md5'),
+        },
+    )
+    response = client.post(
+        '/schema_1/record/InstantaneousEvent',
+        headers={'x-dumpthings-token': 'david_bowie'},
+        data={'id': 'aaaa'}
+    )
+    assert response.status_code == 200
