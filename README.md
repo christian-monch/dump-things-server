@@ -83,3 +83,13 @@ The current implementation has the following restrictions:
 - does not yet support any other data format than `yaml`
 - does not yet support extraction of inlined records
 - does not yet find subclasses of a searched class
+
+
+### Acknowledgements
+
+This work was funded, in part, by
+
+- Deutsche Forschungsgemeinschaft (DFG, German Research Foundation) under grant TRR 379 (546006540, Q02 project)
+
+
+- MKW-NRW: Ministerium für Kultur und Wissenschaft des Landes Nordrhein-Westfalen under the Kooperationsplattformen 2022 program, grant number: KP22-106A
