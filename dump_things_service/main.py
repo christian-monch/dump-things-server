@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import argparse
 import logging
 from http.client import HTTPException
 from itertools import count
@@ -10,7 +9,6 @@ from typing import (
     Any,
 )
 
-import uvicorn
 from fastapi import (
     FastAPI,
     Header,
@@ -19,18 +17,11 @@ from fastapi import (
 from pydantic import BaseModel
 
 from .model import build_model, get_classes
+from .shared import arguments
 from .storage import (
     Storage,
     TokenStorage,
 )
-
-
-parser = argparse.ArgumentParser()
-parser.add_argument('--host', default='0.0.0.0')
-parser.add_argument('--port', default=8000, type=int)
-parser.add_argument('store', help='The root of the data stores, it should contain a global_store and token_stores.')
-
-arguments = parser.parse_args()
 
 
 # Instantiate storage objects
@@ -156,8 +147,8 @@ def _get_store_for_token(token: str|None):
 
 
 def _update_token_stores(
-        store: Path,
-        token_stores: dict,
+    store: Path,
+    token_stores: dict,
 ) -> int:
     added = 0
     for element in (store / 'token_stores').glob('*'):
@@ -170,11 +161,3 @@ def _update_token_stores(
 # Rebuild the app to include all dynamically created endpoints
 app.openapi_schema = None
 app.setup()
-
-
-if __name__ == '__main__':
-    uvicorn.run(
-        app,
-        host=arguments.host,
-        port=arguments.port,
-    )

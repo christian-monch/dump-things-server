@@ -42,17 +42,27 @@ The following shows an example for a store that is at location `data-storage/sto
 
 - `--port`: the port number the service should listen on
 
-The service can be started via `hatch` like this:
+The service can be started via `hatch`.
+There a two modes, *production-mode* and *development-mode*.
+To start the service in production-mode use the following command:
 
 ```bash
 hatch run fastapi:run /data-storage/store
 ```
-In this example the service will run on the network location `0.0.0.0:8000` and provide access to the stores under `/data-storage/store`.
+The service will by default start on host address `0.0.0.0` and port `8000`.
+
+To start the service in development-mode use the following command:
+
+```bash
+hatch run fastapi:dev /data-storage/store
+```
+In this mode the service will start on host address `127.0.0.1` and port `8000`.
+In development-mode the service will be automatically reloaded when changes are made to the code.
 
 To run the service on a specific host and port, use the command line options `--host` and `--port`, for example:
 
 ```bash
-hatch run fastapi:run /data-storage/store --host 127.0.0.1 --port 8000
+hatch run fastapi:run /data-storage/store --host 127.0.0.1 --port 10234
 ```
 
 ### Endpoints

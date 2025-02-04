@@ -73,7 +73,8 @@ exclude_lines = [
 description = "fastapi dev environment"
 
 [tool.hatch.envs.fastapi.scripts]
-run = "python -m dump_things_service.main {args}"
+run = "python -m dump_things_service.start {args}"
+dev = "python -m dump_things_service.start --dev {args}"
 
 [tool.hatch.envs.test]
 default-args = ["dump_things_service"]
