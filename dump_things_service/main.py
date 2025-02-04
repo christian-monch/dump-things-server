@@ -9,6 +9,7 @@ from typing import (
     Annotated,
     Any,
 )
+from urllib.parse import unquote
 
 import uvicorn
 from fastapi import (
@@ -122,10 +123,10 @@ async def read_item(
 ):
     store = _get_store_for_token(x_dumpthings_token)
     if store:
-        record = store.get_record(label, identifier)
+        record = store.get_record(label, unquote(identifier))
         if record:
             return record
-    return global_store.get_record(label, identifier)
+    return global_store.get_record(label, unquote(identifier))
 
 
 @app.get('/{label}/records/{type_name}')
