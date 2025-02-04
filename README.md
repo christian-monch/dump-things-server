@@ -70,7 +70,7 @@ The service provides the following endpoints:
  If a token is provided, all matching objects from the token storage space are returned in addition.
 
 
-- `GET /<interoperability-label>/record/<id>`: retrieve an object with the id `<id>` from the global storage of the service. If a token is provided, the object is also searched in the token storage space. Only objects with a type defined by the schema associated with `<interoperability-label>` are considered.
+- `GET /<interoperability-label>/record?id=<id>`: retrieve an object with the id `<id>` from the global storage of the service. If a token is provided, the object is also searched in the token storage space. Only objects with a type defined by the schema associated with `<interoperability-label>` are considered.
 
 
 - `GET /docs`: provides information about the API of the service, i.e. about all endpoints.

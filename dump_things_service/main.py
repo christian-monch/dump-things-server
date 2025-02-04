@@ -9,7 +9,6 @@ from typing import (
     Annotated,
     Any,
 )
-from urllib.parse import unquote
 
 import uvicorn
 from fastapi import (
@@ -115,22 +114,23 @@ for label, (model, classes, model_var_name) in model_info.items():
 lgr.info('Creation of %d endpoints completed.', next(serial_number))
 
 
-@app.get('/{label}/record/{identifier}')
-async def read_item(
+@app.get('/{label}/record')
+async def read_record_with_id(
     label: str,
-    identifier: str,
+    id: str,
     x_dumpthings_token: Annotated[str | None, Header()] = None
 ):
+    identifier = id
     store = _get_store_for_token(x_dumpthings_token)
     if store:
-        record = store.get_record(label, unquote(identifier))
+        record = store.get_record(label, identifier)
         if record:
             return record
-    return global_store.get_record(label, unquote(identifier))
+    return global_store.get_record(label, identifier)
 
 
 @app.get('/{label}/records/{type_name}')
-def read_item(
+def read_records_from_type(
     label: str,
     type_name: str,
     x_dumpthings_token: Annotated[str | None, Header()] = None
