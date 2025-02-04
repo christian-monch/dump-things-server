@@ -1,17 +1,18 @@
 from __future__ import annotations
 
-import random
 import sys
 from contextlib import contextmanager
 from pathlib import Path
+from typing import Union
 
 import fsspec
+
+from . import JSON
 
 
 @contextmanager
 def sys_path(paths: list[str|Path]):
-    """
-    Patch the `Path` class to return the paths in `paths` in order.
+    """Patch the `Path` class to return the paths in `paths` in order.
     """
     original_path = sys.path
     try:
@@ -30,16 +31,17 @@ def read_url(url: str) -> str:
         return f.read()
 
 
-def create_unique_directory(root: Path, prefix: str = 'schema') -> Path:
-    while True:
-        random_part = ''.join(
-            random.choices('abcdefghijklmnopqrstuvwxyz0123456789', k=8)
-        )
-        directory = root / f'{prefix}{random_part}'
-        if directory.exists():
-            continue
-        try:
-            directory.mkdir()
-        except FileExistsError:
-            continue
-        return directory
+def cleaned_json(
+        data: JSON,
+        remove_keys: tuple[str] = ('@type', 'schema_type')
+) -> JSON:
+    if isinstance(data, list):
+        return [cleaned_json(item, remove_keys) for item in data]
+    elif isinstance(data, dict):
+        return {
+            key: cleaned_json(value, remove_keys)
+            for key, value in data.items()
+            if key not in remove_keys
+        }
+    else:
+        return data

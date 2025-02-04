@@ -2,26 +2,22 @@ from __future__ import annotations
 
 import enum
 import hashlib
+import json
 from functools import partial
 from pathlib import Path
 from typing import (
     Callable,
     Literal,
-    Union,
 )
 
 import yaml
 from fastapi import HTTPException
 from pydantic import BaseModel
-from yaml import (
-    SafeLoader,
-    load,
+
+from . import (
+    Format,
+    YAML,
 )
-
-from .utils import read_url
-
-
-YAML = Union[int, float, str, dict, list, None]
 
 
 config_file_name = '.dumpthings.yaml'
@@ -84,22 +80,20 @@ class Storage:
         self,
         root: str | Path,
     ) -> None:
+        from .convert import get_conversion_objects
+
         self.root = Path(root)
         if not isinstance(self, TokenStorage):
             self.global_config = GlobalConfig(**(self.get_config(self.root)))
             self.collections = self._get_collections()
+            self.conversion_objects = get_conversion_objects(self.collections)
 
     @staticmethod
     def get_config(path: Path) -> YAML:
         return yaml.load(
             (path / config_file_name).read_text(),
-            Loader=SafeLoader
+            Loader=yaml.SafeLoader
         )
-
-    @staticmethod
-    def _read_schema(schema_id: str) -> YAML:
-        schema_definition = read_url(schema_id)
-        return load(schema_definition, Loader=SafeLoader)
 
     def _get_collections(self) -> dict[str, CollectionConfig]:
         # read all record collections
@@ -115,17 +109,27 @@ class Storage:
             raise HTTPException(status_code=404, detail=f'Application {label} not found.')
         return label_path
 
-    def get_record(self, label: str, identifier: str) -> dict | None:
+    def get_record(self, label: str, identifier: str, format: Format) -> dict | str | None:
+        from .convert import convert_format
+
         for path in self.get_label_path(label).rglob('*'):
             if path.is_file() and path.name not in ignored_files:
-                record = yaml.load(path.read_text(), Loader=SafeLoader)
+                record = yaml.load(path.read_text(), Loader=yaml.SafeLoader)
                 if record['id'] == identifier:
+                    if format == Format.ttl:
+                        return convert_format(
+                            target_class=get_class_from_path(path),
+                            data=json.dumps(record),
+                            input_format=Format.json,
+                            output_format=format,
+                            **self.conversion_objects[label]
+                        )
                     return record
 
-    def get_all_records(self, label: str, type_name: str) -> list[dict]:
+    def get_all_records(self, label: str, type_name: str, format: Format) -> list[dict]:
         for path in (self.get_label_path(label) / type_name).rglob('*'):
             if path.is_file() and path.name not in ignored_files:
-                yield yaml.load(path.read_text(), Loader=SafeLoader)
+                yield yaml.load(path.read_text(), Loader=yaml.SafeLoader)
 
 
 class TokenStorage(Storage):
@@ -142,6 +146,7 @@ class TokenStorage(Storage):
             *,
             record: BaseModel,
             label: str,
+            format: Format,
     ):
         # Generate the class directory
         record_root = self.get_label_path(label) / type(record).__name__
@@ -181,3 +186,15 @@ class TokenStorage(Storage):
         elif not label_path.is_dir():
             raise HTTPException(status_code=404, detail=f'{label_path} is not a directory.')
         return label_path
+
+
+def get_class_from_path(path: Path) -> str:
+    """Determine the class that is defined by `path`.
+
+    This code relies on the fact that a `.dumpthings.yaml` exists
+    on the same level as the class name.
+    """
+    while path and path != Path('/'):
+        if path.parent.is_dir() and (path.parent / config_file_name).exists():
+            return path.stem
+        path = path.parent
