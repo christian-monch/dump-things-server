@@ -29,10 +29,10 @@ The following shows an example for a store that is at location `data-storage/sto
 │   │   └── Person
 │   │       └── f2cdfa3142add5791dc6fe45209206fd.yaml
 │   ├── schema_2
-│   │   ├── .dumpthings.yaml
-│   │   └── Person
-│   │       └── f2c
-│   │           └── dfa3142add5791dc6fe45209206fd.yaml
+│             ├── .dumpthings.yaml
+│             └── Person
+│             └── f2c
+│                 └── dfa3142add5791dc6fe45209206fd.yaml
 └── token_stores
     └── token_1
 ```
