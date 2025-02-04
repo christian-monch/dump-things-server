@@ -5,10 +5,7 @@ from tempfile import TemporaryDirectory
 
 from fastapi.testclient import TestClient
 
-from .create_store import (
-    create_store,
-    create_stores,
-)
+from .create_store import create_stores
 
 temp_dir_obj = TemporaryDirectory()
 temp_dir = Path(temp_dir_obj.name)
@@ -37,7 +34,7 @@ client = TestClient(app)
 
 def test_search_by_id():
     for i in range(1, 6):
-        response = client.get(f'/schema_{i}/record/1111')
+        response = client.get(f'/schema_{i}/record?id=1111')
         assert json.loads(response.text) == {'type': 'dltemporal:InstantaneousEvent', 'id': '1111'}
 
 
@@ -51,7 +48,7 @@ def test_store_record():
         assert response.status_code == 200
 
     for i in range(1, 6):
-        response = client.get(f'/schema_{i}/record/aaaa')
+        response = client.get(f'/schema_{i}/record?id=aaaa')
         assert response.status_code == 200
 
 
@@ -80,3 +77,22 @@ def test_token_store_adding():
         json={'id': 'aaaa'}
     )
     assert response.status_code == 200
+
+
+def test_funky_id():
+    record_id = 'trr379:contributors/stupid'
+    for i in range(1, 6):
+        response = client.post(
+            f'/schema_{i}/record/InstantaneousEvent',
+            headers={'x-dumpthings-token': 'token_1'},
+            json={'id': record_id}
+        )
+        assert response.status_code == 200
+
+    # Try to find it
+    for i in range(1, 6):
+        response = client.get(
+            f'/schema_{i}/record?id={record_id}',
+            headers={'x-dumpthings-token': 'token_1'},
+        )
+        assert response.status_code == 200
