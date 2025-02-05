@@ -104,14 +104,14 @@ def fastapi_app(dump_stores):
     sys.argv = ['test', str(dump_stores)]
     from ..main import app
     sys.argv = old_sys_argv
-    return app
+    return app, dump_stores
 
 
 @pytest.fixture(scope='session')
 def fastapi_client(fastapi_app):
     from fastapi.testclient import TestClient
-    return TestClient(fastapi_app)
+    return TestClient(fastapi_app[0]), fastapi_app[1]
 
 
-def test_it(test_client):
-    print(test_client)
+def test_it(fastapi_client):
+    print(fastapi_client)
