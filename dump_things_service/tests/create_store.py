@@ -111,7 +111,3 @@ def fastapi_app(dump_stores):
 def fastapi_client(fastapi_app):
     from fastapi.testclient import TestClient
     return TestClient(fastapi_app[0]), fastapi_app[1]
-
-
-def test_it(fastapi_client):
-    print(fastapi_client)
