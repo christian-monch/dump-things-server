@@ -1,6 +1,9 @@
 from __future__ import annotations
 
+import sys
 from pathlib import Path
+
+import pytest
 
 from ..storage import (
     MappingMethod,
@@ -23,9 +26,10 @@ format: yaml
 idfx: {mapping_function}
 """
 
+identifier = "https://www.example.com/InstantaneousEvent/some_timee@x.com"
 
-test_record = """type: dltemporal:InstantaneousEvent
-id: '1111'
+test_record = f"""type: "dltemporal:InstantaneousEvent"
+id: "{identifier}"
 """
 
 
@@ -69,9 +73,41 @@ def create_store(
         # Add a test record
         mapping_function = mapping_functions[MappingMethod(mapping_function)]
         record_path = collection_dir / 'InstantaneousEvent' / mapping_function(
-            identifier='1111',
+            identifier=identifier,
             data=test_record,
             suffix='yaml'
         )
         record_path.parent.mkdir(parents=True, exist_ok=True)
         record_path.write_text(test_record)
+
+
+@pytest.fixture(scope='session')
+def dump_stores(tmp_path_factory):
+    tmp_path = tmp_path_factory.mktemp('dump_stores')
+    create_stores(
+        root_dir=tmp_path,
+        collection_info={
+            'schema_1': ('https://concepts.trr379.de/s/base/unreleased.yaml', 'digest-md5'),
+            'schema_2': ('https://concepts.trr379.de/s/base/unreleased.yaml', 'digest-md5-p3'),
+            'schema_3': ('https://concepts.trr379.de/s/base/unreleased.yaml', 'digest-sha1'),
+            'schema_4': ('https://concepts.trr379.de/s/base/unreleased.yaml', 'digest-sha1-p3'),
+            'schema_5': ('https://concepts.trr379.de/s/base/unreleased.yaml', 'after-last-colon'),
+        },
+        token_stores=['token_1'],
+    )
+    return tmp_path
+
+
+@pytest.fixture(scope='session')
+def fastapi_app(dump_stores):
+    old_sys_argv = sys.argv
+    sys.argv = ['test', str(dump_stores)]
+    from ..main import app
+    sys.argv = old_sys_argv
+    return app, dump_stores
+
+
+@pytest.fixture(scope='session')
+def fastapi_client(fastapi_app):
+    from fastapi.testclient import TestClient
+    return TestClient(fastapi_app[0]), fastapi_app[1]
