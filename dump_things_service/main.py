@@ -66,6 +66,9 @@ def store_record(
     format: Format,
     token: str | None,
 ) -> Any:
+    if format == Format.json and isinstance(data, str):
+        raise HTTPException(status_code=404, detail="Invalid JSON data provided.")
+
     _get_store_for_token(token).store_record(
         record=data,
         label=label,
