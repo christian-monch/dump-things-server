@@ -64,13 +64,18 @@ The service provides the following endpoints:
 - `POST /<interoperability-label>/record/<class>`: an object of type `<class>` (defined by the schema associated with `<interoperability-label>`) can be posted to this endpoint.
  The object-content must be JSON-encoded.
  In order to `POST` an object to the service, you MUST provide a valid token in the HTTP-header `X-DumpThings-Token`. This token has to correspond to a token value defined in the configuration file.
+ In addition, the `content-type`-header must be set to `application/json`.
 
-
+  
 - `GET /<interoperability-label>/records/<class>`: retrieve all objects of type `<class>` (defined by the schema associated with `<interoperability-label>`) that are stored in the global storage space of the service.
  If a token is provided, all matching objects from the token storage space are returned in addition.
+ The endpoints supports the query parameter `format`, which determines the format of the query result.
+ It can be set to `json` (the default) or to `ttl`,
 
 
 - `GET /<interoperability-label>/record?id=<id>`: retrieve an object with the id `<id>` from the global storage of the service. If a token is provided, the object is also searched in the token storage space. Only objects with a type defined by the schema associated with `<interoperability-label>` are considered.
+  The endpoints supports the query parameter `format`, which determines the format of the query result.
+  It can be set to `json` (the default) or to `ttl`,
 
 
 - `GET /docs`: provides information about the API of the service, i.e. about all endpoints.
