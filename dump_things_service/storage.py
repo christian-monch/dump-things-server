@@ -19,7 +19,7 @@ from . import (
     YAML,
 )
 from .convert import convert_format
-
+from .utils import cleaned_json
 
 config_file_name = '.dumpthings.yaml'
 ignored_files = {'.', '..', config_file_name}
@@ -156,26 +156,32 @@ class TokenStorage(Storage):
         record_root.mkdir(exist_ok=True)
 
         # Get the yaml document representing the record
-        if False:  # TODO: if format == Format.ttl:
-            xrecord = convert_format(
-                class_name,
-                record,
-                Format.ttl,
-                Format.json,
-                **self.canonical_store.conversion_objects[label],
+        if format == Format.ttl:
+            json_object = cleaned_json(
+                json.loads(
+                    convert_format(
+                        class_name,
+                        record,
+                        Format.ttl,
+                        Format.json,
+                        **self.canonical_store.conversion_objects[label],
+                    )
+                )
             )
-            record = xrecord
-
-        data = yaml.dump(
-            data=record.model_dump(exclude_none=True),
-            default_style='"',
-            sort_keys=False,
-        )
+            identifier = json_object['id']
+            data = yaml.dump(json_object)
+        else:
+            identifier = record.id
+            data = yaml.dump(
+                data=record.model_dump(exclude_none=True),
+                default_style='"',
+                sort_keys=False,
+            )
 
         # Apply the mapping function to get the final storage path
         config = self.canonical_store.collections[label]
         storage_path = record_root / mapping_functions[config.idfx](
-            identifier=record.id,
+            identifier=identifier,
             data=data,
             suffix=config.format
         )

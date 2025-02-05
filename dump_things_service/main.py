@@ -4,10 +4,7 @@ import argparse
 import logging
 import json
 from http.client import HTTPException
-from itertools import (
-    chain,
-    count,
-)
+from itertools import count
 from pathlib import Path
 from typing import (
     Annotated,
@@ -58,7 +55,7 @@ async def {name}(
         format: Format = Format.json,
 ):
     lgr.info('{name}(%s, %s, %s, %s)', repr(data), repr('{class_name}'), repr(format), repr(x_dumpthings_token))
-    return store_record('{label}', data, '{class_name}', Format.json, x_dumpthings_token)
+    return store_record('{label}', data, '{class_name}', format, x_dumpthings_token)
 """
 
 
@@ -75,7 +72,10 @@ def store_record(
         class_name=class_name,
         format=format,
     )
-    return data
+    if format == Format.ttl:
+        return PlainTextResponse(data, media_type='text/turtle')
+    else:
+        return data
 
 
 lgr = logging.getLogger('uvicorn')
