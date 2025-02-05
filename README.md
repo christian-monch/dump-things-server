@@ -65,6 +65,9 @@ The service provides the following endpoints:
  The object-content must be JSON-encoded.
  In order to `POST` an object to the service, you MUST provide a valid token in the HTTP-header `X-DumpThings-Token`. This token has to correspond to a token value defined in the configuration file.
  In addition, the `content-type`-header must be set to `application/json`.
+ The endpoints supports the query parameter `format`, to select the format of the posted data.
+ It can be set to `json` (the default) or to `ttl`.
+ If the `ttl`-format is selected, the content-type should be `text/turtle`.
 
   
 - `GET /<interoperability-label>/records/<class>`: retrieve all objects of type `<class>` (defined by the schema associated with `<interoperability-label>`) that are stored in the global storage space of the service.
