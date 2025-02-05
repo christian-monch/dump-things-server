@@ -2,9 +2,11 @@ from __future__ import annotations
 
 import sys
 from contextlib import contextmanager
+from functools import reduce
 from pathlib import Path
 
 import fsspec
+from rdflib import Graph
 
 from . import JSON
 
@@ -44,3 +46,8 @@ def cleaned_json(
         }
     else:
         return data
+
+
+def combine_ttl(documents: list[str]) -> str:
+    graphs = [Graph().parse(data=doc, format='ttl') for doc in documents]
+    return reduce(lambda g1, g2: g1 + g2, graphs).serialize(format='ttl')

@@ -11,7 +11,6 @@ from linkml.utils.datautils import (
 )
 
 from . import Format, JSON
-from .storage import CollectionConfig
 
 
 def convert_format(
@@ -31,8 +30,8 @@ def convert_format(
     if input_format == output_format:
         return data
 
-    pv_target_class = schema_module.__dict__[target_class]
-    loader = get_loader(input_format)
+    py_target_class = schema_module.__dict__[target_class]
+    loader = get_loader(input_format.value)
     if datautils._is_rdf_format(input_format.value):
         input_args = {
             'schemaview': schema_view,
@@ -43,7 +42,7 @@ def convert_format(
 
     data_obj = loader.load(
         source=data,
-        target_class=pv_target_class,
+        target_class=py_target_class,
         **input_args,
     )
 
@@ -54,7 +53,7 @@ def convert_format(
     )
 
 
-def get_conversion_objects(collections: dict[str, CollectionConfig]):
+def get_conversion_objects(collections: dict[str, 'CollectionConfig']):
     return {
         label: {
             'schema_module': PythonGenerator(config.schema).compile_module(),

@@ -18,6 +18,7 @@ from . import (
     Format,
     YAML,
 )
+from .convert import convert_format
 
 
 config_file_name = '.dumpthings.yaml'
@@ -65,6 +66,7 @@ def mapping_after_last_colon(identifier: str, data: str, suffix: str) -> Path:
     # Escape any colons and slashes in the identifier
     escaped_result = plain_result.replace('_', '__').replace('/', '_s').replace('.', '_d')
     return Path(escaped_result + '.' + suffix)
+
 
 mapping_functions = {
     MappingMethod.digest_md5: partial(mapping_digest, hashlib.md5),
@@ -126,7 +128,7 @@ class Storage:
                         )
                     return record
 
-    def get_all_records(self, label: str, type_name: str, format: Format) -> list[dict]:
+    def get_all_records(self, label: str, type_name: str) -> list[dict]:
         for path in (self.get_label_path(label) / type_name).rglob('*'):
             if path.is_file() and path.name not in ignored_files:
                 yield yaml.load(path.read_text(), Loader=yaml.SafeLoader)
@@ -144,15 +146,26 @@ class TokenStorage(Storage):
     def store_record(
             self,
             *,
-            record: BaseModel,
+            record: BaseModel | str,
             label: str,
+            class_name: str,
             format: Format,
     ):
         # Generate the class directory
-        record_root = self.get_label_path(label) / type(record).__name__
+        record_root = self.get_label_path(label) / class_name
         record_root.mkdir(exist_ok=True)
 
         # Get the yaml document representing the record
+        if False:  # TODO: if format == Format.ttl:
+            xrecord = convert_format(
+                class_name,
+                record,
+                Format.ttl,
+                Format.json,
+                **self.canonical_store.conversion_objects[label],
+            )
+            record = xrecord
+
         data = yaml.dump(
             data=record.model_dump(exclude_none=True),
             default_style='"',

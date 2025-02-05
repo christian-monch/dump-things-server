@@ -7,4 +7,5 @@ httpx
 linkml
 pydantic==2.8.0
 PyYAML
+rdflib
 requests

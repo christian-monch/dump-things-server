@@ -2,8 +2,12 @@ from __future__ import annotations
 
 import argparse
 import logging
+import json
 from http.client import HTTPException
-from itertools import count
+from itertools import (
+    chain,
+    count,
+)
 from pathlib import Path
 from typing import (
     Annotated,
@@ -20,12 +24,13 @@ from fastapi import (
 from pydantic import BaseModel
 from starlette.responses import PlainTextResponse
 
+from . import Format
 from .model import build_model, get_classes
 from .storage import (
     Storage,
     TokenStorage,
 )
-from . import Format
+from .utils import combine_ttl
 
 
 parser = argparse.ArgumentParser()
@@ -48,22 +53,28 @@ token_stores = {
 
 _endpoint_template = """
 async def {name}(
-        data: {model_var_name}.{type} | Annotated[str, Body(media_type='text/plain')],
+        data: {model_var_name}.{class_name} | Annotated[str, Body(media_type='text/plain')],
         x_dumpthings_token: Annotated[str | None, Header()],
         format: Format = Format.json,
 ):
-    lgr.info('{name}(%s, %s, %s)', repr(data), repr(format), repr(x_dumpthings_token))
-    return store_record('{label}', data, format, x_dumpthings_token)
+    lgr.info('{name}(%s, %s, %s, %s)', repr(data), repr('{class_name}'), repr(format), repr(x_dumpthings_token))
+    return store_record('{label}', data, '{class_name}', Format.json, x_dumpthings_token)
 """
 
 
 def store_record(
     label: str,
-    data: BaseModel,
+    data: BaseModel | str,
+    class_name: str,
     format: Format,
     token: str | None,
 ) -> Any:
-    _get_store_for_token(token).store_record(record=data, label=label, format=format)
+    _get_store_for_token(token).store_record(
+        record=data,
+        label=label,
+        class_name=class_name,
+        format=format,
+    )
     return data
 
 
@@ -92,27 +103,28 @@ serial_number = count()
 
 
 for label, (model, classes, model_var_name) in model_info.items():
-    for type_name in classes:
+    for class_name in classes:
         # Create an endpoint to dump data of type `type_name` in version
         # `version` of schema `application`.
         endpoint_name = f'_endpoint_{next(serial_number)}'
 
-        exec(_endpoint_template.format(
+        endpoint_source = _endpoint_template.format(
             name=endpoint_name,
             model_var_name=model_var_name,
-            type=type_name,
+            class_name=class_name,
             label=label,
-            info=f"'store {label}/{type_name} objects'"
-        ))
+            info=f"'store {label}/{class_name} objects'"
+        )
+        exec(endpoint_source)
         endpoint = locals()[endpoint_name]
 
         # Create an API route for the endpoint
         app.add_api_route(
-            path=f'/{label}/record/{type_name}',
+            path=f'/{label}/record/{class_name}',
             endpoint=locals()[endpoint_name],
             methods=['POST'],
-            name=f'handle "{type_name}" of schema "{model.linkml_meta["id"]}" objects',
-            response_model=getattr(model, type_name)
+            name=f'handle "{class_name}" of schema "{model.linkml_meta["id"]}" objects',
+            response_model=getattr(model, class_name)
         )
 
 lgr.info('Creation of %d endpoints completed.', next(serial_number))
@@ -127,12 +139,12 @@ async def read_record_with_id(
 ):
     identifier = id
     store = _get_store_for_token(x_dumpthings_token)
+    record = None
     if store:
         record = store.get_record(label, identifier, format)
-    else:
-        record = None
     if not record:
         record = global_store.get_record(label, identifier, format)
+
     if record:
         if format == Format.ttl:
             return PlainTextResponse(record, media_type='text/turtle')
@@ -141,20 +153,36 @@ async def read_record_with_id(
 
 
 @app.get('/{label}/records/{type_name}')
-def read_records_from_type(
+def read_records_of_type(
     label: str,
     type_name: str,
     format: Format = Format.json,
     x_dumpthings_token: Annotated[str | None, Header()] = None
 ):
+    from .convert import convert_format
+
     records = {}
     store = _get_store_for_token(x_dumpthings_token)
     if store:
-        for record in store.get_all_records(label, type_name, format):
+        for record in store.get_all_records(label, type_name):
             records[record['id']] = record
-    for record in global_store.get_all_records(label, type_name, format):
+    for record in global_store.get_all_records(label, type_name):
         records[record['id']] = record
-    yield from records.values()
+
+    if format == Format.ttl:
+        ttls = [
+            convert_format(
+                target_class=type_name,
+                data=json.dumps(record),
+                input_format=Format.json,
+                output_format=format,
+                **(global_store.conversion_objects[label])
+            )
+            for record in records.values()
+        ]
+        return PlainTextResponse(combine_ttl(ttls), media_type='text/turtle')
+    else:
+        return list(records.values())
 
 
 def _get_store_for_token(token: str|None):
