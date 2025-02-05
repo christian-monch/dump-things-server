@@ -42,7 +42,7 @@ def cleaned_json(
         return {
             key: cleaned_json(value, remove_keys)
             for key, value in data.items()
-            if key not in remove_keys
+            if key not in remove_keys and data[key] is not None
         }
     else:
         return data
