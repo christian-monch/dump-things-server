@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import types
 
+from fastapi import HTTPException
 from linkml.generators import PythonGenerator
 from linkml_runtime import SchemaView
 from linkml.utils import datautils
@@ -14,6 +15,32 @@ from . import Format, JSON
 
 
 def convert_format(
+        target_class: str,
+        data: JSON | str,
+        input_format: Format,
+        output_format: Format,
+        schema_module: types.ModuleType,
+        schema_view: SchemaView,
+) -> str:
+    """Convert between different representations of schema:target_class instances
+
+    The schema information is provided by `schema_module` and `schema_view`.
+    Both can be created with `get_convertion_objects`
+    """
+    try:
+        return _convert_format(
+            target_class=target_class,
+            data=data,
+            input_format=input_format,
+            output_format=output_format,
+            schema_module=schema_module,
+            schema_view=schema_view,
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail='Conversion error: ' + str(e))
+
+
+def _convert_format(
         target_class: str,
         data: JSON | str,
         input_format: Format,
