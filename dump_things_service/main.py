@@ -34,6 +34,7 @@ from .utils import combine_ttl
 parser = argparse.ArgumentParser()
 parser.add_argument('--host', default='0.0.0.0')
 parser.add_argument('--port', default=8000, type=int)
+parser.add_argument('--origins', action='append')
 parser.add_argument('store', help='The root of the data stores, it should contain a global_store and token_stores.')
 
 arguments = parser.parse_args()
