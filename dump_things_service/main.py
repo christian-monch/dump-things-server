@@ -18,6 +18,7 @@ from fastapi import (
     Header,
     HTTPException,
 )
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from starlette.responses import PlainTextResponse
 
@@ -98,7 +99,14 @@ for label, configuration in global_store.collections.items():
 
 
 app = FastAPI()
-
+# Add CORS origins
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=arguments.origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # Create endpoints for all applications, all versions, and all classes
 lgr.info('Creating dynamic endpoints...')
