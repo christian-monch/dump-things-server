@@ -183,7 +183,9 @@ def read_records_of_type(
             )
             for record in records.values()
         ]
-        return PlainTextResponse(combine_ttl(ttls), media_type='text/turtle')
+        if ttls:
+            return PlainTextResponse(combine_ttl(ttls), media_type='text/turtle')
+        return PlainTextResponse('', media_type='text/turtle')
     else:
         return list(records.values())
 
