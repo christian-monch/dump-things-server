@@ -165,7 +165,7 @@ async def read_record_with_id(
 
 
 @app.get('/{label}/records/{type_name}')
-def read_records_of_type(
+async def read_records_of_type(
     label: str,
     type_name: str,
     format: Format = Format.json,

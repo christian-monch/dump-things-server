@@ -1,0 +1,19 @@
+id: http://example.org/person-schema
+name: person_schema
+prefixes:
+  ex: http://example.org/person-schema/
+  linkml: https://w3id.org/linkml/
+imports:
+  - linkml:types
+default_range: string
+default_prefix: ex
+
+classes:
+  Thing:
+    attributes:
+      id:
+
+  Person:
+    is_a: Thing
+    attributes:
+      given_name:

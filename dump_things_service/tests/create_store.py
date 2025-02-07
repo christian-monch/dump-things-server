@@ -26,10 +26,11 @@ format: yaml
 idfx: {mapping_function}
 """
 
-identifier = "https://www.example.com/InstantaneousEvent/some_timee@x.com"
+identifier = 'ex:some_timee@x.com'
+given_name = 'Wolfgang'
 
-test_record = f"""type: "dltemporal:InstantaneousEvent"
-id: "{identifier}"
+test_record = f"""id: "{identifier}"
+given_name: Wolfgang
 """
 
 
@@ -72,7 +73,7 @@ def create_store(
 
         # Add a test record
         mapping_function = mapping_functions[MappingMethod(mapping_function)]
-        record_path = collection_dir / 'InstantaneousEvent' / mapping_function(
+        record_path = collection_dir / 'Person' / mapping_function(
             identifier=identifier,
             data=test_record,
             suffix='yaml'
@@ -82,16 +83,45 @@ def create_store(
 
 
 @pytest.fixture(scope='session')
+def dump_stores_simple(tmp_path_factory):
+    tmp_path = tmp_path_factory.mktemp('dump_stores')
+    schema_path = Path(__file__).parent / 'testschema.yaml'
+    create_stores(
+        root_dir=tmp_path,
+        collection_info={
+            'store_1': (str(schema_path), 'digest-md5'),
+            'store_2': (str(schema_path), 'digest-md5-p3'),
+            'store_3': (str(schema_path), 'digest-sha1'),
+            'store_4': (str(schema_path), 'digest-sha1-p3'),
+            'store_5': (str(schema_path), 'after-last-colon'),
+        },
+        token_stores=['token_1'],
+    )
+    return tmp_path
+
+
+@pytest.fixture(scope='session')
+def fastapi_app_simple(dump_stores_simple):
+    old_sys_argv = sys.argv
+    sys.argv = ['test-runner', str(dump_stores_simple)]
+    from ..main import app
+    sys.argv = old_sys_argv
+    return app, dump_stores_simple
+
+
+@pytest.fixture(scope='session')
+def fastapi_client_simple(fastapi_app_simple):
+    from fastapi.testclient import TestClient
+    return TestClient(fastapi_app_simple[0]), fastapi_app_simple[1]
+
+
+@pytest.fixture(scope='session')
 def dump_stores(tmp_path_factory):
     tmp_path = tmp_path_factory.mktemp('dump_stores')
     create_stores(
         root_dir=tmp_path,
         collection_info={
-            'schema_1': ('https://concepts.trr379.de/s/base/unreleased.yaml', 'digest-md5'),
-            'schema_2': ('https://concepts.trr379.de/s/base/unreleased.yaml', 'digest-md5-p3'),
-            'schema_3': ('https://concepts.trr379.de/s/base/unreleased.yaml', 'digest-sha1'),
-            'schema_4': ('https://concepts.trr379.de/s/base/unreleased.yaml', 'digest-sha1-p3'),
-            'schema_5': ('https://concepts.trr379.de/s/base/unreleased.yaml', 'after-last-colon'),
+            'store_1': ('https://concepts.trr379.de/s/base/unreleased.yaml', 'digest-md5'),
         },
         token_stores=['token_1'],
     )
@@ -101,7 +131,7 @@ def dump_stores(tmp_path_factory):
 @pytest.fixture(scope='session')
 def fastapi_app(dump_stores):
     old_sys_argv = sys.argv
-    sys.argv = ['test', str(dump_stores)]
+    sys.argv = ['test-runner', str(dump_stores)]
     from ..main import app
     sys.argv = old_sys_argv
     return app, dump_stores

@@ -119,7 +119,7 @@ class Storage:
                 record = yaml.load(path.read_text(), Loader=yaml.SafeLoader)
                 if record['id'] == identifier:
                     if format == Format.ttl:
-                        return convert_format(
+                        record = convert_format(
                             target_class=get_class_from_path(path),
                             data=json.dumps(record),
                             input_format=Format.json,
@@ -173,12 +173,11 @@ class TokenStorage(Storage):
                 )
             )
             identifier = json_object['id']
-            data = yaml.dump(json_object)
+            data = yaml.dump(data=json_object, sort_keys=False)
         else:
             identifier = record.id
             data = yaml.dump(
                 data=record.model_dump(exclude_none=True),
-                default_style='"',
                 sort_keys=False,
             )
 
