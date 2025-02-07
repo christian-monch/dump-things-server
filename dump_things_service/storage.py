@@ -143,6 +143,10 @@ class TokenStorage(Storage):
         super().__init__(root)
         self.canonical_store = canonical_store
 
+    @property
+    def conversion_objects(self):
+        return self.canonical_store.conversion_objects
+
     def store_record(
             self,
             *,
@@ -213,6 +217,12 @@ def get_class_from_path(path: Path) -> str:
     This code relies on the fact that a `.dumpthings.yaml` exists
     on the same level as the class name.
     """
+    if 'token_stores' in path.parts:
+        parts = list(path.parts)
+        token_store_index = parts.index('token_stores')
+        parts[token_store_index:token_store_index + 2] = ['global_store']
+        path = Path(*parts)
+
     while path and path != Path('/'):
         if path.parent.is_dir() and (path.parent / config_file_name).exists():
             return path.stem
