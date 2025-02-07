@@ -173,12 +173,11 @@ class TokenStorage(Storage):
                 )
             )
             identifier = json_object['id']
-            data = yaml.dump(json_object)
+            data = yaml.dump(data=json_object, sort_keys=False)
         else:
             identifier = record.id
             data = yaml.dump(
                 data=record.model_dump(exclude_none=True),
-                default_style='"',
                 sort_keys=False,
             )
 
