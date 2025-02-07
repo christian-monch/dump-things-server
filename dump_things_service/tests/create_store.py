@@ -26,7 +26,7 @@ format: yaml
 idfx: {mapping_function}
 """
 
-identifier = 'https://www.example.com/Persons/some_timee@x.com'
+identifier = 'ex:some_timee@x.com'
 given_name = 'Wolfgang'
 
 test_record = f"""id: "{identifier}"

@@ -1,5 +1,4 @@
 import json
-from urllib.parse import quote
 
 from .create_store import (
     identifier,
@@ -9,14 +8,13 @@ from .create_store import (
     given_name,
 )
 
-
-extra_record = {'id': 'aaaa', 'given_name': 'David'}
+extra_record = {'id': 'ex:aaaa', 'given_name': 'David'}
 
 
 def test_search_by_id(fastapi_client_simple):
     test_client, _ = fastapi_client_simple
     for i in range(1, 6):
-        response = test_client.get(f'/store_{i}/record?id={quote(identifier)}')
+        response = test_client.get(f'/store_{i}/record?id={identifier}')
         assert json.loads(response.text) == {'id': identifier, 'given_name': given_name}
 
 
@@ -52,7 +50,7 @@ def test_store_record(fastapi_client_simple):
         ) == sorted(
             [
                 {'id': identifier, 'given_name': given_name},
-                {'id': 'aaaa', 'given_name': 'David'},
+                extra_record,
             ],
             key=lambda x: x['id'],
         )
@@ -63,7 +61,7 @@ def test_global_store_fails(fastapi_client_simple):
     for i in range(1, 6):
         response = test_client.post(
             f'/store_{i}/record/Person',
-            json={'id': 'aaaa'}
+            json={'id': extra_record['id']}
         )
         assert response.status_code == 422
 
@@ -73,7 +71,7 @@ def test_token_store_adding(fastapi_client_simple):
     response = test_client.post(
         '/store_1/record/Person',
         headers={'x-dumpthings-token': 'david_bowie'},
-        json={'id': 'aaaa'}
+        json={'id': extra_record['id']}
     )
     assert response.status_code == 401
 
@@ -82,7 +80,7 @@ def test_token_store_adding(fastapi_client_simple):
     response = test_client.post(
         '/store_1/record/Person',
         headers={'x-dumpthings-token': 'david_bowie'},
-        json={'id': 'aaaa'}
+        json={'id': extra_record['id']}
     )
     assert response.status_code == 200
 

@@ -1,7 +1,7 @@
 id: http://example.org/person-schema
 name: person_schema
 prefixes:
-  ex: http://example.org/person-schema
+  ex: http://example.org/person-schema/
   linkml: https://w3id.org/linkml/
 imports:
   - linkml:types
