@@ -26,10 +26,10 @@ format: yaml
 idfx: {mapping_function}
 """
 
-identifier = 'ex:some_timee@x.com'
+identifier = 'abc:some_timee@x.com'
 given_name = 'Wolfgang'
 
-test_record = f"""id: "{identifier}"
+test_record = f"""id: {identifier}
 given_name: Wolfgang
 """
 
