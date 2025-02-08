@@ -8,7 +8,7 @@ from .create_store import (
     given_name,
 )
 
-extra_record = {'id': 'ex:aaaa', 'given_name': 'David'}
+extra_record = {'id': 'abc:aaaa', 'given_name': 'David'}
 
 
 def test_search_by_id(fastapi_client_simple):

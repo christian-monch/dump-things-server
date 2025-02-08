@@ -1,18 +1,20 @@
 id: http://example.org/person-schema
 name: person_schema
 prefixes:
-  ex: http://example.org/person-schema/
+  abc: http://example.org/person-schema/abc/
+  xyz: http://example.org/person-schema/xyz/
   linkml: https://w3id.org/linkml/
 imports:
   - linkml:types
 default_range: string
-default_prefix: ex
+default_prefix: abc
 
 classes:
   Thing:
     attributes:
       id:
-
+        identifier: true
+        required: true
   Person:
     is_a: Thing
     attributes:
