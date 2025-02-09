@@ -174,12 +174,12 @@ async def read_records_of_type(
     from .convert import convert_format
 
     records = {}
+    for record in global_store.get_all_records(label, type_name):
+        records[record['id']] = record
     store = _get_store_for_token(x_dumpthings_token)
     if store:
         for record in store.get_all_records(label, type_name):
             records[record['id']] = record
-    for record in global_store.get_all_records(label, type_name):
-        records[record['id']] = record
 
     if format == Format.ttl:
         ttls = [
