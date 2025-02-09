@@ -2,6 +2,7 @@ import json
 
 from .create_store import (
     identifier,
+    test_record,
     dump_stores_simple,
     fastapi_app_simple,
     fastapi_client_simple,
@@ -103,3 +104,34 @@ def test_funky_id(fastapi_client_simple):
             headers={'x-dumpthings-token': 'token_1'},
         )
         assert response.status_code == 200
+
+
+def test_token_store_priority(fastapi_client_simple):
+    test_client, store_dir = fastapi_client_simple
+
+    # Ensure a token directory existence
+    (store_dir / 'token_stores' / 'david_bowie').mkdir(parents=True, exist_ok=True)
+
+    # Post a record with the same id as the test record in the global store,
+    # but use a different name.
+    response = test_client.post(
+        '/store_1/record/Person',
+        headers={'x-dumpthings-token': 'david_bowie'},
+        json={'id': identifier, 'given_name': 'David'}
+    )
+    assert response.status_code == 200
+
+    # Check that the new record is returned with a token
+    response = test_client.get(
+        f'/store_1/record?id={identifier}',
+        headers={'x-dumpthings-token': 'david_bowie'},
+    )
+    assert response.status_code == 200
+    assert response.json()['given_name'] == 'David'
+
+    # Check that the global test record is returned without a token
+    response = test_client.get(
+        f'/store_1/record?id={identifier}',
+    )
+    assert response.status_code == 200
+    assert response.json()['given_name'] == 'Wolfgang'
