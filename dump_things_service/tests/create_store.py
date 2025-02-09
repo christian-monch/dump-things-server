@@ -116,7 +116,7 @@ def fastapi_client_simple(fastapi_app_simple):
 
 
 @pytest.fixture(scope='session')
-def dump_stores(tmp_path_factory):
+def dump_stores_trr379(tmp_path_factory):
     tmp_path = tmp_path_factory.mktemp('dump_stores')
     create_stores(
         root_dir=tmp_path,
@@ -129,15 +129,15 @@ def dump_stores(tmp_path_factory):
 
 
 @pytest.fixture(scope='session')
-def fastapi_app(dump_stores):
+def fastapi_app_trr379(dump_stores_trr379):
     old_sys_argv = sys.argv
-    sys.argv = ['test-runner', str(dump_stores)]
+    sys.argv = ['test-runner', str(dump_stores_trr379)]
     from ..main import app
     sys.argv = old_sys_argv
-    return app, dump_stores
+    return app, dump_stores_trr379
 
 
 @pytest.fixture(scope='session')
-def fastapi_client(fastapi_app):
+def fastapi_client_trr379(fastapi_app_trr379):
     from fastapi.testclient import TestClient
-    return TestClient(fastapi_app[0]), fastapi_app[1]
+    return TestClient(fastapi_app_trr379[0]), fastapi_app_trr379[1]
