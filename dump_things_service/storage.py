@@ -105,16 +105,16 @@ class Storage:
             if path.is_dir() and path not in (Path('.'), Path('.'))
         }
 
-    def get_label_path(self, label: str) -> Path:
-        label_path = self.root / label
-        if not label_path.exists() or not label_path.is_dir():
-            raise HTTPException(status_code=404, detail=f'Application {label} not found.')
-        return label_path
+    def get_collection_path(self, collection: str) -> Path:
+        collection_path = self.root / collection
+        if not collection_path.exists() or not collection_path.is_dir():
+            raise HTTPException(status_code=404, detail=f'Application {collection} not found.')
+        return collection_path
 
-    def get_record(self, label: str, identifier: str, format: Format) -> dict | str | None:
+    def get_record(self, collection: str, identifier: str, format: Format) -> dict | str | None:
         from .convert import convert_format
 
-        for path in self.get_label_path(label).rglob('*'):
+        for path in self.get_collection_path(collection).rglob('*'):
             if path.is_file() and path.name not in ignored_files:
                 record = yaml.load(path.read_text(), Loader=yaml.SafeLoader)
                 if record['id'] == identifier:
@@ -124,12 +124,12 @@ class Storage:
                             data=json.dumps(record),
                             input_format=Format.json,
                             output_format=format,
-                            **self.conversion_objects[label]
+                            **self.conversion_objects[collection]
                         )
                     return record
 
-    def get_all_records(self, label: str, class_name: str) -> list[dict]:
-        for path in (self.get_label_path(label) / class_name).rglob('*'):
+    def get_all_records(self, collection: str, class_name: str) -> list[dict]:
+        for path in (self.get_collection_path(collection) / class_name).rglob('*'):
             if path.is_file() and path.name not in ignored_files:
                 yield yaml.load(path.read_text(), Loader=yaml.SafeLoader)
 
@@ -151,12 +151,12 @@ class TokenStorage(Storage):
             self,
             *,
             record: BaseModel | str,
-            label: str,
+            collection: str,
             class_name: str,
             format: Format,
     ):
         # Generate the class directory
-        record_root = self.get_label_path(label) / class_name
+        record_root = self.get_collection_path(collection) / class_name
         record_root.mkdir(exist_ok=True)
 
         # Get the yaml document representing the record
@@ -164,11 +164,11 @@ class TokenStorage(Storage):
             json_object = cleaned_json(
                 json.loads(
                     convert_format(
-                        class_name,
-                        record,
-                        Format.ttl,
-                        Format.json,
-                        **self.canonical_store.conversion_objects[label],
+                        target_class=class_name,
+                        data=record,
+                        input_format=Format.ttl,
+                        output_format=Format.json,
+                        **self.canonical_store.conversion_objects[collection],
                     )
                 )
             )
@@ -182,7 +182,7 @@ class TokenStorage(Storage):
             )
 
         # Apply the mapping function to get the final storage path
-        config = self.canonical_store.collections[label]
+        config = self.canonical_store.collections[collection]
         storage_path = record_root / mapping_functions[config.idfx](
             identifier=identifier,
             data=data,
@@ -199,15 +199,15 @@ class TokenStorage(Storage):
         storage_path.parent.mkdir(parents=True, exist_ok=True)
         storage_path.write_text(data)
 
-    def get_label_path(self, label: str) -> Path:
-        label_path = self.root / label
-        if not label_path.exists():
-            # This will raise if the canonical store does not have the label
-            self.canonical_store.get_label_path(label)
-            label_path.mkdir(parents=True)
-        elif not label_path.is_dir():
-            raise HTTPException(status_code=404, detail=f'{label_path} is not a directory.')
-        return label_path
+    def get_collection_path(self, collection: str) -> Path:
+        collection_path = self.root / collection
+        if not collection_path.exists():
+            # This will raise if the canonical store does not have the collection
+            self.canonical_store.get_collection_path(collection)
+            collection_path.mkdir(parents=True)
+        elif not collection_path.is_dir():
+            raise HTTPException(status_code=404, detail=f'{collection_path} is not a directory.')
+        return collection_path
 
 
 def get_class_from_path(path: Path) -> str:

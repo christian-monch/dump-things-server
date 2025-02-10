@@ -7,17 +7,15 @@ from http.client import HTTPException
 from itertools import count
 from pathlib import Path
 from typing import (
-    # used in code template
-    Annotated,
+    Annotated,  # used by generated code
     Any,
 )
 
 import uvicorn
 from fastapi import (
-    Body,
+    Body,  # used by generated code
     Depends,
     FastAPI,
-    Header,
     HTTPException,
 )
 from fastapi.middleware.cors import CORSMiddleware
@@ -60,12 +58,12 @@ async def {name}(
         format: Format = Format.json,
 ):
     lgr.info('{name}(%s, %s, %s, %s)', repr(data), repr('{class_name}'), repr(format), repr(api_key))
-    return store_record('{label}', data, '{class_name}', format, api_key)
+    return store_record('{collection}', data, '{class_name}', format, api_key)
 """
 
 
 def store_record(
-    label: str,
+    collection: str,
     data: BaseModel | str,
     class_name: str,
     format: Format,
@@ -78,7 +76,7 @@ def store_record(
     if store:
         store.store_record(
             record=data,
-            label=label,
+            collection=collection,
             class_name=class_name,
             format=format,
         )
@@ -96,13 +94,13 @@ lgr = logging.getLogger('uvicorn')
 # Create pydantic models from schema sources and add them to globals
 model_info = {}
 model_counter = count()
-for label, configuration in global_store.collections.items():
+for collection, configuration in global_store.collections.items():
     schema_location = configuration.schema
-    lgr.info(f'Building model for {label} from {schema_location}.')
+    lgr.info(f'Building model for collection {collection} from schema {schema_location}.')
     model = build_model(schema_location)
     classes = get_classes(model)
     model_var_name = f'model_{next(model_counter)}'
-    model_info[label] = model, classes, model_var_name
+    model_info[collection] = model, classes, model_var_name
     globals()[model_var_name] = model
 
 
@@ -128,7 +126,7 @@ lgr.info('Creating dynamic endpoints...')
 serial_number = count()
 
 
-for label, (model, classes, model_var_name) in model_info.items():
+for collection, (model, classes, model_var_name) in model_info.items():
     for class_name in classes:
         # Create an endpoint to dump data of type `class_name` in version
         # `version` of schema `application`.
@@ -138,15 +136,15 @@ for label, (model, classes, model_var_name) in model_info.items():
             name=endpoint_name,
             model_var_name=model_var_name,
             class_name=class_name,
-            label=label,
-            info=f"'store {label}/{class_name} objects'"
+            collection=collection,
+            info=f"'store {collection}/{class_name} objects'"
         )
         exec(endpoint_source)
         endpoint = locals()[endpoint_name]
 
         # Create an API route for the endpoint
         app.add_api_route(
-            path=f'/{label}/record/{class_name}',
+            path=f'/{collection}/record/{class_name}',
             endpoint=locals()[endpoint_name],
             methods=['POST'],
             name=f'handle "{class_name}" of schema "{model.linkml_meta["id"]}" objects',
@@ -156,9 +154,9 @@ for label, (model, classes, model_var_name) in model_info.items():
 lgr.info('Creation of %d endpoints completed.', next(serial_number))
 
 
-@app.get('/{label}/record')
+@app.get('/{collection}/record')
 async def read_record_with_id(
-    label: str,
+    collection: str,
     id: str,
     format: Format = Format.json,
     api_key: str = Depends(api_key_header_scheme),
@@ -167,20 +165,19 @@ async def read_record_with_id(
     store = _get_store_for_token(api_key)
     record = None
     if store:
-        record = store.get_record(label, identifier, format)
+        record = store.get_record(collection, identifier, format)
     if not record:
-        record = global_store.get_record(label, identifier, format)
+        record = global_store.get_record(collection, identifier, format)
 
     if record:
         if format == Format.ttl:
             return PlainTextResponse(record, media_type='text/turtle')
-        else:
-            return record
+        return record
 
 
-@app.get('/{label}/records/{class_name}')
+@app.get('/{collection}/records/{class_name}')
 async def read_records_of_type(
-    label: str,
+    collection: str,
     class_name: str,
     format: Format = Format.json,
     api_key: str = Depends(api_key_header_scheme),
@@ -188,11 +185,11 @@ async def read_records_of_type(
     from .convert import convert_format
 
     records = {}
-    for record in global_store.get_all_records(label, class_name):
+    for record in global_store.get_all_records(collection, class_name):
         records[record['id']] = record
     store = _get_store_for_token(api_key)
     if store:
-        for record in store.get_all_records(label, class_name):
+        for record in store.get_all_records(collection, class_name):
             records[record['id']] = record
 
     if format == Format.ttl:
@@ -202,7 +199,7 @@ async def read_records_of_type(
                 data=json.dumps(record),
                 input_format=Format.json,
                 output_format=format,
-                **(global_store.conversion_objects[label])
+                **(global_store.conversion_objects[collection])
             )
             for record in records.values()
         ]
