@@ -117,7 +117,7 @@ def fastapi_client_simple(fastapi_app_simple):
 
 @pytest.fixture(scope='session')
 def dump_stores_trr379(tmp_path_factory):
-    tmp_path = tmp_path_factory.mktemp('dump_stores')
+    tmp_path = tmp_path_factory.mktemp('dump_stores_trr379')
     create_stores(
         root_dir=tmp_path,
         collection_info={

@@ -35,6 +35,7 @@ def test_json_ttl_json_trr379(fastapi_client_trr379):
         headers={'x-dumpthings-token': 'token_1'},
         json=json_record
     )
+    assert response.status_code == 200
 
     # Retrieve TTL records
     response = test_client.get(
