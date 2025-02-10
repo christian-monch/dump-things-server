@@ -1,0 +1,4 @@
+[submodule "datalad-concepts"]
+	path = datalad-concepts
+	url = https://github.com/psychoinformatics-de/datalad-concepts.git
+	datalad-url = https://github.com/psychoinformatics-de/datalad-concepts.git
