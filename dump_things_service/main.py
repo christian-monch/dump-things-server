@@ -17,7 +17,6 @@ from fastapi import (
     Body,
     Depends,
     FastAPI,
-    Header,
     HTTPException,
 )
 from fastapi.middleware.cors import CORSMiddleware
