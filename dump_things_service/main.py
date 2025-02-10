@@ -116,7 +116,7 @@ serial_number = count()
 
 for label, (model, classes, model_var_name) in model_info.items():
     for class_name in classes:
-        # Create an endpoint to dump data of type `type_name` in version
+        # Create an endpoint to dump data of type `class_name` in version
         # `version` of schema `application`.
         endpoint_name = f'_endpoint_{next(serial_number)}'
 
@@ -164,27 +164,27 @@ async def read_record_with_id(
             return record
 
 
-@app.get('/{label}/records/{type_name}')
+@app.get('/{label}/records/{class_name}')
 async def read_records_of_type(
     label: str,
-    type_name: str,
+    class_name: str,
     format: Format = Format.json,
     x_dumpthings_token: Annotated[str | None, Header()] = None
 ):
     from .convert import convert_format
 
     records = {}
-    for record in global_store.get_all_records(label, type_name):
+    for record in global_store.get_all_records(label, class_name):
         records[record['id']] = record
     store = _get_store_for_token(x_dumpthings_token)
     if store:
-        for record in store.get_all_records(label, type_name):
+        for record in store.get_all_records(label, class_name):
             records[record['id']] = record
 
     if format == Format.ttl:
         ttls = [
             convert_format(
-                target_class=type_name,
+                target_class=class_name,
                 data=json.dumps(record),
                 input_format=Format.json,
                 output_format=format,
