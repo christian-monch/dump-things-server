@@ -34,9 +34,9 @@ def get_classes(
 
     def is_thing_subclass(obj):
         while obj is not None:
-            obj = getattr(obj, '__base__', None)
             if obj is model.Thing:
                 return True
+            obj = getattr(obj, '__base__', None)
 
     return [
         name
