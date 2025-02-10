@@ -64,7 +64,7 @@ def test_global_store_fails(fastapi_client_simple):
             f'/store_{i}/record/Person',
             json={'id': extra_record['id']}
         )
-        assert response.status_code == 422
+        assert response.status_code == 403
 
 
 def test_token_store_adding(fastapi_client_simple):

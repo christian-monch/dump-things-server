@@ -74,16 +74,20 @@ def store_record(
     if format == Format.json and isinstance(data, str):
         raise HTTPException(status_code=404, detail="Invalid JSON data provided.")
 
-    _get_store_for_token(token).store_record(
-        record=data,
-        label=label,
-        class_name=class_name,
-        format=format,
-    )
-    if format == Format.ttl:
-        return PlainTextResponse(data, media_type='text/turtle')
+    store = _get_store_for_token(token)
+    if store:
+        store.store_record(
+            record=data,
+            label=label,
+            class_name=class_name,
+            format=format,
+        )
+        if format == Format.ttl:
+            return PlainTextResponse(data, media_type='text/turtle')
+        else:
+            return data
     else:
-        return data
+        raise HTTPException(status_code=403, detail="Invalid token.")
 
 
 lgr = logging.getLogger('uvicorn')
