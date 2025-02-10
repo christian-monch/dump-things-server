@@ -7,14 +7,13 @@ from http.client import HTTPException
 from itertools import count
 from pathlib import Path
 from typing import (
-    # used in code template
-    Annotated,
+    Annotated,  # used by generated code
     Any,
 )
 
 import uvicorn
 from fastapi import (
-    Body,
+    Body,  # used by generated code
     Depends,
     FastAPI,
     HTTPException,
