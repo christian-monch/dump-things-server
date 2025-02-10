@@ -7,6 +7,7 @@ from http.client import HTTPException
 from itertools import count
 from pathlib import Path
 from typing import (
+    # used in code template
     Annotated,
     Any,
 )
@@ -14,11 +15,13 @@ from typing import (
 import uvicorn
 from fastapi import (
     Body,
+    Depends,
     FastAPI,
     Header,
     HTTPException,
 )
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.security import APIKeyHeader
 from pydantic import BaseModel
 from starlette.responses import PlainTextResponse
 
@@ -53,11 +56,11 @@ token_stores = {
 _endpoint_template = """
 async def {name}(
         data: {model_var_name}.{class_name} | Annotated[str, Body(media_type='text/plain')],
-        x_dumpthings_token: Annotated[str | None, Header()],
+        api_key: str = Depends(api_key_header_scheme),
         format: Format = Format.json,
 ):
-    lgr.info('{name}(%s, %s, %s, %s)', repr(data), repr('{class_name}'), repr(format), repr(x_dumpthings_token))
-    return store_record('{label}', data, '{class_name}', format, x_dumpthings_token)
+    lgr.info('{name}(%s, %s, %s, %s)', repr(data), repr('{class_name}'), repr(format), repr(api_key))
+    return store_record('{label}', data, '{class_name}', format, api_key)
 """
 
 
@@ -100,6 +103,13 @@ for label, configuration in global_store.collections.items():
 
 
 app = FastAPI()
+api_key_header_scheme = APIKeyHeader(
+    name="X-DumpThings-Token",
+    # authentication is generally optional
+    auto_error=False,
+    scheme_name="submission",
+    description="Presenting a valid token enables record submission, and retrieval of records submitted with this token prior curation.",
+)
 # Add CORS origins
 app.add_middleware(
     CORSMiddleware,
@@ -147,10 +157,10 @@ async def read_record_with_id(
     label: str,
     id: str,
     format: Format = Format.json,
-    x_dumpthings_token: Annotated[str | None, Header()] = None
+    api_key: str = Depends(api_key_header_scheme),
 ):
     identifier = id
-    store = _get_store_for_token(x_dumpthings_token)
+    store = _get_store_for_token(api_key)
     record = None
     if store:
         record = store.get_record(label, identifier, format)
@@ -169,14 +179,14 @@ async def read_records_of_type(
     label: str,
     type_name: str,
     format: Format = Format.json,
-    x_dumpthings_token: Annotated[str | None, Header()] = None
+    api_key: str = Depends(api_key_header_scheme),
 ):
     from .convert import convert_format
 
     records = {}
     for record in global_store.get_all_records(label, type_name):
         records[record['id']] = record
-    store = _get_store_for_token(x_dumpthings_token)
+    store = _get_store_for_token(api_key)
     if store:
         for record in store.get_all_records(label, type_name):
             records[record['id']] = record
