@@ -82,9 +82,9 @@ def _convert_format(
 
 def get_conversion_objects(collections: dict[str, 'CollectionConfig']):
     return {
-        label: {
+        collection: {
             'schema_module': PythonGenerator(config.schema).compile_module(),
             'schema_view': SchemaView(config.schema),
         }
-        for label, config in collections.items()
+        for collection, config in collections.items()
     }

@@ -57,9 +57,9 @@ def create_store(
     global_config_file.parent.mkdir(parents=True, exist_ok=True)
     global_config_file.write_text(global_config)
 
-    for label, (schema_url, mapping_function) in collection_info.items():
+    for collection, (schema_url, mapping_function) in collection_info.items():
         # Create a collection directory
-        collection_dir = temp_dir / label
+        collection_dir = temp_dir / collection
         collection_dir.mkdir()
 
         # Add the collection level config file
