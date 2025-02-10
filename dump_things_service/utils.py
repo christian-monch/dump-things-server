@@ -3,18 +3,20 @@ from __future__ import annotations
 import sys
 from contextlib import contextmanager
 from functools import reduce
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 import fsspec
 from rdflib import Graph
 
-from . import JSON
+if TYPE_CHECKING:
+    from pathlib import Path
+
+    from dump_things_service import JSON
 
 
 @contextmanager
-def sys_path(paths: list[str|Path]):
-    """Patch the `Path` class to return the paths in `paths` in order.
-    """
+def sys_path(paths: list[str | Path]):
+    """Patch the `Path` class to return the paths in `paths` in order."""
     original_path = sys.path
     try:
         sys.path = [str(path) for path in paths]
@@ -32,20 +34,16 @@ def read_url(url: str) -> str:
         return f.read()
 
 
-def cleaned_json(
-        data: JSON,
-        remove_keys: tuple[str] = ('@type',)
-) -> JSON:
+def cleaned_json(data: JSON, remove_keys: tuple[str] = ('@type',)) -> JSON:
     if isinstance(data, list):
         return [cleaned_json(item, remove_keys) for item in data]
-    elif isinstance(data, dict):
+    if isinstance(data, dict):
         return {
             key: cleaned_json(value, remove_keys)
             for key, value in data.items()
             if key not in remove_keys and data[key] is not None
         }
-    else:
-        return data
+    return data
 
 
 def combine_ttl(documents: list[str]) -> str:

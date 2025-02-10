@@ -7,11 +7,10 @@ from itertools import count
 from pathlib import Path
 from typing import Any
 
-from .utils import (
+from dump_things_service.utils import (
     read_url,
     sys_path,
 )
-
 
 serial_number = count()
 
@@ -26,7 +25,7 @@ def build_model(
         subprocess.run(
             args=['gen-pydantic', str(definition_file)],
             stdout=(Path(temp_dir) / (module_name + '.py')).open('w'),
-            check=True
+            check=True,
         )
         with sys_path([temp_dir]):
             model = importlib.import_module(module_name)
@@ -36,15 +35,11 @@ def build_model(
 def get_classes(
     model: Any,
 ) -> list:
-
-    def is_thing_subclass(obj):
+    def is_thing_subclass(obj) -> bool:
         while obj is not None:
             if obj is model.Thing:
                 return True
             obj = getattr(obj, '__base__', None)
+        return False
 
-    return [
-        name
-        for name, obj in model.__dict__.items()
-        if is_thing_subclass(obj)
-    ]
+    return [name for name, obj in model.__dict__.items() if is_thing_subclass(obj)]

@@ -1,4 +1,6 @@
-import pytest
+import pytest  # noqa F401
+
+from . import HTTP_200_OK
 
 
 json_record = {'id': 'xyz:bbbb', 'given_name': 'John'}
@@ -18,39 +20,36 @@ def test_json_ttl_json(fastapi_client_simple):
 
     # Deposit JSON records
     response = test_client.post(
-        f'/store_1/record/Person',
+        '/store_1/record/Person',
         headers={'x-dumpthings-token': 'token_1'},
-        json=json_record
+        json=json_record,
     )
-    assert response.status_code == 200
+    assert response.status_code == HTTP_200_OK
 
     # Retrieve TTL records
     response = test_client.get(
         f'/store_1/record?id={json_record["id"]}&format=ttl',
         headers={'x-dumpthings-token': 'token_1'},
     )
-    assert response.status_code == 200
+    assert response.status_code == HTTP_200_OK
     ttl = response.text
 
     # modify the id
     ttl = ttl.replace(json_record['id'], new_ttl_id)
 
     response = test_client.post(
-        f'/store_1/record/Person?format=ttl',
-        headers={
-            'content-type': 'text/turtle',
-            'x-dumpthings-token': 'token_1'
-        },
-        data=ttl
+        '/store_1/record/Person?format=ttl',
+        headers={'content-type': 'text/turtle', 'x-dumpthings-token': 'token_1'},
+        data=ttl,
     )
-    assert response.status_code == 200
+    assert response.status_code == HTTP_200_OK
 
     # Retrieve JSON record
     response = test_client.get(
         f'/store_1/record?id={new_ttl_id}&format=json',
         headers={'x-dumpthings-token': 'token_1'},
     )
-    assert response.status_code == 200
+    assert response.status_code == HTTP_200_OK
     json_object = response.json()
     assert json_object != json_record
     json_object['id'] = json_record['id']
@@ -62,41 +61,40 @@ def test_ttl_json_ttl(fastapi_client_simple):
 
     # Deposit a ttl record
     response = test_client.post(
-        f'/store_1/record/Person?format=ttl',
+        '/store_1/record/Person?format=ttl',
         headers={
             'x-dumpthings-token': 'token_1',
             'content-type': 'text/turtle',
         },
-        data=ttl_record
+        data=ttl_record,
     )
-    assert response.status_code == 200
+    assert response.status_code == HTTP_200_OK
 
     # Retrieve JSON records
     response = test_client.get(
-        f'/store_1/record?id=xyz:HenryAdams&format=json',
+        '/store_1/record?id=xyz:HenryAdams&format=json',
         headers={'x-dumpthings-token': 'token_1'},
     )
-    assert response.status_code == 200
+    assert response.status_code == HTTP_200_OK
     json_object = response.json()
 
     # modify the id
     json_object['id'] = new_json_id
 
     response = test_client.post(
-        f'/store_1/record/Person?format=json',
-        headers={
-            'x-dumpthings-token': 'token_1'
-        },
-        json=json_object
+        '/store_1/record/Person?format=json',
+        headers={'x-dumpthings-token': 'token_1'},
+        json=json_object,
     )
-    assert response.status_code == 200
+    assert response.status_code == HTTP_200_OK
 
     # Retrieve ttl record
     response = test_client.get(
         f'/store_1/record?id={new_json_id}&format=ttl',
         headers={'x-dumpthings-token': 'token_1'},
     )
-    assert response.status_code == 200
-    assert response.text.strip() == ttl_record.replace(
-        'xyz:HenryAdams', new_json_id
-    ).strip()
+    assert response.status_code == HTTP_200_OK
+    assert (
+        response.text.strip()
+        == ttl_record.replace('xyz:HenryAdams', new_json_id).strip()
+    )
