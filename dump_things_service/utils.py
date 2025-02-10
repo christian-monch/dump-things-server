@@ -34,7 +34,7 @@ def read_url(url: str) -> str:
 
 def cleaned_json(
         data: JSON,
-        remove_keys: tuple[str] = ('@type', 'schema_type')
+        remove_keys: tuple[str] = ('@type',)
 ) -> JSON:
     if isinstance(data, list):
         return [cleaned_json(item, remove_keys) for item in data]

@@ -23,10 +23,12 @@ def test_cleaned_json():
     assert clean_data is not dirty_data
     assert clean_data == {
         'id': 'trr379:contributors/michael-hanke',
+        'schema_type': 'dlsocial:Person',
         'identifiers': [
             {
                 'notation': '0000-0001-6398-6370',
                 'creator': 'https://orcid.org',
+                'schema_type': 'dlidentifiers:Identifier',
             }
         ],
         'family_name': 'Hanke',
