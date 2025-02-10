@@ -46,6 +46,11 @@ packages = ["dump_things_service"]
 [tool.hatch.version]
 path = "dump_things_service/__about__.py"
 
+[tool.hatch.envs.default]
+post-install-commands = [
+  "{root}/tools/patch_linkml",
+]
+
 [tool.hatch.envs.types]
 extra-dependencies = [
     "mypy>=1.0.0",
