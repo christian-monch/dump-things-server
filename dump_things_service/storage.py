@@ -4,6 +4,7 @@ import enum
 import hashlib
 import json
 from functools import partial
+from itertools import chain
 from pathlib import Path
 from typing import (
     Callable,
@@ -15,6 +16,7 @@ from fastapi import HTTPException
 from pydantic import BaseModel
 
 from dump_things_service import (
+    JSON,
     YAML,
     Format,
 )
@@ -165,11 +167,7 @@ class TokenStorage(Storage):
     ):
         from dump_things_service.convert import convert_format
 
-        # Generate the class directory
-        record_root = self.get_collection_path(collection) / class_name
-        record_root.mkdir(exist_ok=True)
-
-        # Get the yaml document representing the record
+        # Get a JSON object representing the record
         if input_format == Format.ttl:
             json_object = cleaned_json(
                 json.loads(
@@ -182,14 +180,42 @@ class TokenStorage(Storage):
                     )
                 )
             )
-            identifier = json_object['id']
-            data = yaml.dump(data=json_object, sort_keys=False)
         else:
-            identifier = record.id
-            data = yaml.dump(
-                data=record.model_dump(exclude_none=True),
-                sort_keys=False,
+            json_object = record.model_dump(exclude_none=True)
+
+        root_id = json_object['id']
+        final_objects = self.extract_inlined(json_object)
+
+        # Assert that all extracted objects have a schema_type
+        if not all(
+            'schema_type' in obj for obj in final_objects if obj['id'] != root_id
+        ):
+            raise HTTPException(
+                status_code=400, detail='Missing schema_type in inlined record.'
             )
+
+        for final_object in final_objects:
+            self.store_single_record(
+                json_object=final_object,
+                collection=collection,
+                class_name=class_name
+                if final_object['id'] == root_id
+                else final_object['schema_type'].split(':')[-1],
+            )
+
+    def store_single_record(
+        self,
+        *,
+        json_object: JSON,
+        collection: str,
+        class_name: str,
+    ):
+        # Generate the class directory
+        record_root = self.get_collection_path(collection) / class_name
+        record_root.mkdir(exist_ok=True)
+
+        identifier = json_object['id']
+        data = yaml.dump(data=json_object, sort_keys=False)
 
         # Apply the mapping function to get the final storage path
         config = self.canonical_store.collections[collection]
@@ -218,6 +244,26 @@ class TokenStorage(Storage):
                 status_code=404, detail=f'{collection_path} is not a directory.'
             )
         return collection_path
+
+    def extract_inlined(self, record: JSON) -> list[JSON]:
+        # The trivial case: no relations
+        if record.get('relations', None) is None:
+            return [record]
+
+        extracted_sub_records = list(
+            chain(
+                *[
+                    self.extract_inlined(sub_record)
+                    for sub_record in record['relations'].values()
+                ]
+            )
+        )
+        # Simplify the relations in this record
+        record['relations'] = {
+            sub_record_id: {'id': sub_record_id}
+            for sub_record_id in record['relations']
+        }
+        return [record, *extracted_sub_records]
 
 
 def get_class_from_path(path: Path) -> str | None:
