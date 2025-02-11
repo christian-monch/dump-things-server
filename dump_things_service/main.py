@@ -1,42 +1,50 @@
 from __future__ import annotations
 
 import argparse
-import logging
 import json
-from http.client import HTTPException
+import logging
 from itertools import count
 from pathlib import Path
 from typing import (
-    Annotated,  # used by generated code
+    TYPE_CHECKING,
+    Annotated,  # noqa F401 -- used by generated code
     Any,
 )
 
 import uvicorn
 from fastapi import (
-    Body,  # used by generated code
+    Body,  # noqa F401 -- used by generated code
     Depends,
     FastAPI,
     HTTPException,
 )
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import APIKeyHeader
-from pydantic import BaseModel
 from starlette.responses import PlainTextResponse
 
-from . import Format
-from .model import build_model, get_classes
-from .storage import (
+from dump_things_service import Format
+from dump_things_service.model import (
+    build_model,
+    get_classes,
+)
+from dump_things_service.storage import (
     Storage,
     TokenStorage,
 )
-from .utils import combine_ttl
+from dump_things_service.utils import combine_ttl
+
+if TYPE_CHECKING:
+    from pydantic import BaseModel
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--host', default='0.0.0.0')
+parser.add_argument('--host', default='0.0.0.0')  # noqa S104
 parser.add_argument('--port', default=8000, type=int)
 parser.add_argument('--origins', action='append', default=[])
-parser.add_argument('store', help='The root of the data stores, it should contain a global_store and token_stores.')
+parser.add_argument(
+    'store',
+    help='The root of the data stores, it should contain a global_store and token_stores.',
+)
 
 arguments = parser.parse_args()
 
@@ -45,7 +53,7 @@ arguments = parser.parse_args()
 store = Path(arguments.store)
 global_store = Storage(store / 'global_store')
 token_stores = {
-    element.name : TokenStorage(element, global_store)
+    element.name: TokenStorage(element, global_store)
     for element in (store / 'token_stores').glob('*')
     if element.is_dir()
 }
@@ -66,11 +74,11 @@ def store_record(
     collection: str,
     data: BaseModel | str,
     class_name: str,
-    format: Format,
+    input_format: Format,
     token: str | None,
 ) -> Any:
-    if format == Format.json and isinstance(data, str):
-        raise HTTPException(status_code=404, detail="Invalid JSON data provided.")
+    if input_format == Format.json and isinstance(data, str):
+        raise HTTPException(status_code=404, detail='Invalid JSON data provided.')
 
     store = _get_store_for_token(token)
     if store:
@@ -78,14 +86,12 @@ def store_record(
             record=data,
             collection=collection,
             class_name=class_name,
-            format=format,
+            input_format=input_format,
         )
-        if format == Format.ttl:
+        if input_format == Format.ttl:
             return PlainTextResponse(data, media_type='text/turtle')
-        else:
-            return data
-    else:
-        raise HTTPException(status_code=403, detail="Invalid token.")
+        return data
+    raise HTTPException(status_code=403, detail='Invalid token.')
 
 
 lgr = logging.getLogger('uvicorn')
@@ -98,11 +104,15 @@ created_models = {}
 for collection, configuration in global_store.collections.items():
     schema_location = configuration.schema
     if schema_location not in created_models:
-        lgr.info(f'Building model for collection {collection} from schema {schema_location}.')
+        lgr.info(
+            f'Building model for collection {collection} from schema {schema_location}.'
+        )
         model = build_model(schema_location)
         created_models[schema_location] = model
     else:
-        lgr.info(f'Using existing model for collection {collection} from schema {schema_location}.')
+        lgr.info(
+            f'Using existing model for collection {collection} from schema {schema_location}.'
+        )
         model = created_models[schema_location]
     classes = get_classes(model)
     model_var_name = f'model_{next(model_counter)}'
@@ -112,19 +122,20 @@ for collection, configuration in global_store.collections.items():
 
 app = FastAPI()
 api_key_header_scheme = APIKeyHeader(
-    name="X-DumpThings-Token",
+    name='X-DumpThings-Token',
     # authentication is generally optional
     auto_error=False,
-    scheme_name="submission",
-    description="Presenting a valid token enables record submission, and retrieval of records submitted with this token prior curation.",
+    scheme_name='submission',
+    description='Presenting a valid token enables record submission, and retrieval of records submitted with this token prior curation.',
 )
+
 # Add CORS origins
 app.add_middleware(
     CORSMiddleware,
     allow_origins=arguments.origins,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=['*'],
+    allow_headers=['*'],
 )
 
 # Create endpoints for all applications, all versions, and all classes
@@ -143,9 +154,9 @@ for collection, (model, classes, model_var_name) in model_info.items():
             model_var_name=model_var_name,
             class_name=class_name,
             collection=collection,
-            info=f"'store {collection}/{class_name} objects'"
+            info=f"'store {collection}/{class_name} objects'",
         )
-        exec(endpoint_source)
+        exec(endpoint_source)  # noqa S102
         endpoint = locals()[endpoint_name]
 
         # Create an API route for the endpoint
@@ -154,7 +165,7 @@ for collection, (model, classes, model_var_name) in model_info.items():
             endpoint=locals()[endpoint_name],
             methods=['POST'],
             name=f'handle "{class_name}" of schema "{model.linkml_meta["id"]}" objects',
-            response_model=getattr(model, class_name)
+            response_model=getattr(model, class_name),
         )
 
 lgr.info('Creation of %d endpoints completed.', next(serial_number))
@@ -163,8 +174,8 @@ lgr.info('Creation of %d endpoints completed.', next(serial_number))
 @app.get('/{collection}/record')
 async def read_record_with_id(
     collection: str,
-    id: str,
-    format: Format = Format.json,
+    id: str,  # noqa A002
+    format: Format = Format.json,  # noqa A002
     api_key: str = Depends(api_key_header_scheme),
 ):
     identifier = id
@@ -179,16 +190,17 @@ async def read_record_with_id(
         if format == Format.ttl:
             return PlainTextResponse(record, media_type='text/turtle')
         return record
+    return None
 
 
 @app.get('/{collection}/records/{class_name}')
 async def read_records_of_type(
     collection: str,
     class_name: str,
-    format: Format = Format.json,
+    format: Format = Format.json,  # noqa A002
     api_key: str = Depends(api_key_header_scheme),
 ):
-    from .convert import convert_format
+    from dump_things_service.convert import convert_format
 
     records = {}
     for record in global_store.get_all_records(collection, class_name):
@@ -205,18 +217,17 @@ async def read_records_of_type(
                 data=json.dumps(record),
                 input_format=Format.json,
                 output_format=format,
-                **(global_store.conversion_objects[collection])
+                **(global_store.conversion_objects[collection]),
             )
             for record in records.values()
         ]
         if ttls:
             return PlainTextResponse(combine_ttl(ttls), media_type='text/turtle')
         return PlainTextResponse('', media_type='text/turtle')
-    else:
-        return list(records.values())
+    return list(records.values())
 
 
-def _get_store_for_token(token: str|None):
+def _get_store_for_token(token: str | None):
     if token is None:
         return None
     if token not in token_stores:
@@ -227,8 +238,8 @@ def _get_store_for_token(token: str|None):
 
 
 def _update_token_stores(
-        store: Path,
-        token_stores: dict,
+    store: Path,
+    token_stores: dict,
 ) -> int:
     added = 0
     for element in (store / 'token_stores').glob('*'):

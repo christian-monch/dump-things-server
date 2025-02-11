@@ -1,14 +1,15 @@
 from __future__ import annotations
 
-import sys
-from pathlib import Path
+from typing import TYPE_CHECKING
 
-from ..storage import (
+from dump_things_service.storage import (
     MappingMethod,
-    mapping_functions,
     config_file_name,
+    mapping_functions,
 )
 
+if TYPE_CHECKING:
+    from pathlib import Path
 
 global_config = """
 type: collections
@@ -41,7 +42,7 @@ def create_stores(
     root_dir: Path,
     collection_info: dict[str, tuple[str, str]],
     token_stores: list[str] | None = None,
-    default_entries: list[tuple[str, str, str]] = None,
+    default_entries: list[tuple[str, str, str]] | None = None,
 ):
     global_store = root_dir / 'global_store'
     global_store.mkdir(parents=True, exist_ok=True)
@@ -56,7 +57,7 @@ def create_stores(
 def create_store(
     temp_dir: Path,
     collection_info: dict[str, tuple[str, str]],
-    default_entries: list[tuple[str, str, str]] = None,
+    default_entries: list[tuple[str, str, str]] | None = None,
 ):
     global_config_file = temp_dir / config_file_name
     global_config_file.parent.mkdir(parents=True, exist_ok=True)
@@ -71,18 +72,21 @@ def create_store(
         collection_config_file = collection_dir / config_file_name
         collection_config_file.write_text(
             collection_config_template.format(
-                schema=schema_url,
-                mapping_function=mapping_function
+                schema=schema_url, mapping_function=mapping_function
             )
         )
 
         # Add default entries
         mapper = mapping_functions[MappingMethod(mapping_function)]
         for class_name, identifier, record in default_entries or []:
-            record_path = collection_dir / class_name / mapper(
-                identifier=identifier,
-                data=record,
-                suffix='yaml',
+            record_path = (
+                collection_dir
+                / class_name
+                / mapper(
+                    identifier=identifier,
+                    data=record,
+                    suffix='yaml',
+                )
             )
             record_path.parent.mkdir(parents=True, exist_ok=True)
             record_path.write_text(record)

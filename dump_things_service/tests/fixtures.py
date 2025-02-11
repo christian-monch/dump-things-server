@@ -3,8 +3,7 @@ from pathlib import Path
 
 import pytest
 
-from .create_store import create_stores
-
+from dump_things_service.tests.create_store import create_stores
 
 identifier = 'abc:some_timee@x.com'
 given_name = 'Wolfgang'
@@ -38,7 +37,10 @@ def dump_stores_simple(tmp_path_factory):
     create_stores(
         root_dir=tmp_path,
         collection_info={
-            'trr379_store': ('https://concepts.trr379.de/s/base/unreleased.yaml', 'digest-md5'),
+            'trr379_store': (
+                'https://concepts.trr379.de/s/base/unreleased.yaml',
+                'digest-md5',
+            ),
         },
         token_stores=['token_1'],
         default_entries=[('Person', identifier_trr, test_record_trr)],
@@ -50,7 +52,8 @@ def dump_stores_simple(tmp_path_factory):
 def fastapi_app_simple(dump_stores_simple):
     old_sys_argv = sys.argv
     sys.argv = ['test-runner', str(dump_stores_simple)]
-    from ..main import app
+    from dump_things_service.main import app
+
     sys.argv = old_sys_argv
     return app, dump_stores_simple
 
@@ -58,4 +61,5 @@ def fastapi_app_simple(dump_stores_simple):
 @pytest.fixture(scope='session')
 def fastapi_client_simple(fastapi_app_simple):
     from fastapi.testclient import TestClient
+
     return TestClient(fastapi_app_simple[0]), fastapi_app_simple[1]

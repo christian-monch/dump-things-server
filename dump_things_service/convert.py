@@ -1,26 +1,33 @@
 from __future__ import annotations
 
-import types
+from typing import TYPE_CHECKING
 
 from fastapi import HTTPException
 from linkml.generators import PythonGenerator
-from linkml_runtime import SchemaView
-from linkml.utils import datautils
 from linkml.utils.datautils import (
     get_dumper,
     get_loader,
 )
+from linkml_runtime import SchemaView
 
-from . import Format, JSON
+from dump_things_service import (
+    JSON,
+    Format,
+)
+
+if TYPE_CHECKING:
+    import types
+
+    from dump_things_service.storage import CollectionConfig
 
 
 def convert_format(
-        target_class: str,
-        data: JSON | str,
-        input_format: Format,
-        output_format: Format,
-        schema_module: types.ModuleType,
-        schema_view: SchemaView,
+    target_class: str,
+    data: JSON | str,
+    input_format: Format,
+    output_format: Format,
+    schema_module: types.ModuleType,
+    schema_view: SchemaView,
 ) -> str:
     """Convert between different representations of schema:target_class instances
 
@@ -36,17 +43,19 @@ def convert_format(
             schema_module=schema_module,
             schema_view=schema_view,
         )
-    except Exception as e:
-        raise HTTPException(status_code=500, detail='Conversion error: ' + str(e))
+    except Exception as e:  # BLE001
+        raise HTTPException(
+            status_code=500, detail='Conversion error: ' + str(e)
+        ) from e
 
 
 def _convert_format(
-        target_class: str,
-        data: JSON | str,
-        input_format: Format,
-        output_format: Format,
-        schema_module: types.ModuleType,
-        schema_view: SchemaView,
+    target_class: str,
+    data: JSON | str,
+    input_format: Format,
+    output_format: Format,
+    schema_module: types.ModuleType,
+    schema_view: SchemaView,
 ) -> str:
     """Convert between different representations of schema:target_class instances
 
@@ -59,11 +68,8 @@ def _convert_format(
 
     py_target_class = schema_module.__dict__[target_class]
     loader = get_loader(input_format.value)
-    if datautils._is_rdf_format(input_format.value):
-        input_args = {
-            'schemaview': schema_view,
-            'fmt': input_format.value
-        }
+    if input_format.value in ('ttl',):
+        input_args = {'schemaview': schema_view, 'fmt': input_format.value}
     else:
         input_args = {}
 
@@ -75,12 +81,11 @@ def _convert_format(
 
     dumper = get_dumper(output_format.value)
     return dumper.dumps(
-        data_obj,
-        **({'schemaview': schema_view} if output_format == Format.ttl else {})
+        data_obj, **({'schemaview': schema_view} if output_format == Format.ttl else {})
     )
 
 
-def get_conversion_objects(collections: dict[str, 'CollectionConfig']):
+def get_conversion_objects(collections: dict[str, CollectionConfig]):
     return {
         collection: {
             'schema_module': PythonGenerator(config.schema).compile_module(),
