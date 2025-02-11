@@ -4,6 +4,7 @@ import enum
 import hashlib
 import json
 from functools import partial
+from itertools import chain
 from pathlib import Path
 from typing import (
     Callable,
@@ -15,6 +16,7 @@ from fastapi import HTTPException
 from pydantic import BaseModel
 
 from dump_things_service import (
+    JSON,
     YAML,
     Format,
 )
@@ -182,30 +184,30 @@ class TokenStorage(Storage):
                     )
                 )
             )
+        else:
+            json_object = record.model_dump(exclude_none=True)
+
+        final_objects = self.extract_inlined(json_object)
+
+        for json_object in final_objects:
             identifier = json_object['id']
             data = yaml.dump(data=json_object, sort_keys=False)
-        else:
-            identifier = record.id
-            data = yaml.dump(
-                data=record.model_dump(exclude_none=True),
-                sort_keys=False,
+
+            # Apply the mapping function to get the final storage path
+            config = self.canonical_store.collections[collection]
+            storage_path = record_root / mapping_functions[config.idfx](
+                identifier=identifier, data=data, suffix=config.format
             )
 
-        # Apply the mapping function to get the final storage path
-        config = self.canonical_store.collections[collection]
-        storage_path = record_root / mapping_functions[config.idfx](
-            identifier=identifier, data=data, suffix=config.format
-        )
+            # Ensure that the storage path is within the record root
+            try:
+                storage_path.relative_to(record_root)
+            except ValueError as e:
+                raise HTTPException(status_code=400, detail='Invalid identifier.') from e
 
-        # Ensure that the storage path is within the record root
-        try:
-            storage_path.relative_to(record_root)
-        except ValueError as e:
-            raise HTTPException(status_code=400, detail='Invalid identifier.') from e
-
-        # Ensure all intermediate directories exist and save the yaml document
-        storage_path.parent.mkdir(parents=True, exist_ok=True)
-        storage_path.write_text(data)
+            # Ensure all intermediate directories exist and save the yaml document
+            storage_path.parent.mkdir(parents=True, exist_ok=True)
+            storage_path.write_text(data)
 
     def get_collection_path(self, collection: str) -> Path:
         collection_path = self.root / collection
@@ -219,6 +221,20 @@ class TokenStorage(Storage):
             )
         return collection_path
 
+    def extract_inlined(self, record: JSON) -> list[JSON]:
+        if record.get('relations', None) is None:
+            return [record]
+        sub_records = list(
+            chain(
+                *[
+                    self.extract_inlined(sub_record)
+                    for sub_record in record['relations'].values()
+                ]
+            )
+        )
+        record['characterized_by'] = [sub_record['id'] for sub_record in sub_records]
+        del record['relations']
+        return [record] + sub_records
 
 def get_class_from_path(path: Path) -> str | None:
     """Determine the class that is defined by `path`.
