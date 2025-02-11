@@ -1,7 +1,6 @@
 import pytest  # noqa F401
 
 from . import HTTP_200_OK
-from .fixtures import fastapi_client_simple
 from dump_things_service import JSON
 from dump_things_service.storage import (
     Storage,
@@ -47,8 +46,7 @@ def test_inline_extraction_locally(dump_stores_simple):
     root = dump_stores_simple
 
     store = TokenStorage(
-        root / 'token_stores' / 'token_1',
-        Storage(root / 'global_store')
+        root / 'token_stores' / 'token_1', Storage(root / 'global_store')
     )
     records = store.extract_inlined(inlined_json_record.copy())
     _check_result(records, tree)

@@ -187,7 +187,9 @@ class TokenStorage(Storage):
         final_objects = self.extract_inlined(json_object)
 
         # Assert that all extracted objects have a schema_type
-        if not all ('schema_type' in obj for obj in final_objects if obj['id'] != root_id):
+        if not all(
+            'schema_type' in obj for obj in final_objects if obj['id'] != root_id
+        ):
             raise HTTPException(
                 status_code=400, detail='Missing schema_type in inlined record.'
             )
@@ -196,15 +198,17 @@ class TokenStorage(Storage):
             self.store_single_record(
                 json_object=final_object,
                 collection=collection,
-                class_name=class_name if final_object['id'] == root_id else final_object['schema_type'].split(':')[-1],
+                class_name=class_name
+                if final_object['id'] == root_id
+                else final_object['schema_type'].split(':')[-1],
             )
 
     def store_single_record(
-            self,
-            *,
-            json_object: JSON,
-            collection: str,
-            class_name: str,
+        self,
+        *,
+        json_object: JSON,
+        collection: str,
+        class_name: str,
     ):
         # Generate the class directory
         record_root = self.get_collection_path(collection) / class_name
@@ -223,9 +227,7 @@ class TokenStorage(Storage):
         try:
             storage_path.relative_to(record_root)
         except ValueError as e:
-            raise HTTPException(
-                status_code=400, detail='Invalid identifier.'
-            ) from e
+            raise HTTPException(status_code=400, detail='Invalid identifier.') from e
 
         # Ensure all intermediate directories exist and save the yaml document
         storage_path.parent.mkdir(parents=True, exist_ok=True)
@@ -258,7 +260,8 @@ class TokenStorage(Storage):
         )
         # Simplify the relations in this record
         record['relations'] = {
-            sub_record_id: {'id': sub_record_id} for sub_record_id in record['relations'].keys()
+            sub_record_id: {'id': sub_record_id}
+            for sub_record_id in record['relations']
         }
         return [record, *extracted_sub_records]
 
