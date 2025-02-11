@@ -189,7 +189,7 @@ class TokenStorage(Storage):
         # Assert that all extracted objects have a schema_type
         if not all ('schema_type' in obj for obj in final_objects if obj['id'] != root_id):
             raise HTTPException(
-                status_code=400, detail='Missing schema_type in record.'
+                status_code=400, detail='Missing schema_type in inlined record.'
             )
 
         for final_object in final_objects:

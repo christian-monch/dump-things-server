@@ -9,35 +9,37 @@ from dump_things_service.storage import (
 )
 
 inlined_json_record = {
-    'id': 'trr379:root_element',
+    'id': 'trr379:test_extract_1',
     'schema_type': 'dlsocial:Person',
     'given_name': 'Grandfather',
     'relations': {
-        'trr379:child_element_1': {
-            'id': 'trr379:child_element_1',
+        'trr379:test_extract_1_1': {
+            'id': 'trr379:test_extract_1_1',
             'schema_type': 'dlsocial:Person',
             'given_name': 'Father',
             'relations': {
-                'trr379:grand_child_element': {
-                    'id': 'trr379:grand_child_element',
-                    'schema_type': 'dlsocial:Person',
-                    'given_name': 'Son',
+                'trr379:test_extract_1_1_1': {
+                    'id': 'trr379:test_extract_1_1_1',
+                    'schema_type': 'dlprov:Agent',
+                    'acted_on_behalf_of': [
+                        'trr379:test_extract_1_1',
+                    ],
                 },
             },
         },
-        'trr379:child_element_2': {
-            'id': 'trr379:child_element_2',
-            'schema_type': 'dlsocial:Person',
-            'given_name': 'Aunt',
+        'trr379:test_extract_1_2': {
+            'id': 'trr379:test_extract_1_2',
+            'schema_type': 'dltemporal:InstantaneousEvent',
+            'at_time': '2028-12-31',
         },
     },
 }
 
 tree = (
-    ('trr379:root_element', ('trr379:child_element_1', 'trr379:child_element_2')),
-    ('trr379:child_element_1', ('trr379:grand_child_element',)),
-    ('trr379:child_element_2', ()),
-    ('trr379:grand_child_element', ()),
+    ('trr379:test_extract_1', ('trr379:test_extract_1_1', 'trr379:test_extract_1_2')),
+    ('trr379:test_extract_1_1', ('trr379:test_extract_1_1_1',)),
+    ('trr379:test_extract_1_2', ()),
+    ('trr379:test_extract_1_1_1', ()),
 )
 
 
@@ -48,7 +50,7 @@ def test_inline_extraction_locally(dump_stores_simple):
         root / 'token_stores' / 'token_1',
         Storage(root / 'global_store')
     )
-    records = store.extract_inlined(inlined_json_record)
+    records = store.extract_inlined(inlined_json_record.copy())
     _check_result(records, tree)
 
 
@@ -64,12 +66,9 @@ def _check_result(
 
     for record_id, linked_ids in tree:
         record = get_record_by_id(record_id)
-        import sys
-        print('RECORD:', record, file=sys.stderr, flush=True)
         if 'relations' in record:
             assert len(record['relations']) == len(linked_ids)
         for linked_id in linked_ids:
-            print('CHECKING:', linked_id, file=sys.stderr, flush=True)
             assert record['relations'][linked_id] == {'id': linked_id}
 
 
