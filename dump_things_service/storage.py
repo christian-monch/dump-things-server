@@ -234,8 +234,9 @@ class TokenStorage(Storage):
                 ]
             )
         )
-        record['characterized_by'] = [sub_record['id'] for sub_record in sub_records]
-        del record['relations']
+        record['relations'] = {
+            sub_record['id']: {'id': sub_record['id']} for sub_record in sub_records
+        }
         return [record, *sub_records]
 
 

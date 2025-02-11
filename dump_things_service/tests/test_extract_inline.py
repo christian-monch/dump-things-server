@@ -47,4 +47,4 @@ def test_inline_extraction(fastapi_client_simple):
         assert response.status_code == HTTP_200_OK
         record = response.json()
         if linked_id:
-            assert linked_id in record['characterized_by']
+            assert record['relations'][linked_id] == {'id': linked_id}
