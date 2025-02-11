@@ -94,10 +94,16 @@ lgr = logging.getLogger('uvicorn')
 # Create pydantic models from schema sources and add them to globals
 model_info = {}
 model_counter = count()
+created_models = {}
 for collection, configuration in global_store.collections.items():
     schema_location = configuration.schema
-    lgr.info(f'Building model for collection {collection} from schema {schema_location}.')
-    model = build_model(schema_location)
+    if schema_location not in created_models:
+        lgr.info(f'Building model for collection {collection} from schema {schema_location}.')
+        model = build_model(schema_location)
+        created_models[schema_location] = model
+    else:
+        lgr.info(f'Using existing model for collection {collection} from schema {schema_location}.')
+        model = created_models[schema_location]
     classes = get_classes(model)
     model_var_name = f'model_{next(model_counter)}'
     model_info[collection] = model, classes, model_var_name

@@ -1,15 +1,17 @@
 import json
 
+import pytest
+
 from .create_store import (
     identifier,
-    test_record,
-    dump_stores_simple,
-    fastapi_app_simple,
-    fastapi_client_simple,
     given_name,
 )
 
-extra_record = {'id': 'abc:aaaa', 'given_name': 'David'}
+
+extra_record = {
+    'id': 'abc:aaaa',
+    'given_name': 'David',
+}
 
 
 def test_search_by_id(fastapi_client_simple):
