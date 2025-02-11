@@ -6,7 +6,7 @@ inlined_json_record = {
     'id': 'trr379:root_element',
     'schema_type': 'dlsocial:Person',
     'given_name': 'Grandfather',
-    'relations' : {
+    'relations': {
         'trr379:child_element': {
             'id': 'trr379:child_element',
             'schema_type': 'dlsocial:Person',
@@ -16,10 +16,10 @@ inlined_json_record = {
                     'id': 'trr379:grand_child_element',
                     'schema_type': 'dlsocial:Person',
                     'given_name': 'Son',
-                }
-            }
-        }
-    }
+                },
+            },
+        },
+    },
 }
 
 
@@ -28,9 +28,9 @@ def test_inline_extraction(fastapi_client_simple):
 
     # Deposit JSON record
     response = test_client.post(
-        f'/trr379_store/record/Person',
+        '/trr379_store/record/Person',
         headers={'x-dumpthings-token': 'token_1'},
-        json=inlined_json_record
+        json=inlined_json_record,
     )
     assert response.status_code == HTTP_200_OK
 

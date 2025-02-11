@@ -203,7 +203,9 @@ class TokenStorage(Storage):
             try:
                 storage_path.relative_to(record_root)
             except ValueError as e:
-                raise HTTPException(status_code=400, detail='Invalid identifier.') from e
+                raise HTTPException(
+                    status_code=400, detail='Invalid identifier.'
+                ) from e
 
             # Ensure all intermediate directories exist and save the yaml document
             storage_path.parent.mkdir(parents=True, exist_ok=True)
@@ -234,7 +236,8 @@ class TokenStorage(Storage):
         )
         record['characterized_by'] = [sub_record['id'] for sub_record in sub_records]
         del record['relations']
-        return [record] + sub_records
+        return [record, *sub_records]
+
 
 def get_class_from_path(path: Path) -> str | None:
     """Determine the class that is defined by `path`.
