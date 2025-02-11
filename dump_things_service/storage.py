@@ -259,11 +259,12 @@ class TokenStorage(Storage):
             )
         )
         # Simplify the relations in this record
-        record['relations'] = {
+        new_record = record.copy()
+        new_record['relations'] = {
             sub_record_id: {'id': sub_record_id}
             for sub_record_id in record['relations']
         }
-        return [record, *extracted_sub_records]
+        return [new_record, *extracted_sub_records]
 
 
 def get_class_from_path(path: Path) -> str | None:

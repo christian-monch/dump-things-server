@@ -48,7 +48,7 @@ def test_inline_extraction_locally(dump_stores_simple):
     store = TokenStorage(
         root / 'token_stores' / 'token_1', Storage(root / 'global_store')
     )
-    records = store.extract_inlined(inlined_json_record.copy())
+    records = store.extract_inlined(inlined_json_record)
     _check_result(records, tree)
 
 
