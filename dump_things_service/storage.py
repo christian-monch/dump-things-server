@@ -167,11 +167,7 @@ class TokenStorage(Storage):
     ):
         from dump_things_service.convert import convert_format
 
-        # Generate the class directory
-        record_root = self.get_collection_path(collection) / class_name
-        record_root.mkdir(exist_ok=True)
-
-        # Get the yaml document representing the record
+        # Get a JSON object representing the record
         if input_format == Format.ttl:
             json_object = cleaned_json(
                 json.loads(
@@ -187,29 +183,53 @@ class TokenStorage(Storage):
         else:
             json_object = record.model_dump(exclude_none=True)
 
+        root_id = json_object['id']
         final_objects = self.extract_inlined(json_object)
 
-        for json_object in final_objects:
-            identifier = json_object['id']
-            data = yaml.dump(data=json_object, sort_keys=False)
-
-            # Apply the mapping function to get the final storage path
-            config = self.canonical_store.collections[collection]
-            storage_path = record_root / mapping_functions[config.idfx](
-                identifier=identifier, data=data, suffix=config.format
+        # Assert that all extracted objects have a schema_type
+        if not all ('schema_type' in obj for obj in final_objects if obj['id'] != root_id):
+            raise HTTPException(
+                status_code=400, detail='Missing schema_type in record.'
             )
 
-            # Ensure that the storage path is within the record root
-            try:
-                storage_path.relative_to(record_root)
-            except ValueError as e:
-                raise HTTPException(
-                    status_code=400, detail='Invalid identifier.'
-                ) from e
+        for final_object in final_objects:
+            self.store_single_record(
+                json_object=final_object,
+                collection=collection,
+                class_name=class_name if final_object['id'] == root_id else final_object['schema_type'].split(':')[-1],
+            )
 
-            # Ensure all intermediate directories exist and save the yaml document
-            storage_path.parent.mkdir(parents=True, exist_ok=True)
-            storage_path.write_text(data)
+    def store_single_record(
+            self,
+            *,
+            json_object: JSON,
+            collection: str,
+            class_name: str,
+    ):
+        # Generate the class directory
+        record_root = self.get_collection_path(collection) / class_name
+        record_root.mkdir(exist_ok=True)
+
+        identifier = json_object['id']
+        data = yaml.dump(data=json_object, sort_keys=False)
+
+        # Apply the mapping function to get the final storage path
+        config = self.canonical_store.collections[collection]
+        storage_path = record_root / mapping_functions[config.idfx](
+            identifier=identifier, data=data, suffix=config.format
+        )
+
+        # Ensure that the storage path is within the record root
+        try:
+            storage_path.relative_to(record_root)
+        except ValueError as e:
+            raise HTTPException(
+                status_code=400, detail='Invalid identifier.'
+            ) from e
+
+        # Ensure all intermediate directories exist and save the yaml document
+        storage_path.parent.mkdir(parents=True, exist_ok=True)
+        storage_path.write_text(data)
 
     def get_collection_path(self, collection: str) -> Path:
         collection_path = self.root / collection
@@ -224,9 +244,11 @@ class TokenStorage(Storage):
         return collection_path
 
     def extract_inlined(self, record: JSON) -> list[JSON]:
+        # The trivial case: no relations
         if record.get('relations', None) is None:
             return [record]
-        sub_records = list(
+
+        extracted_sub_records = list(
             chain(
                 *[
                     self.extract_inlined(sub_record)
@@ -234,10 +256,11 @@ class TokenStorage(Storage):
                 ]
             )
         )
+        # Simplify the relations in this record
         record['relations'] = {
-            sub_record['id']: {'id': sub_record['id']} for sub_record in sub_records
+            sub_record_id: {'id': sub_record_id} for sub_record_id in record['relations'].keys()
         }
-        return [record, *sub_records]
+        return [record, *extracted_sub_records]
 
 
 def get_class_from_path(path: Path) -> str | None:
