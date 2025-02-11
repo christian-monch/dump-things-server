@@ -1,9 +1,4 @@
-
-from .create_store import (
-    dump_stores_trr379,
-    fastapi_app_trr379,
-    fastapi_client_trr379,
-)
+import pytest
 
 
 json_record = {
@@ -26,12 +21,12 @@ trr379:test_john_ttl a dlsocial:Person ;
 new_json_id = 'trr379:another_john_ttl'
 
 
-def test_json_ttl_json_trr379(fastapi_client_trr379):
-    test_client, _ = fastapi_client_trr379
+def test_json_ttl_json_trr379(fastapi_client_simple):
+    test_client, _ = fastapi_client_simple
 
     # Deposit JSON records
     response = test_client.post(
-        f'/store_1/record/Person',
+        f'/trr379_store/record/Person',
         headers={'x-dumpthings-token': 'token_1'},
         json=json_record
     )
@@ -39,7 +34,7 @@ def test_json_ttl_json_trr379(fastapi_client_trr379):
 
     # Retrieve TTL records
     response = test_client.get(
-        f'/store_1/record?id={json_record["id"]}&format=ttl',
+        f'/trr379_store/record?id={json_record["id"]}&format=ttl',
         headers={'x-dumpthings-token': 'token_1'},
     )
     assert response.status_code == 200
@@ -49,7 +44,7 @@ def test_json_ttl_json_trr379(fastapi_client_trr379):
     ttl = ttl.replace(json_record['id'], new_ttl_id)
 
     response = test_client.post(
-        f'/store_1/record/Person?format=ttl',
+        f'/trr379_store/record/Person?format=ttl',
         headers={
             'content-type': 'text/turtle',
             'x-dumpthings-token': 'token_1'
@@ -60,7 +55,7 @@ def test_json_ttl_json_trr379(fastapi_client_trr379):
 
     # Retrieve JSON record
     response = test_client.get(
-        f'/store_1/record?id={new_ttl_id}&format=json',
+        f'/trr379_store/record?id={new_ttl_id}&format=json',
         headers={'x-dumpthings-token': 'token_1'},
     )
     assert response.status_code == 200
@@ -70,12 +65,12 @@ def test_json_ttl_json_trr379(fastapi_client_trr379):
     assert json_object == json_record
 
 
-def test_ttl_json_ttl_trr379(fastapi_client_trr379):
-    test_client, _ = fastapi_client_trr379
+def test_ttl_json_ttl_trr379(fastapi_client_simple):
+    test_client, _ = fastapi_client_simple
 
     # Deposit a ttl record
     response = test_client.post(
-        f'/store_1/record/Person?format=ttl',
+        f'/trr379_store/record/Person?format=ttl',
         headers={
             'x-dumpthings-token': 'token_1',
             'content-type': 'text/turtle',
@@ -86,7 +81,7 @@ def test_ttl_json_ttl_trr379(fastapi_client_trr379):
 
     # Retrieve JSON records
     response = test_client.get(
-        f'/store_1/record?id=trr379:test_john_ttl&format=json',
+        f'/trr379_store/record?id=trr379:test_john_ttl&format=json',
         headers={'x-dumpthings-token': 'token_1'},
     )
     assert response.status_code == 200
@@ -96,7 +91,7 @@ def test_ttl_json_ttl_trr379(fastapi_client_trr379):
     json_object['id'] = new_json_id
 
     response = test_client.post(
-        f'/store_1/record/Person?format=json',
+        f'/trr379_store/record/Person?format=json',
         headers={
             'x-dumpthings-token': 'token_1'
         },
@@ -106,7 +101,7 @@ def test_ttl_json_ttl_trr379(fastapi_client_trr379):
 
     # Retrieve ttl record
     response = test_client.get(
-        f'/store_1/record?id={new_json_id}&format=ttl',
+        f'/trr379_store/record?id={new_json_id}&format=ttl',
         headers={'x-dumpthings-token': 'token_1'},
     )
     assert response.status_code == 200
