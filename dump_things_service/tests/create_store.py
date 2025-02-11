@@ -3,8 +3,6 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-import pytest
-
 from ..storage import (
     MappingMethod,
     mapping_functions,
@@ -28,9 +26,14 @@ idfx: {mapping_function}
 
 identifier = 'abc:some_timee@x.com'
 given_name = 'Wolfgang'
-
 test_record = f"""id: {identifier}
-given_name: Wolfgang
+given_name: {given_name}
+"""
+
+identifier_trr = 'trr379:amadeus'
+given_name_trr = 'Amadeus'
+test_record_trr = f"""id: {identifier_trr}
+given_name: {given_name_trr}
 """
 
 
@@ -38,20 +41,22 @@ def create_stores(
     root_dir: Path,
     collection_info: dict[str, tuple[str, str]],
     token_stores: list[str] | None = None,
+    default_entries: list[tuple[str, str, str]] = None,
 ):
     global_store = root_dir / 'global_store'
-    global_store.mkdir()
+    global_store.mkdir(parents=True, exist_ok=True)
     token_store_dir = root_dir / 'token_stores'
-    token_store_dir.mkdir()
+    global_store.mkdir(parents=True, exist_ok=True)
 
-    create_store(global_store, collection_info)
+    create_store(global_store, collection_info, default_entries)
     for token in token_stores or []:
-        (token_store_dir / token).mkdir()
+        (token_store_dir / token).mkdir(parents=True, exist_ok=True)
 
 
 def create_store(
     temp_dir: Path,
-    collection_info: dict[str, tuple[str, str]]
+    collection_info: dict[str, tuple[str, str]],
+    default_entries: list[tuple[str, str, str]] = None,
 ):
     global_config_file = temp_dir / config_file_name
     global_config_file.parent.mkdir(parents=True, exist_ok=True)
@@ -60,7 +65,7 @@ def create_store(
     for collection, (schema_url, mapping_function) in collection_info.items():
         # Create a collection directory
         collection_dir = temp_dir / collection
-        collection_dir.mkdir()
+        collection_dir.mkdir(parents=True, exist_ok=True)
 
         # Add the collection level config file
         collection_config_file = collection_dir / config_file_name
@@ -71,73 +76,13 @@ def create_store(
             )
         )
 
-        # Add a test record
-        mapping_function = mapping_functions[MappingMethod(mapping_function)]
-        record_path = collection_dir / 'Person' / mapping_function(
-            identifier=identifier,
-            data=test_record,
-            suffix='yaml'
-        )
-        record_path.parent.mkdir(parents=True, exist_ok=True)
-        record_path.write_text(test_record)
-
-
-@pytest.fixture(scope='session')
-def dump_stores_simple(tmp_path_factory):
-    tmp_path = tmp_path_factory.mktemp('dump_stores')
-    schema_path = Path(__file__).parent / 'testschema.yaml'
-    create_stores(
-        root_dir=tmp_path,
-        collection_info={
-            'store_1': (str(schema_path), 'digest-md5'),
-            'store_2': (str(schema_path), 'digest-md5-p3'),
-            'store_3': (str(schema_path), 'digest-sha1'),
-            'store_4': (str(schema_path), 'digest-sha1-p3'),
-            'store_5': (str(schema_path), 'after-last-colon'),
-        },
-        token_stores=['token_1'],
-    )
-    return tmp_path
-
-
-@pytest.fixture(scope='session')
-def fastapi_app_simple(dump_stores_simple):
-    old_sys_argv = sys.argv
-    sys.argv = ['test-runner', str(dump_stores_simple)]
-    from ..main import app
-    sys.argv = old_sys_argv
-    return app, dump_stores_simple
-
-
-@pytest.fixture(scope='session')
-def fastapi_client_simple(fastapi_app_simple):
-    from fastapi.testclient import TestClient
-    return TestClient(fastapi_app_simple[0]), fastapi_app_simple[1]
-
-
-@pytest.fixture(scope='session')
-def dump_stores_trr379(tmp_path_factory):
-    tmp_path = tmp_path_factory.mktemp('dump_stores_trr379')
-    create_stores(
-        root_dir=tmp_path,
-        collection_info={
-            'store_1': ('https://concepts.trr379.de/s/base/unreleased.yaml', 'digest-md5'),
-        },
-        token_stores=['token_1'],
-    )
-    return tmp_path
-
-
-@pytest.fixture(scope='session')
-def fastapi_app_trr379(dump_stores_trr379):
-    old_sys_argv = sys.argv
-    sys.argv = ['test-runner', str(dump_stores_trr379)]
-    from ..main import app
-    sys.argv = old_sys_argv
-    return app, dump_stores_trr379
-
-
-@pytest.fixture(scope='session')
-def fastapi_client_trr379(fastapi_app_trr379):
-    from fastapi.testclient import TestClient
-    return TestClient(fastapi_app_trr379[0]), fastapi_app_trr379[1]
+        # Add default entries
+        mapper = mapping_functions[MappingMethod(mapping_function)]
+        for class_name, identifier, record in default_entries or []:
+            record_path = collection_dir / class_name / mapper(
+                identifier=identifier,
+                data=record,
+                suffix='yaml',
+            )
+            record_path.parent.mkdir(parents=True, exist_ok=True)
+            record_path.write_text(record)
