@@ -49,12 +49,12 @@ class MockedModule:
     Person = Person
 
 
-# The value is an `Person` record
+# The value is a `Person` record
 inlined_json_record = {
     'id': 'trr379:test_extract_1',
     'given_name': 'Grandfather',
     'relations': {
-        # The value is an `Person` record
+        # The value is a `Person` record
         'trr379:test_extract_1_1': {
             'id': 'trr379:test_extract_1_1',
             'given_name': 'Father',
@@ -109,6 +109,17 @@ tree = (
 )
 
 
+empty_inlined_object = Person(
+    id='trr379:test_extract_1',
+    given_name='Grandfather',
+    relations={
+        'trr379:test_extract_a': Thing(id='trr379:test_extract_a'),
+        'trr379:test_extract_b': Thing(id='trr379:test_extract_b'),
+        'trr379:test_extract_c': Thing(id='trr379:test_extract_c'),
+    },
+)
+
+
 def test_inline_extraction_locally(dump_stores_simple):
     root = dump_stores_simple
 
@@ -135,6 +146,17 @@ def _check_result_objects(
         for linked_id in linked_ids:
             # Processing might add `schema_type` to records, ignore it.
             assert record.relations[linked_id].id == linked_id
+
+
+def test_dont_extract_empty_things(dump_stores_simple):
+    root = dump_stores_simple
+
+    store = TokenStorage(
+        root / 'token_stores' / 'token_1', Storage(root / 'global_store')
+    )
+    records = store.extract_inlined(empty_inlined_object, MockedModule())
+    assert len(records) == 1
+    assert records[0] == empty_inlined_object
 
 
 def test_inline_extraction_on_service(fastapi_client_simple):
