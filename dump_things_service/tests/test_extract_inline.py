@@ -120,6 +120,24 @@ empty_inlined_object = Person(
 )
 
 
+# The value is a `Person` record
+empty_inlined_json_record = {
+    'id': 'trr379:test_extract_1',
+    'given_name': 'Grandfather',
+    'relations': {
+        'trr379:test_extract_a': {
+            'id': 'trr379:test_extract_a',
+        },
+        'trr379:test_extract_b': {
+            'id': 'trr379:test_extract_b',
+        },
+        'trr379:test_extract_c': {
+            'id': 'trr379:test_extract_c',
+        },
+    },
+}
+
+
 def test_inline_extraction_locally(dump_stores_simple):
     root = dump_stores_simple
 
@@ -148,7 +166,7 @@ def _check_result_objects(
             assert record.relations[linked_id].id == linked_id
 
 
-def test_dont_extract_empty_things(dump_stores_simple):
+def test_dont_extract_empty_things_locally(dump_stores_simple):
     root = dump_stores_simple
 
     store = TokenStorage(
@@ -216,3 +234,19 @@ def _check_result_json(
             if 'schema_type' in record['relations'][linked_id]:
                 del record['relations'][linked_id]['schema_type']
             assert record['relations'][linked_id] == {'id': linked_id}
+
+
+def test_dont_extract_empty_things_on_service(fastapi_client_simple):
+    test_client, store = fastapi_client_simple
+
+    # Deposit JSON record
+    response = test_client.post(
+        '/trr379_store/record/Person',
+        headers={'x-dumpthings-token': 'token_1'},
+        json=empty_inlined_json_record,
+    )
+    assert response.status_code == HTTP_200_OK
+
+    # Ensure that no `Thing` records are extracted
+    thing_path = store / 'token_stores' / 'token_1' / 'trr379_store' / 'Thing'
+    assert tuple(thing_path.rglob('*.yaml')) == ()
