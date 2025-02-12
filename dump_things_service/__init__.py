@@ -1,12 +1,13 @@
 from enum import Enum
-from typing import Union
+from typing import (
+    Any,
+    Union,
+)
 
 
 class Format(str, Enum):
     json = 'json'
     ttl = 'ttl'
 
-
-YAML = Union[int, float, str, dict, list, None]
-
-JSON = Union[dict, list, str, int, float, None]
+JSON = Union[dict[str, Any], list[Any], str, int, float, None]
+YAML = JSON

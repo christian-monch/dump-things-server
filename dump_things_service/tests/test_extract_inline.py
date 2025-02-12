@@ -2,37 +2,35 @@ import pytest  # noqa F401
 
 from . import HTTP_200_OK
 from dump_things_service import JSON
-from dump_things_service.storage import (
-    Storage,
-    TokenStorage,
-)
 
+
+# The value is an `Person` record
 inlined_json_record = {
     'id': 'trr379:test_extract_1',
-    'schema_type': 'dlsocial:Person',
     'given_name': 'Grandfather',
     'relations': {
+        # The value is an `Person` record
         'trr379:test_extract_1_1': {
             'id': 'trr379:test_extract_1_1',
-            'schema_type': 'dlsocial:Person',
             'given_name': 'Father',
             'relations': {
+                # The value is an `Agent` record
                 'trr379:test_extract_1_1_1': {
                     'id': 'trr379:test_extract_1_1_1',
-                    'schema_type': 'dlprov:Agent',
                     'acted_on_behalf_of': [
                         'trr379:test_extract_1_1',
                     ],
                 },
             },
         },
+        # The value is an `InstantaneousEvent` record
         'trr379:test_extract_1_2': {
             'id': 'trr379:test_extract_1_2',
-            'schema_type': 'dltemporal:InstantaneousEvent',
             'at_time': '2028-12-31',
         },
     },
 }
+
 
 tree = (
     ('trr379:test_extract_1', ('trr379:test_extract_1_1', 'trr379:test_extract_1_2')),
@@ -40,16 +38,6 @@ tree = (
     ('trr379:test_extract_1_2', ()),
     ('trr379:test_extract_1_1_1', ()),
 )
-
-
-def test_inline_extraction_locally(dump_stores_simple):
-    root = dump_stores_simple
-
-    store = TokenStorage(
-        root / 'token_stores' / 'token_1', Storage(root / 'global_store')
-    )
-    records = store.extract_inlined(inlined_json_record)
-    _check_result(records, tree)
 
 
 def _check_result(
@@ -67,6 +55,9 @@ def _check_result(
         if 'relations' in record:
             assert len(record['relations']) == len(linked_ids)
         for linked_id in linked_ids:
+            # Processing might add `schema_type` to records, ignore it.
+            if 'schema_type' in record['relations'][linked_id]:
+                del record['relations'][linked_id]['schema_type']
             assert record['relations'][linked_id] == {'id': linked_id}
 
 

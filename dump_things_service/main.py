@@ -65,8 +65,8 @@ async def {name}(
         api_key: str = Depends(api_key_header_scheme),
         format: Format = Format.json,
 ):
-    lgr.info('{name}(%s, %s, %s, %s)', repr(data), repr('{class_name}'), repr(format), repr(api_key))
-    return store_record('{collection}', data, '{class_name}', format, api_key)
+    lgr.info('{name}(%s, %s, %s, %s, %s)', repr(data), repr('{class_name}'), repr({model_var_name}), repr(format), repr(api_key))
+    return store_record('{collection}', data, '{class_name}', {model_var_name}, format, api_key)
 """
 
 
@@ -74,6 +74,7 @@ def store_record(
     collection: str,
     data: BaseModel | str,
     class_name: str,
+    model: Any,
     input_format: Format,
     token: str | None,
 ) -> Any:
@@ -85,6 +86,7 @@ def store_record(
         store.store_record(
             record=data,
             collection=collection,
+            model=model,
             class_name=class_name,
             input_format=input_format,
         )
