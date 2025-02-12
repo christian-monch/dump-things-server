@@ -185,7 +185,9 @@ class TokenStorage(Storage):
                     )
                 )
             )
-            record = TypeAdapter(getattr(model, class_name)).validate_python(json_object)
+            record = TypeAdapter(getattr(model, class_name)).validate_python(
+                json_object
+            )
 
         final_records = self.extract_inlined(record, model)
         for final_record in final_records:
@@ -195,10 +197,10 @@ class TokenStorage(Storage):
             )
 
     def store_single_record(
-            self,
-            *,
-            record: BaseModel,
-            collection: str,
+        self,
+        *,
+        record: BaseModel,
+        collection: str,
     ):
         # Generate the class directory
         class_name = record.__class__.__name__
@@ -206,10 +208,7 @@ class TokenStorage(Storage):
         record_root.mkdir(exist_ok=True)
 
         # Convert the record object into a YAML object
-        data = yaml.dump(
-            data=record.model_dump(exclude_none=True),
-            sort_keys=False
-        )
+        data = yaml.dump(data=record.model_dump(exclude_none=True), sort_keys=False)
 
         # Apply the mapping function to the record id to get the final storage path
         config = self.canonical_store.collections[collection]
