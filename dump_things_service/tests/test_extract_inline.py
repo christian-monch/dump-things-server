@@ -1,7 +1,45 @@
+from __future__ import annotations
+
+from copy import copy
+from dataclasses import dataclass
+
 import pytest  # noqa F401
+from pydantic import BaseModel
 
 from . import HTTP_200_OK
 from dump_things_service import JSON
+from dump_things_service.storage import (
+    Storage,
+    TokenStorage,
+)
+
+@dataclass
+class Thing:
+    id: str
+    relations: dict[str, Thing] | None = None
+    def model_copy(self):
+        return copy(self)
+
+
+@dataclass
+class Agent(Thing):
+    acted_on_behalf_of: list[str] | None = None
+
+
+@dataclass
+class InstantaneousEvent(Thing):
+    at_time: str | None = None
+
+
+@dataclass
+class Person(Thing):
+    given_name: str | None = None
+
+
+class MockedModule:
+    Agent = Agent
+    Thing = Thing
+    Person = Person
 
 
 # The value is an `Person` record
@@ -32,12 +70,65 @@ inlined_json_record = {
 }
 
 
+inlined_object = Person(
+    id='trr379:test_extract_1',
+    given_name='Grandfather',
+    relations={
+        'trr379:test_extract_1_1': Person(
+            id='trr379:test_extract_1_1',
+            given_name='Father',
+            relations={
+                'trr379:test_extract_1_1_1': Agent(
+                    id='trr379:test_extract_1_1_1',
+                    acted_on_behalf_of=['trr379:test_extract_1_1'],
+                    relations=None,
+                ),
+            },
+        ),
+        'trr379:test_extract_1_2': InstantaneousEvent(
+            id='trr379:test_extract_1_2',
+            at_time='2028-12-31',
+            relations=None,
+        ),
+    }
+)
+
+
 tree = (
     ('trr379:test_extract_1', ('trr379:test_extract_1_1', 'trr379:test_extract_1_2')),
     ('trr379:test_extract_1_1', ('trr379:test_extract_1_1_1',)),
     ('trr379:test_extract_1_2', ()),
     ('trr379:test_extract_1_1_1', ()),
 )
+
+
+
+def test_inline_extraction_locally(dump_stores_simple):
+    root = dump_stores_simple
+
+    store = TokenStorage(
+        root / 'token_stores' / 'token_1', Storage(root / 'global_store')
+    )
+    records = store.extract_inlined(inlined_object, MockedModule())
+    _check_result_objects(records, tree)
+
+
+def _check_result_objects(
+        records: list[BaseModel],
+        tree: tuple[tuple[str, tuple[str, ...]]],
+):
+    def get_record_by_id(record_id: str):
+        for record in records:
+            if record.id == record_id:
+                return record
+        return None
+
+    for record_id, linked_ids in tree:
+        record = get_record_by_id(record_id)
+        assert len(record.relations or {}) == len(linked_ids)
+        for linked_id in linked_ids:
+            # Processing might add `schema_type` to records, ignore it.
+            assert record.relations[linked_id].id == linked_id
 
 
 def _check_result(
