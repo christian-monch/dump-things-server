@@ -57,20 +57,19 @@ def get_hex_digest(hasher: Callable, data: str) -> str:
 
 def mapping_digest_p3(
     hasher: Callable,
-    identifier: str,  # noqa ARG001
-    data: str,
+    identifier: str,
     suffix: str,
 ) -> Path:
-    hex_digest = get_hex_digest(hasher, data)
+    hex_digest = get_hex_digest(hasher, identifier)
     return Path(hex_digest[:3]) / (hex_digest[3:] + '.' + suffix)
 
 
-def mapping_digest(hasher: Callable, identifier: str, data: str, suffix: str) -> Path:  # noqa ARG001
-    hex_digest = get_hex_digest(hasher, data)
+def mapping_digest(hasher: Callable, identifier: str, suffix: str) -> Path:
+    hex_digest = get_hex_digest(hasher, identifier)
     return Path(hex_digest + '.' + suffix)
 
 
-def mapping_after_last_colon(identifier: str, data: str, suffix: str) -> Path:  # noqa ARG001
+def mapping_after_last_colon(identifier: str, suffix: str) -> Path:
     plain_result = identifier.split(':')[-1]
     # Escape any colons and slashes in the identifier
     escaped_result = (
@@ -213,7 +212,7 @@ class TokenStorage(Storage):
         # Apply the mapping function to the record id to get the final storage path
         config = self.canonical_store.collections[collection]
         storage_path = record_root / mapping_functions[config.idfx](
-            identifier=record.id, data=data, suffix=config.format
+            identifier=record.id, suffix=config.format
         )
 
         # Ensure that the storage path is within the record root

@@ -84,7 +84,6 @@ def create_store(
                 / class_name
                 / mapper(
                     identifier=identifier,
-                    data=record,
                     suffix='yaml',
                 )
             )
