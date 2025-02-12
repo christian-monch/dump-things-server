@@ -247,6 +247,8 @@ class TokenStorage(Storage):
                 *[
                     self.extract_inlined(sub_record, model)
                     for sub_record in record.relations.values()
+                    # Do not extract 'empty'-Thing records, those are just placeholders
+                    if sub_record != model.Thing(id=sub_record.id)
                 ]
             )
         )
