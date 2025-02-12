@@ -15,6 +15,10 @@ classes:
       id:
         identifier: true
         required: true
+      relations:
+        range: Thing
+        multivalued: true
+        inlined: true
   Person:
     is_a: Thing
     attributes:

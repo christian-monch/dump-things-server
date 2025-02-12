@@ -2,7 +2,10 @@ from __future__ import annotations
 
 from copy import copy
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
+from typing import (
+    cast,
+    TYPE_CHECKING,
+)
 
 import pytest  # noqa F401
 
@@ -144,7 +147,7 @@ def test_inline_extraction_locally(dump_stores_simple):
     store = TokenStorage(
         root / 'token_stores' / 'token_1', Storage(root / 'global_store')
     )
-    records = store.extract_inlined(inlined_object, MockedModule())
+    records = store.extract_inlined(cast(BaseModel, inlined_object), MockedModule())
     _check_result_objects(records, tree)
 
 
@@ -172,7 +175,7 @@ def test_dont_extract_empty_things_locally(dump_stores_simple):
     store = TokenStorage(
         root / 'token_stores' / 'token_1', Storage(root / 'global_store')
     )
-    records = store.extract_inlined(empty_inlined_object, MockedModule())
+    records = store.extract_inlined(cast(BaseModel, empty_inlined_object), MockedModule())
     assert len(records) == 1
     assert records[0] == empty_inlined_object
 
