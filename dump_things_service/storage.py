@@ -7,16 +7,19 @@ from functools import partial
 from itertools import chain
 from pathlib import Path
 from typing import (
+    Any,
     Callable,
     Literal,
 )
 
 import yaml
 from fastapi import HTTPException
-from pydantic import BaseModel
+from pydantic import (
+    BaseModel,
+    TypeAdapter,
+)
 
 from dump_things_service import (
-    JSON,
     YAML,
     Format,
 )
@@ -162,12 +165,14 @@ class TokenStorage(Storage):
         *,
         record: BaseModel | str,
         collection: str,
-        class_name: str,
+        model: Any,
         input_format: Format,
+        class_name: str | None = None,
     ):
         from dump_things_service.convert import convert_format
 
-        # Get a JSON object representing the record
+        # If the input is ttl, get a JSON object representing the record and
+        # convert it to a BaseModel instance.
         if input_format == Format.ttl:
             json_object = cleaned_json(
                 json.loads(
@@ -180,47 +185,36 @@ class TokenStorage(Storage):
                     )
                 )
             )
-        else:
-            json_object = record.model_dump(exclude_none=True)
+            record = TypeAdapter(getattr(model, class_name)).validate_python(json_object)
 
-        root_id = json_object['id']
-        final_objects = self.extract_inlined(json_object)
-
-        # Assert that all extracted objects have a schema_type
-        if not all(
-            'schema_type' in obj for obj in final_objects if obj['id'] != root_id
-        ):
-            raise HTTPException(
-                status_code=400, detail='Missing schema_type in inlined record.'
-            )
-
-        for final_object in final_objects:
+        final_records = self.extract_inlined(record, model)
+        for final_record in final_records:
             self.store_single_record(
-                json_object=final_object,
+                record=final_record,
                 collection=collection,
-                class_name=class_name
-                if final_object['id'] == root_id
-                else final_object['schema_type'].split(':')[-1],
             )
 
     def store_single_record(
-        self,
-        *,
-        json_object: JSON,
-        collection: str,
-        class_name: str,
+            self,
+            *,
+            record: BaseModel,
+            collection: str,
     ):
         # Generate the class directory
+        class_name = record.__class__.__name__
         record_root = self.get_collection_path(collection) / class_name
         record_root.mkdir(exist_ok=True)
 
-        identifier = json_object['id']
-        data = yaml.dump(data=json_object, sort_keys=False)
+        # Convert the record object into a YAML object
+        data = yaml.dump(
+            data=record.model_dump(exclude_none=True),
+            sort_keys=False
+        )
 
-        # Apply the mapping function to get the final storage path
+        # Apply the mapping function to the record id to get the final storage path
         config = self.canonical_store.collections[collection]
         storage_path = record_root / mapping_functions[config.idfx](
-            identifier=identifier, data=data, suffix=config.format
+            identifier=record.id, data=data, suffix=config.format
         )
 
         # Ensure that the storage path is within the record root
@@ -245,24 +239,24 @@ class TokenStorage(Storage):
             )
         return collection_path
 
-    def extract_inlined(self, record: JSON) -> list[JSON]:
+    def extract_inlined(self, record: BaseModel, model: Any) -> list[BaseModel]:
         # The trivial case: no relations
-        if record.get('relations', None) is None:
+        if not hasattr(record, 'relations') or record.relations is None:
             return [record]
 
         extracted_sub_records = list(
             chain(
                 *[
-                    self.extract_inlined(sub_record)
-                    for sub_record in record['relations'].values()
+                    self.extract_inlined(sub_record, model)
+                    for sub_record in record.relations.values()
                 ]
             )
         )
         # Simplify the relations in this record
-        new_record = record.copy()
-        new_record['relations'] = {
-            sub_record_id: {'id': sub_record_id}
-            for sub_record_id in record['relations']
+        new_record = record.model_copy()
+        new_record.relations = {
+            sub_record_id: model.Thing(id=sub_record_id)
+            for sub_record_id in record.relations
         }
         return [new_record, *extracted_sub_records]
 
