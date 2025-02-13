@@ -75,6 +75,12 @@ inlined_json_record = {
             'at_time': '2028-12-31',
         },
     },
+    # Preset `contains` to test honoring of existing ids and uniqueness property of `contains`
+    'contains': [
+        'abc',
+        'def',
+        'trr379:test_extract_1_1',
+    ],
 }
 
 
@@ -99,14 +105,20 @@ inlined_object = Person(
             relations=None,
         ),
     },
+    # Preset `contains` to test honoring of existing ids and uniqueness property of `contains`
+    contains=[
+        'abc',
+        'def',
+        'trr379:test_extract_1_1',
+    ],
 )
 
 
 tree = (
-    ('trr379:test_extract_1', ('trr379:test_extract_1_1', 'trr379:test_extract_1_2')),
-    ('trr379:test_extract_1_1', ('trr379:test_extract_1_1_1',)),
-    ('trr379:test_extract_1_2', ()),
-    ('trr379:test_extract_1_1_1', ()),
+    ('trr379:test_extract_1', ('trr379:test_extract_1_1', 'trr379:test_extract_1_2'), ('abc', 'def')),
+    ('trr379:test_extract_1_1', ('trr379:test_extract_1_1_1',), ()),
+    ('trr379:test_extract_1_2', (), ()),
+    ('trr379:test_extract_1_1_1', (), ()),
 )
 
 
@@ -122,7 +134,7 @@ def test_inline_extraction_locally(dump_stores_simple):
 
 def _check_result_objects(
     records: list[BaseModel],
-    tree: tuple[tuple[str, tuple[str, ...]]],
+    tree: tuple[tuple[str, tuple[str, ...], tuple[str, ...]]],
 ):
     def get_record_by_id(record_id: str):
         for record in records:
@@ -130,9 +142,11 @@ def _check_result_objects(
                 return record
         return None
 
-    for record_id, linked_ids in tree:
+    for record_id, linked_ids, pre_existing in tree:
         record = get_record_by_id(record_id)
-        assert len(record.contains or {}) == len(linked_ids)
+        for identifier in pre_existing:
+            record.contains.remove(identifier)
+        assert len(record.contains or []) == len(linked_ids)
         for linked_id in linked_ids:
             # Processing might add `schema_type` to records, ignore it.
             assert linked_id in record.contains
@@ -186,8 +200,10 @@ def _check_result_json(
                 return record
         return None
 
-    for record_id, linked_ids in tree:
+    for record_id, linked_ids, pre_existing in tree:
         record = get_record_by_id(record_id)
+        for identifier in pre_existing:
+            record['contains'].remove(identifier)
         if linked_ids:
             assert len(record['contains']) == len(linked_ids)
             for linked_id in linked_ids:
