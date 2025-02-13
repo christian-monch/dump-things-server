@@ -1,0 +1,2022 @@
+{
+  "name": "trr379-base-schema",
+  "description": "TODO\n\nMore information is available on the schema's [about page](about).\n\nThe schema definition is available as\n\n- [JSON-LD context](../unreleased.context.jsonld)\n- [LinkML YAML](../unreleased.yaml)\n- [OWL TTL](../unreleased.owl.ttl)\n- [SHACL TTL](../unreleased.shacl.ttl)\n",
+  "title": "Base schema for TRR379 metadata",
+  "comments": [
+    "ALL CONTENT HERE IS UNRELEASED AND MAY CHANGE ANY TIME"
+  ],
+  "status": "eunal:concept-status/DRAFT",
+  "id": "https://concepts.trr379.de/s/base/unreleased",
+  "version": "UNRELEASED",
+  "license": "CC-BY-4.0",
+  "prefixes": {
+    "CiTO": {
+      "prefix_prefix": "CiTO",
+      "prefix_reference": "http://purl.org/spar/cito/"
+    },
+    "cogatlas": {
+      "prefix_prefix": "cogatlas",
+      "prefix_reference": "https://www.cognitiveatlas.org/task/id/"
+    },
+    "dlidentifiers": {
+      "prefix_prefix": "dlidentifiers",
+      "prefix_reference": "https://concepts.datalad.org/s/identifiers/unreleased/"
+    },
+    "dlprops": {
+      "prefix_prefix": "dlprops",
+      "prefix_reference": "https://concepts.datalad.org/s/properties/unreleased/"
+    },
+    "dlprov": {
+      "prefix_prefix": "dlprov",
+      "prefix_reference": "https://concepts.datalad.org/s/prov/unreleased/"
+    },
+    "dlpubs": {
+      "prefix_prefix": "dlpubs",
+      "prefix_reference": "https://concepts.datalad.org/s/publications/unreleased/"
+    },
+    "dlres": {
+      "prefix_prefix": "dlres",
+      "prefix_reference": "https://concepts.datalad.org/s/resources/unreleased/"
+    },
+    "dlroles": {
+      "prefix_prefix": "dlroles",
+      "prefix_reference": "https://concepts.datalad.org/s/roles/unreleased/"
+    },
+    "dlschemas": {
+      "prefix_prefix": "dlschemas",
+      "prefix_reference": "https://concepts.datalad.org/s/"
+    },
+    "dlsocial": {
+      "prefix_prefix": "dlsocial",
+      "prefix_reference": "https://concepts.datalad.org/s/social/unreleased/"
+    },
+    "dlspatial": {
+      "prefix_prefix": "dlspatial",
+      "prefix_reference": "https://concepts.datalad.org/s/spatial/unreleased/"
+    },
+    "dltemporal": {
+      "prefix_prefix": "dltemporal",
+      "prefix_reference": "https://concepts.datalad.org/s/temporal/unreleased/"
+    },
+    "dlthings": {
+      "prefix_prefix": "dlthings",
+      "prefix_reference": "https://concepts.datalad.org/s/things/v1/"
+    },
+    "dltypes": {
+      "prefix_prefix": "dltypes",
+      "prefix_reference": "https://concepts.datalad.org/s/types/unreleased/"
+    },
+    "doi": {
+      "prefix_prefix": "doi",
+      "prefix_reference": "https://dx.doi.org/"
+    },
+    "email": {
+      "prefix_prefix": "email",
+      "prefix_reference": "https://concepts.datalad.org/ns/email/"
+    },
+    "eunal": {
+      "prefix_prefix": "eunal",
+      "prefix_reference": "http://publications.europa.eu/resource/authority/"
+    },
+    "geo": {
+      "prefix_prefix": "geo",
+      "prefix_reference": "geo:"
+    },
+    "gepris": {
+      "prefix_prefix": "gepris",
+      "prefix_reference": "https://gepris.dfg.de/gepris/"
+    },
+    "linkml": {
+      "prefix_prefix": "linkml",
+      "prefix_reference": "https://w3id.org/linkml/"
+    },
+    "marcrel": {
+      "prefix_prefix": "marcrel",
+      "prefix_reference": "http://id.loc.gov/vocabulary/relators/"
+    },
+    "obo": {
+      "prefix_prefix": "obo",
+      "prefix_reference": "http://purl.obolibrary.org/obo/"
+    },
+    "orcid": {
+      "prefix_prefix": "orcid",
+      "prefix_reference": "https://orcid.org/"
+    },
+    "owl": {
+      "prefix_prefix": "owl",
+      "prefix_reference": "http://www.w3.org/2002/07/owl#"
+    },
+    "rdf": {
+      "prefix_prefix": "rdf",
+      "prefix_reference": "http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+    },
+    "rdfs": {
+      "prefix_prefix": "rdfs",
+      "prefix_reference": "http://www.w3.org/2000/01/rdf-schema#"
+    },
+    "ror": {
+      "prefix_prefix": "ror",
+      "prefix_reference": "https://ror.org/"
+    },
+    "schema": {
+      "prefix_prefix": "schema",
+      "prefix_reference": "http://schema.org/"
+    },
+    "sct": {
+      "prefix_prefix": "sct",
+      "prefix_reference": "http://snomed.info/id/"
+    },
+    "sh": {
+      "prefix_prefix": "sh",
+      "prefix_reference": "http://www.w3.org/ns/shacl#"
+    },
+    "sio": {
+      "prefix_prefix": "sio",
+      "prefix_reference": "http://semanticscience.org/resource/"
+    },
+    "skos": {
+      "prefix_prefix": "skos",
+      "prefix_reference": "http://www.w3.org/2004/02/skos/core#"
+    },
+    "trr379base": {
+      "prefix_prefix": "trr379base",
+      "prefix_reference": "https://concepts.trr379.de/s/base/unreleased/"
+    },
+    "trr379": {
+      "prefix_prefix": "trr379",
+      "prefix_reference": "https://trr379.de/"
+    },
+    "w3ctr": {
+      "prefix_prefix": "w3ctr",
+      "prefix_reference": "https://www.w3.org/TR/"
+    },
+    "xsd": {
+      "prefix_prefix": "xsd",
+      "prefix_reference": "http://www.w3.org/2001/XMLSchema#"
+    },
+    "dcat": {
+      "prefix_prefix": "dcat",
+      "prefix_reference": "http://www.w3.org/ns/dcat#"
+    },
+    "ex": {
+      "prefix_prefix": "ex",
+      "prefix_reference": "http://example.org/"
+    },
+    "prov": {
+      "prefix_prefix": "prov",
+      "prefix_reference": "http://www.w3.org/ns/prov#"
+    },
+    "foaf": {
+      "prefix_prefix": "foaf",
+      "prefix_reference": "http://xmlns.com/foaf/0.1/"
+    },
+    "dcterms": {
+      "prefix_prefix": "dcterms",
+      "prefix_reference": "http://purl.org/dc/terms/"
+    },
+    "pq": {
+      "prefix_prefix": "pq",
+      "prefix_reference": "http://www.wikidata.org/prop/qualifier/"
+    },
+    "vcard": {
+      "prefix_prefix": "vcard",
+      "prefix_reference": "http://www.w3.org/2006/vcard/ns#"
+    },
+    "bibo": {
+      "prefix_prefix": "bibo",
+      "prefix_reference": "http://purl.org/ontology/bibo/"
+    },
+    "shex": {
+      "prefix_prefix": "shex",
+      "prefix_reference": "http://www.w3.org/ns/shex#"
+    },
+    "ADMS": {
+      "prefix_prefix": "ADMS",
+      "prefix_reference": "http://www.w3.org/ns/adms#"
+    },
+    "exthisns": {
+      "prefix_prefix": "exthisns",
+      "prefix_reference": "https://example.org/ns/"
+    },
+    "spdx": {
+      "prefix_prefix": "spdx",
+      "prefix_reference": "http://spdx.org/rdf/terms#"
+    }
+  },
+  "emit_prefixes": [
+    "dlidentifiers",
+    "dlprops",
+    "dlprov",
+    "dlpubs",
+    "dlres",
+    "dlroles",
+    "dlsocial",
+    "dlspatial",
+    "dltemporal",
+    "dlthings",
+    "dltypes",
+    "email",
+    "geo",
+    "marcrel",
+    "orcid",
+    "rdf",
+    "rdfs",
+    "skos",
+    "trr379",
+    "w3ctr",
+    "xsd"
+  ],
+  "default_prefix": "trr379base",
+  "types": {
+    "W3CISO8601": {
+      "name": "W3CISO8601",
+      "description": "W3C variant/subset of IS08601 for specifying date(times). Supported are - YYYY (eg 1997) - YYYY-MM (eg 1997-07) - YYYY-MM-DD (eg 1997-07-16) - YYYY-MM-DDThh:mmTZD (eg 1997-07-16T19:20+01:00) - YYYY-MM-DDThh:mm:ssTZD (eg 1997-07-16T19:20:30+01:00) - YYYY-MM-DDThh:mm:ss.sTZD (eg 1997-07-16T19:20:30.45+01:00) where TZD is the time zone designator (Z or +hh:mm or -hh:mm)",
+      "from_schema": "https://concepts.datalad.org/s/temporal/unreleased",
+      "see_also": [
+        "https://www.w3.org/TR/NOTE-datetime"
+      ],
+      "typeof": "string",
+      "uri": "w3ctr:NOTE-datetime",
+      "pattern": "^([-+]\\d+)|(\\d{4})|(\\d{4}-[01]\\d)|(\\d{4}-[01]\\d-[0-3]\\d)|(\\d{4}-[01]\\d-[0-3]\\dT[0-2]\\d:[0-5]\\d:[0-5]\\d\\.\\d+([+-][0-2]\\d:[0-5]\\d|Z))|(\\d{4}-[01]\\d-[0-3]\\dT[0-2]\\d:[0-5]\\d:[0-5]\\d([+-][0-2]\\d:[0-5]\\d|Z))|(\\d{4}-[01]\\d-[0-3]\\dT[0-2]\\d:[0-5]\\d([+-][0-2]\\d:[0-5]\\d|Z))$"
+    },
+    "string": {
+      "name": "string",
+      "description": "A character string",
+      "notes": [
+        "In RDF serializations, a slot with range of string is treated as a literal or type xsd:string.   If you are authoring schemas in LinkML YAML, the type is referenced with the lower case \"string\"."
+      ],
+      "from_schema": "https://w3id.org/linkml/types",
+      "exact_mappings": [
+        "schema:Text"
+      ],
+      "base": "str",
+      "uri": "xsd:string"
+    },
+    "integer": {
+      "name": "integer",
+      "description": "An integer",
+      "notes": [
+        "If you are authoring schemas in LinkML YAML, the type is referenced with the lower case \"integer\"."
+      ],
+      "from_schema": "https://w3id.org/linkml/types",
+      "exact_mappings": [
+        "schema:Integer"
+      ],
+      "base": "int",
+      "uri": "xsd:integer"
+    },
+    "boolean": {
+      "name": "boolean",
+      "description": "A binary (true or false) value",
+      "notes": [
+        "If you are authoring schemas in LinkML YAML, the type is referenced with the lower case \"boolean\"."
+      ],
+      "from_schema": "https://w3id.org/linkml/types",
+      "exact_mappings": [
+        "schema:Boolean"
+      ],
+      "base": "Bool",
+      "uri": "xsd:boolean",
+      "repr": "bool"
+    },
+    "float": {
+      "name": "float",
+      "description": "A real number that conforms to the xsd:float specification",
+      "notes": [
+        "If you are authoring schemas in LinkML YAML, the type is referenced with the lower case \"float\"."
+      ],
+      "from_schema": "https://w3id.org/linkml/types",
+      "exact_mappings": [
+        "schema:Float"
+      ],
+      "base": "float",
+      "uri": "xsd:float"
+    },
+    "double": {
+      "name": "double",
+      "description": "A real number that conforms to the xsd:double specification",
+      "notes": [
+        "If you are authoring schemas in LinkML YAML, the type is referenced with the lower case \"double\"."
+      ],
+      "from_schema": "https://w3id.org/linkml/types",
+      "close_mappings": [
+        "schema:Float"
+      ],
+      "base": "float",
+      "uri": "xsd:double"
+    },
+    "decimal": {
+      "name": "decimal",
+      "description": "A real number with arbitrary precision that conforms to the xsd:decimal specification",
+      "notes": [
+        "If you are authoring schemas in LinkML YAML, the type is referenced with the lower case \"decimal\"."
+      ],
+      "from_schema": "https://w3id.org/linkml/types",
+      "broad_mappings": [
+        "schema:Number"
+      ],
+      "base": "Decimal",
+      "uri": "xsd:decimal"
+    },
+    "time": {
+      "name": "time",
+      "description": "A time object represents a (local) time of day, independent of any particular day",
+      "notes": [
+        "URI is dateTime because OWL reasoners do not work with straight date or time",
+        "If you are authoring schemas in LinkML YAML, the type is referenced with the lower case \"time\"."
+      ],
+      "from_schema": "https://w3id.org/linkml/types",
+      "exact_mappings": [
+        "schema:Time"
+      ],
+      "base": "XSDTime",
+      "uri": "xsd:time",
+      "repr": "str"
+    },
+    "date": {
+      "name": "date",
+      "description": "a date (year, month and day) in an idealized calendar",
+      "notes": [
+        "URI is dateTime because OWL reasoners don't work with straight date or time",
+        "If you are authoring schemas in LinkML YAML, the type is referenced with the lower case \"date\"."
+      ],
+      "from_schema": "https://w3id.org/linkml/types",
+      "exact_mappings": [
+        "schema:Date"
+      ],
+      "base": "XSDDate",
+      "uri": "xsd:date",
+      "repr": "str"
+    },
+    "datetime": {
+      "name": "datetime",
+      "description": "The combination of a date and time",
+      "notes": [
+        "If you are authoring schemas in LinkML YAML, the type is referenced with the lower case \"datetime\"."
+      ],
+      "from_schema": "https://w3id.org/linkml/types",
+      "exact_mappings": [
+        "schema:DateTime"
+      ],
+      "base": "XSDDateTime",
+      "uri": "xsd:dateTime",
+      "repr": "str"
+    },
+    "date_or_datetime": {
+      "name": "date_or_datetime",
+      "description": "Either a date or a datetime",
+      "notes": [
+        "If you are authoring schemas in LinkML YAML, the type is referenced with the lower case \"date_or_datetime\"."
+      ],
+      "from_schema": "https://w3id.org/linkml/types",
+      "base": "str",
+      "uri": "linkml:DateOrDatetime",
+      "repr": "str"
+    },
+    "uriorcurie": {
+      "name": "uriorcurie",
+      "description": "a URI or a CURIE",
+      "notes": [
+        "If you are authoring schemas in LinkML YAML, the type is referenced with the lower case \"uriorcurie\"."
+      ],
+      "from_schema": "https://w3id.org/linkml/types",
+      "base": "URIorCURIE",
+      "uri": "xsd:anyURI",
+      "repr": "str"
+    },
+    "curie": {
+      "name": "curie",
+      "conforms_to": "https://www.w3.org/TR/curie/",
+      "description": "a compact URI",
+      "notes": [
+        "If you are authoring schemas in LinkML YAML, the type is referenced with the lower case \"curie\"."
+      ],
+      "comments": [
+        "in RDF serializations this MUST be expanded to a URI",
+        "in non-RDF serializations MAY be serialized as the compact representation"
+      ],
+      "from_schema": "https://w3id.org/linkml/types",
+      "base": "Curie",
+      "uri": "xsd:string",
+      "repr": "str"
+    },
+    "uri": {
+      "name": "uri",
+      "conforms_to": "https://www.ietf.org/rfc/rfc3987.txt",
+      "description": "a complete URI",
+      "notes": [
+        "If you are authoring schemas in LinkML YAML, the type is referenced with the lower case \"uri\"."
+      ],
+      "comments": [
+        "in RDF serializations a slot with range of uri is treated as a literal or type xsd:anyURI unless it is an identifier or a reference to an identifier, in which case it is translated directly to a node"
+      ],
+      "from_schema": "https://w3id.org/linkml/types",
+      "close_mappings": [
+        "schema:URL"
+      ],
+      "base": "URI",
+      "uri": "xsd:anyURI",
+      "repr": "str"
+    },
+    "ncname": {
+      "name": "ncname",
+      "description": "Prefix part of CURIE",
+      "notes": [
+        "If you are authoring schemas in LinkML YAML, the type is referenced with the lower case \"ncname\"."
+      ],
+      "from_schema": "https://w3id.org/linkml/types",
+      "base": "NCName",
+      "uri": "xsd:string",
+      "repr": "str"
+    },
+    "objectidentifier": {
+      "name": "objectidentifier",
+      "description": "A URI or CURIE that represents an object in the model.",
+      "notes": [
+        "If you are authoring schemas in LinkML YAML, the type is referenced with the lower case \"objectidentifier\"."
+      ],
+      "comments": [
+        "Used for inheritance and type checking"
+      ],
+      "from_schema": "https://w3id.org/linkml/types",
+      "base": "ElementIdentifier",
+      "uri": "shex:iri",
+      "repr": "str"
+    },
+    "nodeidentifier": {
+      "name": "nodeidentifier",
+      "description": "A URI, CURIE or BNODE that represents a node in a model.",
+      "notes": [
+        "If you are authoring schemas in LinkML YAML, the type is referenced with the lower case \"nodeidentifier\"."
+      ],
+      "from_schema": "https://w3id.org/linkml/types",
+      "base": "NodeIdentifier",
+      "uri": "shex:nonLiteral",
+      "repr": "str"
+    },
+    "jsonpointer": {
+      "name": "jsonpointer",
+      "conforms_to": "https://datatracker.ietf.org/doc/html/rfc6901",
+      "description": "A string encoding a JSON Pointer. The value of the string MUST conform to JSON Point syntax and SHOULD dereference to a valid object within the current instance document when encoded in tree form.",
+      "notes": [
+        "If you are authoring schemas in LinkML YAML, the type is referenced with the lower case \"jsonpointer\"."
+      ],
+      "from_schema": "https://w3id.org/linkml/types",
+      "base": "str",
+      "uri": "xsd:string",
+      "repr": "str"
+    },
+    "jsonpath": {
+      "name": "jsonpath",
+      "conforms_to": "https://www.ietf.org/archive/id/draft-goessner-dispatch-jsonpath-00.html",
+      "description": "A string encoding a JSON Path. The value of the string MUST conform to JSON Point syntax and SHOULD dereference to zero or more valid objects within the current instance document when encoded in tree form.",
+      "notes": [
+        "If you are authoring schemas in LinkML YAML, the type is referenced with the lower case \"jsonpath\"."
+      ],
+      "from_schema": "https://w3id.org/linkml/types",
+      "base": "str",
+      "uri": "xsd:string",
+      "repr": "str"
+    },
+    "sparqlpath": {
+      "name": "sparqlpath",
+      "conforms_to": "https://www.w3.org/TR/sparql11-query/#propertypaths",
+      "description": "A string encoding a SPARQL Property Path. The value of the string MUST conform to SPARQL syntax and SHOULD dereference to zero or more valid objects within the current instance document when encoded as RDF.",
+      "notes": [
+        "If you are authoring schemas in LinkML YAML, the type is referenced with the lower case \"sparqlpath\"."
+      ],
+      "from_schema": "https://w3id.org/linkml/types",
+      "base": "str",
+      "uri": "xsd:string",
+      "repr": "str"
+    },
+    "EmailAddress": {
+      "name": "EmailAddress",
+      "description": "RFC 5322 compliant email address",
+      "notes": [
+        "The validation regex is taken from https://stackoverflow.com/a/201378",
+        "The regex is single-quoted for YAML encoding, hence all inner \"'\" have been doubled"
+      ],
+      "from_schema": "https://concepts.datalad.org/s/types/unreleased",
+      "base": "str",
+      "uri": "dltypes:EmailAddress",
+      "pattern": "(?:[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*|\"(?:[\\x01-\\x08\\x0b\\x0c\\x0e-\\x1f\\x21\\x23-\\x5b\\x5d-\\x7f]|\\\\[\\x01-\\x09\\x0b\\x0c\\x0e-\\x7f])*\")@(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\\[(?:(?:(2(5[0-5]|[0-4][0-9])|1[0-9][0-9]|[1-9]?[0-9]))\\.){3}(?:(2(5[0-5]|[0-4][0-9])|1[0-9][0-9]|[1-9]?[0-9])|[a-z0-9-]*[a-z0-9]:(?:[\\x01-\\x08\\x0b\\x0c\\x0e-\\x1f\\x21-\\x5a\\x53-\\x7f]|\\\\[\\x01-\\x09\\x0b\\x0c\\x0e-\\x7f])+)\\])"
+    },
+    "HexBinary": {
+      "name": "HexBinary",
+      "description": "hex-encoded binary data.",
+      "from_schema": "https://concepts.datalad.org/s/types/unreleased",
+      "base": "str",
+      "uri": "xsd:hexBinary",
+      "pattern": "^[a-fA-F0-9]+$"
+    },
+    "NodeUriOrCurie": {
+      "name": "NodeUriOrCurie",
+      "description": "A type referencing an graph node. This is like `uriorcurie`, but in an RDF export leads to the desirable `rdf.type` declaration, rather then an `rdf.literal` of the corresponding URI.",
+      "from_schema": "https://concepts.datalad.org/s/types/unreleased",
+      "typeof": "uriorcurie",
+      "base": "str",
+      "uri": "rdfs:Resource"
+    },
+    "NonNegativeInteger": {
+      "name": "NonNegativeInteger",
+      "description": "An integer",
+      "notes": [
+        "Integer with minimum (inclusive) value of zero, i.e. the standard mathematical concept of the non-negative integers."
+      ],
+      "from_schema": "https://concepts.datalad.org/s/types/unreleased",
+      "broad_mappings": [
+        "schema:Integer"
+      ],
+      "base": "int",
+      "uri": "xsd:nonNegativeInteger"
+    }
+  },
+  "slots": {
+    "roles": {
+      "name": "roles",
+      "description": "Describes the function of an entity or agent (object) within the scope of a `Relationship` with the subject.",
+      "from_schema": "https://concepts.datalad.org/s/roles/unreleased",
+      "exact_mappings": [
+        "prov:hadRole",
+        "dcat:had_role"
+      ],
+      "slot_uri": "dlroles:roles",
+      "range": "Role",
+      "multivalued": true,
+      "inlined": false
+    },
+    "qualified_relations": {
+      "name": "qualified_relations",
+      "description": "Characterizes the relationship or role of an entity with respect to the subject.",
+      "from_schema": "https://concepts.datalad.org/s/roles/unreleased",
+      "exact_mappings": [
+        "dcat:qualifiedRelation"
+      ],
+      "domain": "Thing",
+      "slot_uri": "dlroles:qualified_relations",
+      "range": "Relationship",
+      "multivalued": true,
+      "inlined": true
+    },
+    "acted_on_behalf_of": {
+      "name": "acted_on_behalf_of",
+      "description": "Assign the authority and responsibility for carrying out a specific activity of the subject agent to another agent.",
+      "from_schema": "https://concepts.datalad.org/s/prov/unreleased",
+      "exact_mappings": [
+        "prov:actedOnBehalfOf"
+      ],
+      "domain": "Agent",
+      "slot_uri": "dlprov:acted_on_behalf_of",
+      "range": "Agent",
+      "multivalued": true,
+      "inlined": false
+    },
+    "associated_with": {
+      "name": "associated_with",
+      "description": "An activity association is an assignment of responsibility to an agent for an activity, indicating that the agent had a role in the activity. It further allows for a plan to be specified, which is the plan intended by the agent to achieve some goals in the context of this activity.",
+      "from_schema": "https://concepts.datalad.org/s/prov/unreleased",
+      "exact_mappings": [
+        "prov:wasAssociatedWith"
+      ],
+      "domain": "Activity",
+      "slot_uri": "dlprov:associated_with",
+      "range": "Agent",
+      "multivalued": true,
+      "inlined": false
+    },
+    "attributed_to": {
+      "name": "attributed_to",
+      "description": "Attribution is the ascribing of an entity to an agent.",
+      "from_schema": "https://concepts.datalad.org/s/prov/unreleased",
+      "exact_mappings": [
+        "prov:wasAttributedTo"
+      ],
+      "domain": "Entity",
+      "slot_uri": "dlprov:attributed_to",
+      "range": "Agent",
+      "multivalued": true,
+      "inlined": false
+    },
+    "derived_from": {
+      "name": "derived_from",
+      "description": "Derivation is a transformation of an entity into another, an update of an entity resulting in a new one, or the construction of a new entity based on a pre-existing entity.",
+      "from_schema": "https://concepts.datalad.org/s/prov/unreleased",
+      "exact_mappings": [
+        "prov:wasDerivedFrom"
+      ],
+      "domain": "Entity",
+      "slot_uri": "dlprov:derived_from",
+      "range": "Entity",
+      "multivalued": true,
+      "inlined": false
+    },
+    "generated_by": {
+      "name": "generated_by",
+      "description": "Generation is the completion of production of a new entity by an activity. This entity did not exist before generation and becomes available for usage after this generation.",
+      "from_schema": "https://concepts.datalad.org/s/prov/unreleased",
+      "exact_mappings": [
+        "prov:wasAttributedTo"
+      ],
+      "domain": "Entity",
+      "slot_uri": "dlprov:generated_by",
+      "range": "Activity",
+      "multivalued": true,
+      "inlined": false
+    },
+    "informed_by": {
+      "name": "informed_by",
+      "description": "Communication is the exchange of an entity by two activities, one activity using the entity generated by the other.",
+      "from_schema": "https://concepts.datalad.org/s/prov/unreleased",
+      "exact_mappings": [
+        "prov:wasInformedBy"
+      ],
+      "domain": "Activity",
+      "slot_uri": "dlprov:informed_by",
+      "range": "Activity",
+      "multivalued": true,
+      "inlined": false
+    },
+    "conforms_to": {
+      "name": "conforms_to",
+      "description": "An established standard to which the subject conforms.",
+      "comments": [
+        "This property SHOULD be used to indicate a model, schema, ontology, view or profile that the subject conforms to."
+      ],
+      "from_schema": "https://concepts.datalad.org/s/properties/unreleased",
+      "exact_mappings": [
+        "dcterms:conformsTo"
+      ],
+      "slot_uri": "dlprops:conforms_to",
+      "range": "uriorcurie"
+    },
+    "about": {
+      "name": "about",
+      "description": "A relation of an information artifact to the subject, such as a URL identifying the topic of a document.",
+      "from_schema": "https://concepts.datalad.org/s/properties/unreleased",
+      "exact_mappings": [
+        "schema:about",
+        "obo:IAO_0000136"
+      ],
+      "slot_uri": "dlprops:about",
+      "range": "uriorcurie",
+      "multivalued": true
+    },
+    "name": {
+      "name": "name",
+      "description": "Name of the subject. A name is closely related to a `title`, but often more compact and identifier-like, but without the implication of uniqueness of an identifier. A name is often used by technical systems to display an item in an organizational structure, such as a file in a directory hierarchy.",
+      "from_schema": "https://concepts.datalad.org/s/properties/unreleased",
+      "exact_mappings": [
+        "rdfs:label",
+        "schema:name",
+        "foaf:name"
+      ],
+      "close_mappings": [
+        "dlprops:title"
+      ],
+      "slot_uri": "dlprops:name",
+      "range": "string"
+    },
+    "same_as": {
+      "name": "same_as",
+      "description": "Declares that the subject and an object are equal. Can be used to indicate a URL of a reference Web page that unambiguously indicates the subject's identity. For example, the URL of the subject's Wikipedia page, Wikidata entry, or official website.",
+      "from_schema": "https://concepts.datalad.org/s/properties/unreleased",
+      "exact_mappings": [
+        "owl:sameAs"
+      ],
+      "close_mappings": [
+        "schema:sameAs"
+      ],
+      "slot_uri": "dlprops:same_as",
+      "range": "uriorcurie"
+    },
+    "short_name": {
+      "name": "short_name",
+      "description": "A shortened name for the subject. For example, an acronym, initialism, nickname, or other abbreviation of the `name`.",
+      "from_schema": "https://concepts.datalad.org/s/properties/unreleased",
+      "exact_mappings": [
+        "pq:P1813"
+      ],
+      "is_a": "name",
+      "slot_uri": "dlprops:short_name",
+      "range": "string"
+    },
+    "title": {
+      "name": "title",
+      "description": "A summarily description of the subject. It is closely related to a `name`, but often less compact and more descriptive. Typically used for documents.",
+      "from_schema": "https://concepts.datalad.org/s/properties/unreleased",
+      "exact_mappings": [
+        "dcterms:title",
+        "sio:SIO_000185"
+      ],
+      "related_mappings": [
+        "schema:name"
+      ],
+      "slot_uri": "dlprops:title",
+      "range": "string"
+    },
+    "family_name": {
+      "name": "family_name",
+      "description": "The (inherited) family name of the subject. In many Western languages this is the \"last name\".",
+      "from_schema": "https://concepts.datalad.org/s/social/unreleased",
+      "exact_mappings": [
+        "foaf:familyName",
+        "vcard:family-name"
+      ],
+      "is_a": "name",
+      "slot_uri": "dlsocial:family_name",
+      "range": "string"
+    },
+    "formatted_name": {
+      "name": "formatted_name",
+      "description": "A formatted text corresponding to the name of the subject.",
+      "from_schema": "https://concepts.datalad.org/s/social/unreleased",
+      "exact_mappings": [
+        "vcard:fn"
+      ],
+      "is_a": "name",
+      "slot_uri": "dlsocial:formatted_name",
+      "range": "string"
+    },
+    "honorific_name_prefix": {
+      "name": "honorific_name_prefix",
+      "description": "The honorific prefix(es) of the subject's name. For example, (academic/formal) titles like \"Mrs\", or \"Dr\", \"Dame\".",
+      "from_schema": "https://concepts.datalad.org/s/social/unreleased",
+      "exact_mappings": [
+        "vcard:honorific-suffix"
+      ],
+      "is_a": "name",
+      "slot_uri": "dlsocial:honorific_name_prefix",
+      "range": "string"
+    },
+    "honorific_name_suffix": {
+      "name": "honorific_name_suffix",
+      "description": "The honorific suffix(es) of the subject's name. For example, generation labels (\"III\"), or indicators of an academic degree, a profession, or a position (\"MD\", \"BA\").",
+      "from_schema": "https://concepts.datalad.org/s/social/unreleased",
+      "exact_mappings": [
+        "vcard:honorific-suffix"
+      ],
+      "is_a": "name",
+      "slot_uri": "dlsocial:honorific_name_suffix",
+      "range": "string"
+    },
+    "given_name": {
+      "name": "given_name",
+      "description": "The given (non-inherited) name of the subject.",
+      "from_schema": "https://concepts.datalad.org/s/social/unreleased",
+      "exact_mappings": [
+        "foaf:familyName",
+        "vcard:given-name"
+      ],
+      "is_a": "name",
+      "slot_uri": "dlsocial:given_name",
+      "range": "string"
+    },
+    "additional_names": {
+      "name": "additional_names",
+      "description": "Additional name(s) associated with the subject, such as one or more middle names, or a nick name.",
+      "from_schema": "https://concepts.datalad.org/s/social/unreleased",
+      "exact_mappings": [
+        "vcard:additional_name"
+      ],
+      "is_a": "name",
+      "slot_uri": "dlsocial:additional_names",
+      "range": "string",
+      "multivalued": true
+    },
+    "at_time": {
+      "name": "at_time",
+      "description": "Time at which an instanteneous event takes place or took place.",
+      "from_schema": "https://concepts.datalad.org/s/temporal/unreleased",
+      "exact_mappings": [
+        "prov:atTime"
+      ],
+      "slot_uri": "dltemporal:at_time",
+      "range": "W3CISO8601"
+    },
+    "date_modified": {
+      "name": "date_modified",
+      "description": "Timepoint at which the subject was (last) changed, updated or modified.",
+      "notes": [
+        "successful validation with `datetime` as a range and linkml-jsonschema-validate` depends on a patched linkml, see https://github.com/linkml/linkml/issues/1806",
+        "a related problem also exists for `linkml-validate`, we cannot have a more specific range right now"
+      ],
+      "from_schema": "https://concepts.datalad.org/s/temporal/unreleased",
+      "exact_mappings": [
+        "dcterms:modified"
+      ],
+      "slot_uri": "dltemporal:date_modified",
+      "range": "W3CISO8601"
+    },
+    "date_published": {
+      "name": "date_published",
+      "description": "Timepoint at which the subject was (last) published.",
+      "from_schema": "https://concepts.datalad.org/s/temporal/unreleased",
+      "exact_mappings": [
+        "schema:datePublished"
+      ],
+      "slot_uri": "dltemporal:date_published",
+      "range": "W3CISO8601"
+    },
+    "started_at": {
+      "name": "started_at",
+      "description": "Start is when an activity is deemed to have been started by some trigger. The activity did not exist before its start. Any usage, generation, or invalidation involving an activity follows the activity's start.",
+      "from_schema": "https://concepts.datalad.org/s/temporal/unreleased",
+      "exact_mappings": [
+        "prov:startedAtTime"
+      ],
+      "slot_uri": "dltemporal:started_at",
+      "range": "W3CISO8601"
+    },
+    "ended_at": {
+      "name": "ended_at",
+      "description": "End is when an activity is deemed to have been ended by some trigger. The activity no longer exists after its end. Any usage, generation, or invalidation involving an activity precedes the activity's end.",
+      "from_schema": "https://concepts.datalad.org/s/temporal/unreleased",
+      "exact_mappings": [
+        "prov:endedAtTime"
+      ],
+      "slot_uri": "dltemporal:ended_at",
+      "range": "W3CISO8601"
+    },
+    "indexed_parts": {
+      "name": "indexed_parts",
+      "description": "A qualified relation that assigns an index `locator` to a resource within the context of a `hasPart` relationship with a subject (the containing resource).",
+      "from_schema": "https://concepts.datalad.org/s/resources/unreleased",
+      "broad_mappings": [
+        "dcat:qualifiedRelation"
+      ],
+      "slot_uri": "dlres:indexed_parts",
+      "range": "IndexedResourcePart",
+      "multivalued": true,
+      "inlined": true
+    },
+    "indexed_part_of": {
+      "name": "indexed_part_of",
+      "description": "A qualified relation that assigns an index `locator` to a resource within the context of an `isPartOf` relationship with a subject (the contained resource).",
+      "from_schema": "https://concepts.datalad.org/s/resources/unreleased",
+      "broad_mappings": [
+        "dcat:qualifiedRelation"
+      ],
+      "slot_uri": "dlres:indexed_part_of",
+      "range": "IndexedResourcePartOf",
+      "multivalued": true,
+      "inlined": true,
+      "inlined_as_list": true
+    },
+    "locator": {
+      "name": "locator",
+      "description": "A descriptive identifier that locates a resource within a containing resource. This can be a unique name, a numerical key, or another notation that uniquely identifies the subject within the containing resource.",
+      "from_schema": "https://concepts.datalad.org/s/resources/unreleased",
+      "exact_mappings": [
+        "bibo:locator"
+      ],
+      "slot_uri": "dlres:locator",
+      "range": "string"
+    },
+    "resource": {
+      "name": "resource",
+      "description": "Property referencing a resource within an indexed-part or indexed-part-of qualified relationship.",
+      "from_schema": "https://concepts.datalad.org/s/resources/unreleased",
+      "slot_uri": "dlres:resource",
+      "range": "Resource",
+      "inlined": false
+    },
+    "sponsor": {
+      "name": "sponsor",
+      "description": "An agent that supports a thing through a pledge, promise, or financial contribution.",
+      "from_schema": "https://concepts.datalad.org/s/resources/unreleased",
+      "exact_mappings": [
+        "schema:sponsor"
+      ],
+      "slot_uri": "dlres:sponsor",
+      "range": "Agent"
+    },
+    "broad_mappings": {
+      "name": "broad_mappings",
+      "description": "A list of terms from different schemas or terminology systems that have broader meaning.",
+      "from_schema": "https://concepts.datalad.org/s/things/v1",
+      "is_a": "mappings",
+      "slot_uri": "skos:broadMatch",
+      "range": "uriorcurie",
+      "multivalued": true
+    },
+    "close_mappings": {
+      "name": "close_mappings",
+      "description": "A list of terms from different schemas or terminology systems that have close meaning.",
+      "from_schema": "https://concepts.datalad.org/s/things/v1",
+      "is_a": "mappings",
+      "slot_uri": "skos:closeMatch",
+      "range": "uriorcurie",
+      "multivalued": true
+    },
+    "description": {
+      "name": "description",
+      "description": "A free-text account of the subject.",
+      "from_schema": "https://concepts.datalad.org/s/things/v1",
+      "exact_mappings": [
+        "dcterms:description",
+        "rdfs:comment"
+      ],
+      "slot_uri": "dlthings:description",
+      "range": "string"
+    },
+    "exact_mappings": {
+      "name": "exact_mappings",
+      "description": "A list of terms from different schemas or terminology systems that have identical meaning.",
+      "from_schema": "https://concepts.datalad.org/s/things/v1",
+      "is_a": "mappings",
+      "slot_uri": "skos:exactMatch",
+      "range": "uriorcurie",
+      "multivalued": true
+    },
+    "attributes": {
+      "name": "attributes",
+      "description": "Declares a relation that associates a `Thing` (or another attribute) with an attribute, where an attribute is an intrinsic characteristic, such as a quality, capability, disposition, function, or is an externally derived attribute determined from some descriptor (e.g. a quantity, position, label/identifier). Technically, this declaration is done via an `AttributeSpecification` that combines a `predicate` with a value declaration and the attribute-related slots of a `Thing`. Importantly, such attributes are declared inline, because they do not have a unique identifier. If an identifier is available, a `Thing` declaration (see `relation`), and a qualification of that relationship via a `Statement` (see `characterized_by`) should be preferred.",
+      "from_schema": "https://concepts.datalad.org/s/things/v1",
+      "exact_mappings": [
+        "sio:SIO_000008"
+      ],
+      "slot_uri": "dlthings:attributes",
+      "range": "AttributeSpecification",
+      "multivalued": true,
+      "inlined": true,
+      "inlined_as_list": true
+    },
+    "id": {
+      "name": "id",
+      "description": "Persistent and globally unique identifier of a `Thing`.",
+      "from_schema": "https://concepts.datalad.org/s/things/v1",
+      "exact_mappings": [
+        "dcterms:identifier",
+        "schema:identifier",
+        "ADMS:identifier"
+      ],
+      "slot_uri": "dlthings:id",
+      "identifier": true,
+      "range": "uriorcurie"
+    },
+    "characterized_by": {
+      "name": "characterized_by",
+      "description": "Qualifies relationships between a subject `Thing` and an object `Thing` with a `Statement` declaring a `predicate` on the nature of the relationship.",
+      "from_schema": "https://concepts.datalad.org/s/things/v1",
+      "exact_mappings": [
+        "obo:RO_0000053"
+      ],
+      "slot_uri": "dlthings:characterized_by",
+      "range": "Statement",
+      "multivalued": true,
+      "inlined": true,
+      "inlined_as_list": true
+    },
+    "mappings": {
+      "name": "mappings",
+      "description": "A list of terms from different schemas or terminology systems that have comparable meaning. These may include terms that are precisely equivalent, broader or narrower in meaning, or otherwise semantically related but not equivalent from a strict ontological perspective.",
+      "from_schema": "https://concepts.datalad.org/s/things/v1",
+      "slot_uri": "skos:mappingRelation",
+      "range": "uriorcurie",
+      "multivalued": true
+    },
+    "annotations": {
+      "name": "annotations",
+      "description": "A record of properties of the metadata record on a subject, a collection of tag/text tuples with the semantics of OWL Annotation.",
+      "from_schema": "https://concepts.datalad.org/s/things/v1",
+      "slot_uri": "dlthings:annotations",
+      "range": "Annotation",
+      "multivalued": true,
+      "inlined": true
+    },
+    "annotation_tag": {
+      "name": "annotation_tag",
+      "description": "A tag identifying an annotation.",
+      "from_schema": "https://concepts.datalad.org/s/things/v1",
+      "range": "uriorcurie"
+    },
+    "annotation_value": {
+      "name": "annotation_value",
+      "description": "The actual annotation.",
+      "from_schema": "https://concepts.datalad.org/s/things/v1",
+      "range": "string"
+    },
+    "narrow_mappings": {
+      "name": "narrow_mappings",
+      "description": "A list of terms from different schemas or terminology systems that have narrower meaning.",
+      "from_schema": "https://concepts.datalad.org/s/things/v1",
+      "is_a": "mappings",
+      "slot_uri": "skos:narrowMatch",
+      "range": "uriorcurie",
+      "multivalued": true
+    },
+    "object": {
+      "name": "object",
+      "description": "Reference to a `Thing` within a `Statement`.",
+      "from_schema": "https://concepts.datalad.org/s/things/v1",
+      "exact_mappings": [
+        "rdf:object"
+      ],
+      "slot_uri": "rdf:object",
+      "relational_role": "OBJECT",
+      "range": "uriorcurie",
+      "multivalued": false,
+      "inlined": false
+    },
+    "predicate": {
+      "name": "predicate",
+      "description": "Reference to a `Property` within a `Statement`.",
+      "from_schema": "https://concepts.datalad.org/s/things/v1",
+      "exact_mappings": [
+        "rdf:predicate"
+      ],
+      "slot_uri": "rdf:predicate",
+      "relational_role": "PREDICATE",
+      "range": "Property",
+      "multivalued": false,
+      "inlined": false
+    },
+    "range": {
+      "name": "range",
+      "description": "Declares that the value of a `Thing` or `AttributeSpecification` are instances of a particular class.",
+      "from_schema": "https://concepts.datalad.org/s/things/v1",
+      "exact_mappings": [
+        "rdfs:range"
+      ],
+      "slot_uri": "rdfs:range",
+      "range": "uriorcurie"
+    },
+    "related_mappings": {
+      "name": "related_mappings",
+      "description": "A list of terms from different schemas or terminology systems that have related meaning.",
+      "from_schema": "https://concepts.datalad.org/s/things/v1",
+      "is_a": "mappings",
+      "slot_uri": "skos:relatedMatch",
+      "range": "uriorcurie",
+      "multivalued": true
+    },
+    "relations": {
+      "name": "relations",
+      "description": "Declares an unqualified relation of the subject `Thing` to another `Thing`. This schema slot is used to define related things inline. If such a definition is not needed. A qualified relationship can be declared directly using the `characterized_by` slot.",
+      "from_schema": "https://concepts.datalad.org/s/things/v1",
+      "exact_mappings": [
+        "dcat:relation",
+        "dcterms:relation"
+      ],
+      "domain": "Thing",
+      "slot_uri": "dlthings:relation",
+      "symmetric": true,
+      "relational_role": "OBJECT",
+      "range": "Thing",
+      "multivalued": true,
+      "inlined": true,
+      "inlined_as_list": false
+    },
+    "contains": {
+      "name": "contains",
+      "description": "Previously inlined `Thing` instances.",
+      "from_schema": "https://concepts.datalad.org/s/things/v1",
+      "exact_mappings": [
+        "dcat:relation",
+        "dcterms:relation"
+      ],
+      "domain": "Thing",
+      "slot_uri": "dlthings:contains",
+      "symmetric": true,
+      "relational_role": "OBJECT",
+      "range": "string",
+      "multivalued": true,
+      "inlined": false
+    },
+    "value": {
+      "name": "value",
+      "description": "Value of a thing.",
+      "from_schema": "https://concepts.datalad.org/s/things/v1",
+      "exact_mappings": [
+        "rdf:value"
+      ],
+      "slot_uri": "rdfs:value",
+      "relational_role": "OBJECT",
+      "range": "string"
+    },
+    "creator": {
+      "name": "creator",
+      "description": "An agent responsible for making an entity.",
+      "from_schema": "https://concepts.datalad.org/s/identifiers/unreleased",
+      "exact_mappings": [
+        "dcterms:creator"
+      ],
+      "slot_uri": "dlidentifiers:creator",
+      "range": "uriorcurie"
+    },
+    "identifiers": {
+      "name": "identifiers",
+      "description": "An unambiguous reference to the subject within a given context.",
+      "from_schema": "https://concepts.datalad.org/s/identifiers/unreleased",
+      "exact_mappings": [
+        "dcterms:identifier",
+        "schema:identifier",
+        "ADMS:identifier"
+      ],
+      "slot_uri": "dlidentifiers:identifier",
+      "range": "Identifier",
+      "multivalued": true,
+      "inlined": true,
+      "inlined_as_list": true
+    },
+    "notation": {
+      "name": "notation",
+      "description": "String of characters such as \"T58:5\" or \"30:4833\" used to uniquely identify a concept within the scope of a given concept scheme.",
+      "from_schema": "https://concepts.datalad.org/s/identifiers/unreleased",
+      "exact_mappings": [
+        "skos:notation"
+      ],
+      "slot_uri": "dlidentifiers:notation",
+      "range": "string"
+    },
+    "schema_agency": {
+      "name": "schema_agency",
+      "description": "Name of the agency that issued an identifier.",
+      "from_schema": "https://concepts.datalad.org/s/identifiers/unreleased",
+      "exact_mappings": [
+        "ADMS:schemaAgency"
+      ],
+      "slot_uri": "dlidentifiers:schema_agency",
+      "range": "string"
+    },
+    "at_location": {
+      "name": "at_location",
+      "description": "Associate the subject with a location. This can be a geographic place, or a place in a directory, or table.",
+      "from_schema": "https://concepts.datalad.org/s/spatial/unreleased",
+      "exact_mappings": [
+        "prov:atLocation"
+      ],
+      "slot_uri": "dlspatial:at_location",
+      "range": "Location",
+      "multivalued": false,
+      "inlined": false
+    },
+    "schema_type": {
+      "name": "schema_type",
+      "description": "State that the subject is an instance of a particular schema class. Typically, no explicit value needs to be assigned to this slot, because it matches the class type of a particular record. However, this slots can be used as a type designator of a schema element for validation and schema structure handling purposes. This is used to indicate specialized schema classes for properties that accept a hierarchy of classes as their range.",
+      "from_schema": "https://concepts.datalad.org/s/types/unreleased",
+      "exact_mappings": [
+        "dcterms:type"
+      ],
+      "slot_uri": "rdf:type",
+      "designates_type": true,
+      "range": "NodeUriOrCurie"
+    }
+  },
+  "classes": {
+    "Role": {
+      "name": "Role",
+      "description": "A role is the function of a resource or agent with respect to a subject, in the context of resource attribution or relationships.",
+      "from_schema": "https://concepts.datalad.org/s/roles/unreleased",
+      "exact_mappings": [
+        "prov:Role",
+        "dcat:Role"
+      ],
+      "is_a": "Thing",
+      "class_uri": "dlroles:Role"
+    },
+    "Relationship": {
+      "name": "Relationship",
+      "description": "An association class for characterizing the relation between two things with the role(s) the object had with respect to the subject. A relationship is always between two things only, but can be annotated with multiple roles (for example, a person having both an author role with respect to a dataset, and also being the person who is legally responsible contact for it).",
+      "from_schema": "https://concepts.datalad.org/s/roles/unreleased",
+      "close_mappings": [
+        "prov:Influence",
+        "dcat:Relationship"
+      ],
+      "slots": [
+        "object",
+        "roles"
+      ],
+      "slot_usage": {
+        "roles": {
+          "name": "roles",
+          "required": true
+        },
+        "object": {
+          "name": "object",
+          "key": true,
+          "range": "uriorcurie",
+          "required": true
+        }
+      },
+      "class_uri": "dlroles:Relationship"
+    },
+    "Agent": {
+      "name": "Agent",
+      "description": "Something that bears some form of responsibility for an activity taking place, for the existence of an entity, or for another agent's activity.",
+      "comments": [
+        "This class does not support even a basic `name` slot, because depending on the context, there may not be a suitable name, or one name would not be enough. If no specialized derived class is available in a context where a `name` or similar attribute is desired, it can be expressed via the `has_attributes` slot."
+      ],
+      "from_schema": "https://concepts.datalad.org/s/prov/unreleased",
+      "exact_mappings": [
+        "foaf:Agent",
+        "prov:Agent"
+      ],
+      "is_a": "Thing",
+      "slots": [
+        "acted_on_behalf_of",
+        "at_location",
+        "identifiers",
+        "qualified_relations"
+      ],
+      "class_uri": "dlprov:Agent"
+    },
+    "Activity": {
+      "name": "Activity",
+      "description": "An activity is something that occurs over a period of time and acts upon or with entities; it may include consuming, processing, transforming, modifying, relocating, using, or generating entities.",
+      "comments": [
+        "This class does not support even a basic `name` slot, because depending on the context, there may not be a suitable name, or one name would not be enough. If no specialized derived class is available in a context where a `name` or similar attribute is desired, it can be expressed via the `has_attributes` slot."
+      ],
+      "from_schema": "https://concepts.datalad.org/s/prov/unreleased",
+      "exact_mappings": [
+        "prov:Activity"
+      ],
+      "is_a": "Thing",
+      "slots": [
+        "at_location",
+        "ended_at",
+        "identifiers",
+        "qualified_relations",
+        "started_at",
+        "associated_with",
+        "informed_by"
+      ],
+      "class_uri": "dlprov:Activity"
+    },
+    "Entity": {
+      "name": "Entity",
+      "description": "A physical, digital, conceptual, or other kind of thing with some fixed aspects; entities may be real or imaginary.",
+      "from_schema": "https://concepts.datalad.org/s/prov/unreleased",
+      "exact_mappings": [
+        "prov:Entity"
+      ],
+      "is_a": "Thing",
+      "slots": [
+        "identifiers",
+        "qualified_relations",
+        "attributed_to",
+        "derived_from",
+        "generated_by"
+      ],
+      "class_uri": "dlprov:Entity"
+    },
+    "SoftwareAgent": {
+      "name": "SoftwareAgent",
+      "description": "Running software.",
+      "from_schema": "https://concepts.datalad.org/s/prov/unreleased",
+      "exact_mappings": [
+        "prov:SoftwareAgent"
+      ],
+      "is_a": "Agent",
+      "class_uri": "dlprov:SoftwareAgent"
+    },
+    "Person": {
+      "name": "Person",
+      "description": "Person agents are people, alive, dead, or fictional.",
+      "comments": [
+        "This class does not offer common slots like \"affiliation\" or \"email\". Instead, this information should be expressed as `qualified_relations` to other things with a role characterization. An affiliation can be expressed as a relation to an organization, and the role that the organization has for the person (e.g., \"employer\"). This approach has the advantage that relations like a membership can be expressed at either end (at an organizations potential `members` slot, but also (symmetrically) as a persons potential `member_of` slot)."
+      ],
+      "from_schema": "https://concepts.datalad.org/s/social/unreleased",
+      "exact_mappings": [
+        "foaf:Person",
+        "prov:Person"
+      ],
+      "is_a": "Agent",
+      "slots": [
+        "additional_names",
+        "family_name",
+        "given_name",
+        "honorific_name_prefix",
+        "honorific_name_suffix",
+        "formatted_name"
+      ],
+      "slot_usage": {
+        "family_name": {
+          "name": "family_name",
+          "annotations": {
+            "sh:name": {
+              "tag": "sh:name",
+              "value": "Family name"
+            },
+            "sh:group": {
+              "tag": "sh:group",
+              "value": "dlsocial:PersonPropertyGroup"
+            },
+            "sh:order": {
+              "tag": "sh:order",
+              "value": 1
+            }
+          }
+        },
+        "given_name": {
+          "name": "given_name",
+          "annotations": {
+            "sh:name": {
+              "tag": "sh:name",
+              "value": "Given name"
+            },
+            "sh:group": {
+              "tag": "sh:group",
+              "value": "dlsocial:PersonPropertyGroup"
+            },
+            "sh:order": {
+              "tag": "sh:order",
+              "value": 2
+            }
+          }
+        },
+        "additional_names": {
+          "name": "additional_names",
+          "annotations": {
+            "sh:name": {
+              "tag": "sh:name",
+              "value": "Additional names"
+            },
+            "sh:group": {
+              "tag": "sh:group",
+              "value": "dlsocial:PersonPropertyGroup"
+            },
+            "sh:order": {
+              "tag": "sh:order",
+              "value": 3
+            }
+          }
+        },
+        "honorific_name_prefix": {
+          "name": "honorific_name_prefix",
+          "annotations": {
+            "sh:name": {
+              "tag": "sh:name",
+              "value": "Title or prefix"
+            },
+            "sh:group": {
+              "tag": "sh:group",
+              "value": "dlsocial:PersonPropertyGroup"
+            },
+            "sh:order": {
+              "tag": "sh:order",
+              "value": 4
+            }
+          }
+        },
+        "honorific_name_suffix": {
+          "name": "honorific_name_suffix",
+          "annotations": {
+            "sh:name": {
+              "tag": "sh:name",
+              "value": "Suffix"
+            },
+            "sh:group": {
+              "tag": "sh:group",
+              "value": "dlsocial:PersonPropertyGroup"
+            },
+            "sh:order": {
+              "tag": "sh:order",
+              "value": 5
+            }
+          }
+        }
+      },
+      "class_uri": "dlsocial:Person"
+    },
+    "Organization": {
+      "name": "Organization",
+      "description": "A social or legal instititution such as a company, a society, or a university.",
+      "comments": [
+        "This class does not offer common slots like \"address\" or \"contact\". Instead, this information should be expressed as `qualified_relations` to other things with a role-characterization. An address can be expressed as a relation to a location, and the role this location has for the organization (e.g., \"main office\"). Likewise, a contact can be describe as a relation to a person, and the role that this person fulfills for the organization (e.g., \"spokesperson\")."
+      ],
+      "from_schema": "https://concepts.datalad.org/s/social/unreleased",
+      "exact_mappings": [
+        "foaf:Organization",
+        "prov:Organization"
+      ],
+      "is_a": "Agent",
+      "slots": [
+        "name",
+        "short_name"
+      ],
+      "class_uri": "dlsocial:Organization"
+    },
+    "Project": {
+      "name": "Project",
+      "description": "A collective endeavour of some kind. Typically it is a planned process that is undertaken or attempted to meet some requirement, or to achieve a particular goal.",
+      "from_schema": "https://concepts.datalad.org/s/social/unreleased",
+      "exact_mappings": [
+        "foaf:Project"
+      ],
+      "close_mappings": [
+        "obo:NCIT_C47885"
+      ],
+      "broad_mappings": [
+        "obo:BFO_0000015"
+      ],
+      "is_a": "Activity",
+      "slots": [
+        "short_name",
+        "title"
+      ],
+      "class_uri": "dlsocial:Project"
+    },
+    "InstantaneousEvent": {
+      "name": "InstantaneousEvent",
+      "description": "A moment of a transition from one particular state of the world to another.",
+      "from_schema": "https://concepts.datalad.org/s/temporal/unreleased",
+      "exact_mappings": [
+        "prov:InstantaneousEvent"
+      ],
+      "is_a": "Thing",
+      "slots": [
+        "at_time",
+        "identifiers",
+        "qualified_relations"
+      ]
+    },
+    "Resource": {
+      "name": "Resource",
+      "description": "A consumable, often quantifiable entity, typically made available by a single agent.",
+      "from_schema": "https://concepts.datalad.org/s/resources/unreleased",
+      "narrow_mappings": [
+        "dcat:Resource"
+      ],
+      "is_a": "Entity",
+      "slots": [
+        "about",
+        "indexed_parts",
+        "indexed_part_of",
+        "same_as",
+        "short_name",
+        "title"
+      ],
+      "class_uri": "dlres:Resource"
+    },
+    "Grant": {
+      "name": "Grant",
+      "description": "A grant, typically financial or otherwise quantifiable, of resources.",
+      "from_schema": "https://concepts.datalad.org/s/resources/unreleased",
+      "exact_mappings": [
+        "schema:Grant"
+      ],
+      "is_a": "Resource",
+      "slots": [
+        "sponsor"
+      ],
+      "class_uri": "dlres:Grant",
+      "disjoint_with": [
+        "Dataset",
+        "Grant"
+      ]
+    },
+    "Dataset": {
+      "name": "Dataset",
+      "description": "A collection of data, published or curated by a single agent. This is a conceptual entity. A single dataset might be available in more than one representation, with differing schematic layouts, formats, and serializations.",
+      "from_schema": "https://concepts.datalad.org/s/resources/unreleased",
+      "exact_mappings": [
+        "dcat:Dataset"
+      ],
+      "is_a": "Resource",
+      "class_uri": "dlres:Dataset",
+      "disjoint_with": [
+        "Grant",
+        "Instrument"
+      ]
+    },
+    "IndexedResourceRelationship": {
+      "name": "IndexedResourceRelationship",
+      "description": "An association class for attaching a `name` as additional information to a `hasPart` relationship.",
+      "from_schema": "https://concepts.datalad.org/s/resources/unreleased",
+      "slots": [
+        "locator",
+        "resource",
+        "roles"
+      ]
+    },
+    "IndexedResourcePart": {
+      "name": "IndexedResourcePart",
+      "description": "An association class for attaching an index `locator` as additional information to a `hasPart` relationship.",
+      "from_schema": "https://concepts.datalad.org/s/resources/unreleased",
+      "is_a": "IndexedResourceRelationship",
+      "slot_usage": {
+        "locator": {
+          "name": "locator",
+          "key": true
+        },
+        "resource": {
+          "name": "resource",
+          "required": true
+        }
+      }
+    },
+    "IndexedResourcePartOf": {
+      "name": "IndexedResourcePartOf",
+      "description": "An association class for attaching an index `locator` as additional information to a `isPartOf` relationship.",
+      "from_schema": "https://concepts.datalad.org/s/resources/unreleased",
+      "is_a": "IndexedResourceRelationship"
+    },
+    "Instrument": {
+      "name": "Instrument",
+      "description": "A thing that enables an agent to perform an action. This is typically a device (e.g., a machine to perform a particular type of measurement), but it can also be a questionnaire that is used to perform a particular kind of assessment. An instrument is typically not a \"reagent\".",
+      "from_schema": "https://concepts.datalad.org/s/resources/unreleased",
+      "related_mappings": [
+        "schema:instrument"
+      ],
+      "narrow_mappings": [
+        "obo:NCIT_C62103"
+      ],
+      "is_a": "Resource",
+      "class_uri": "dlres:Instrument",
+      "disjoint_with": [
+        "Dataset",
+        "Grant"
+      ]
+    },
+    "Publication": {
+      "name": "Publication",
+      "description": "A document that is the output of a publishing process. This can printed or electronic work offered for distribution, and may have been made available by a publisher.",
+      "from_schema": "https://concepts.datalad.org/s/publications/unreleased",
+      "exact_mappings": [
+        "obo:IAO_0000311",
+        "obo:NCIT_C48471"
+      ],
+      "close_mappings": [
+        "sio:SIO_000087"
+      ],
+      "is_a": "Resource",
+      "slots": [
+        "date_modified",
+        "date_published"
+      ],
+      "class_uri": "dlpubs:Publication"
+    },
+    "ThingMixin": {
+      "name": "ThingMixin",
+      "description": "Mix-in with the common interface of `Thing` and `AttributeSpecification`. This interface enables type specifications (`rdf:type`) for things and attributes via a `type` designator slot to indicate specialized schema classes for validation where a slot's `range` is too generic. A thing or attribute can be further describe with statements on qualified relations to other things (`characterized_by`), or inline attributes (`attributes`). A set of `mappings` slots enables the alignment for arbitrary external schemas and terminologies.",
+      "from_schema": "https://concepts.datalad.org/s/things/v1",
+      "mixin": true,
+      "slots": [
+        "annotations",
+        "broad_mappings",
+        "close_mappings",
+        "description",
+        "exact_mappings",
+        "attributes",
+        "characterized_by",
+        "narrow_mappings",
+        "related_mappings",
+        "schema_type"
+      ]
+    },
+    "ValueSpecificationMixin": {
+      "name": "ValueSpecificationMixin",
+      "description": "Mix-in for a (structured) value specification. Two slots are provided to define a (literal) value (`value`) and its type (`range`).",
+      "from_schema": "https://concepts.datalad.org/s/things/v1",
+      "slots": [
+        "range",
+        "value"
+      ]
+    },
+    "AttributeSpecification": {
+      "name": "AttributeSpecification",
+      "description": "An attribute is conceptually a thing, but it requires no dedicated identifier (`id`). Instead, it is linked to a `Thing` via its `attributes` slot and declares a `predicate` on the nature of the relationship.",
+      "from_schema": "https://concepts.datalad.org/s/things/v1",
+      "exact_mappings": [
+        "sio:SIO_000614"
+      ],
+      "close_mappings": [
+        "dlthings:Thing"
+      ],
+      "mixins": [
+        "ThingMixin",
+        "ValueSpecificationMixin"
+      ],
+      "slots": [
+        "predicate"
+      ],
+      "slot_usage": {
+        "predicate": {
+          "name": "predicate",
+          "required": true
+        }
+      }
+    },
+    "Property": {
+      "name": "Property",
+      "description": "An RDF property, a `Thing` used to define a `predicate`, for example in a `Statement`.",
+      "from_schema": "https://concepts.datalad.org/s/things/v1",
+      "exact_mappings": [
+        "rdf:Property"
+      ],
+      "is_a": "Thing",
+      "class_uri": "dlthings:Property"
+    },
+    "Statement": {
+      "name": "Statement",
+      "description": "An RDF statement that links a `predicate` (a `Property`) with an `object` (a `Thing`) to the subject to form a triple. A `Statement` is used to qualify a relation to a `Thing` referenced by its identifier. For specifying a qualified relation to an attribute that has no dedicated identifier, use an `AttributeSpecification`.",
+      "from_schema": "https://concepts.datalad.org/s/things/v1",
+      "exact_mappings": [
+        "rdf:Statement"
+      ],
+      "slots": [
+        "object",
+        "predicate"
+      ],
+      "slot_usage": {
+        "object": {
+          "name": "object",
+          "required": true
+        },
+        "predicate": {
+          "name": "predicate",
+          "required": true
+        }
+      },
+      "class_uri": "dlthings:Statement"
+    },
+    "Thing": {
+      "name": "Thing",
+      "description": "The most basic, identifiable item. In addition to the slots that are common between a `Thing` and an `AttributeSpecification` (see `ThingMixin`), two additional slots are provided. The `id` slot takes the required identifier for a `Thing`. The `relation` slot allows for the inline specification of other `Thing` instances. Such a relation is unqualified (and symmetric), and should be further characterized via a `Statement` (see `characterized_by`). From a schema perspective, the `relation` slots allows for building self-contained, structured documents (e.g., a JSON object) with arbitrarily complex information on a `Thing`.",
+      "from_schema": "https://concepts.datalad.org/s/things/v1",
+      "exact_mappings": [
+        "schema:Thing"
+      ],
+      "mixins": [
+        "ThingMixin"
+      ],
+      "slots": [
+        "id",
+        "relations",
+        "contains"
+      ],
+      "slot_usage": {
+        "id": {
+          "name": "id",
+          "annotations": {
+            "sh:group": {
+              "tag": "sh:group",
+              "value": "ThingsPropertyGroup"
+            },
+            "sh:name": {
+              "tag": "sh:name",
+              "value": "Persistent identifier"
+            },
+            "sh:order": {
+              "tag": "sh:order",
+              "value": 1
+            }
+          }
+        },
+        "characterized_by": {
+          "name": "characterized_by",
+          "annotations": {
+            "sh:group": {
+              "tag": "sh:group",
+              "value": "ThingsPropertyGroup"
+            },
+            "sh:name": {
+              "tag": "sh:name",
+              "value": "Is characterized by"
+            },
+            "sh:order": {
+              "tag": "sh:order",
+              "value": 2
+            }
+          }
+        },
+        "attributes": {
+          "name": "attributes",
+          "annotations": {
+            "sh:group": {
+              "tag": "sh:group",
+              "value": "ThingsPropertyGroup"
+            },
+            "sh:name": {
+              "tag": "sh:name",
+              "value": "Attributes"
+            },
+            "sh:order": {
+              "tag": "sh:order",
+              "value": 3
+            }
+          }
+        },
+        "description": {
+          "name": "description",
+          "annotations": {
+            "sh:group": {
+              "tag": "sh:group",
+              "value": "ThingsPropertyGroup"
+            },
+            "sh:name": {
+              "tag": "sh:name",
+              "value": "Description"
+            },
+            "sh:order": {
+              "tag": "sh:order",
+              "value": 4
+            }
+          }
+        },
+        "annotations": {
+          "name": "annotations",
+          "annotations": {
+            "sh:group": {
+              "tag": "sh:group",
+              "value": "ThingsPropertyGroup"
+            },
+            "sh:name": {
+              "tag": "sh:name",
+              "value": "Annotations"
+            },
+            "sh:order": {
+              "tag": "sh:order",
+              "value": 5
+            }
+          }
+        },
+        "relations": {
+          "name": "relations",
+          "annotations": {
+            "sh:group": {
+              "tag": "sh:group",
+              "value": "ThingsPropertyGroup"
+            },
+            "sh:name": {
+              "tag": "sh:name",
+              "value": "Relations"
+            },
+            "sh:order": {
+              "tag": "sh:order",
+              "value": 6
+            }
+          }
+        },
+        "contains": {
+          "name": "contains",
+          "annotations": {
+            "sh:group": {
+              "tag": "sh:group",
+              "value": "ThingsPropertyGroup"
+            },
+            "sh:name": {
+              "tag": "sh:name",
+              "value": "Contains"
+            },
+            "sh:order": {
+              "tag": "sh:order",
+              "value": 7
+            }
+          }
+        },
+        "exact_mappings": {
+          "name": "exact_mappings",
+          "annotations": {
+            "sh:group": {
+              "tag": "sh:group",
+              "value": "ThingsPropertyGroup"
+            },
+            "sh:name": {
+              "tag": "sh:name",
+              "value": "Exact mappings"
+            },
+            "sh:order": {
+              "tag": "sh:order",
+              "value": 8
+            }
+          }
+        },
+        "close_mappings": {
+          "name": "close_mappings",
+          "annotations": {
+            "sh:group": {
+              "tag": "sh:group",
+              "value": "ThingsPropertyGroup"
+            },
+            "sh:name": {
+              "tag": "sh:name",
+              "value": "Close mappings"
+            },
+            "sh:order": {
+              "tag": "sh:order",
+              "value": 9
+            }
+          }
+        },
+        "broad_mappings": {
+          "name": "broad_mappings",
+          "annotations": {
+            "sh:group": {
+              "tag": "sh:group",
+              "value": "ThingsPropertyGroup"
+            },
+            "sh:name": {
+              "tag": "sh:name",
+              "value": "Broad mappings"
+            },
+            "sh:order": {
+              "tag": "sh:order",
+              "value": 10
+            }
+          }
+        },
+        "narrow_mappings": {
+          "name": "narrow_mappings",
+          "annotations": {
+            "sh:group": {
+              "tag": "sh:group",
+              "value": "ThingsPropertyGroup"
+            },
+            "sh:name": {
+              "tag": "sh:name",
+              "value": "Narrow mappings"
+            },
+            "sh:order": {
+              "tag": "sh:order",
+              "value": 11
+            }
+          }
+        },
+        "related_mappings": {
+          "name": "related_mappings",
+          "annotations": {
+            "sh:group": {
+              "tag": "sh:group",
+              "value": "ThingsPropertyGroup"
+            },
+            "sh:name": {
+              "tag": "sh:name",
+              "value": "Related mappings"
+            },
+            "sh:order": {
+              "tag": "sh:order",
+              "value": 12
+            }
+          }
+        }
+      },
+      "class_uri": "dlthings:Thing"
+    },
+    "ValueSpecification": {
+      "name": "ValueSpecification",
+      "description": "A `Thing` that is a value of some kind. This class can be used to describe an outcome of a measurement, a factual value or constant, or other qualitative or quantitative information with an associated identifier. If no identifier is available, an `AttributeSpecification` can be used within the context of an associated `Thing` (`attributes`).",
+      "from_schema": "https://concepts.datalad.org/s/things/v1",
+      "exact_mappings": [
+        "obo:OBI_0001933"
+      ],
+      "is_a": "Thing",
+      "mixins": [
+        "ValueSpecificationMixin"
+      ],
+      "slot_usage": {
+        "value": {
+          "name": "value",
+          "notes": [
+            "It is required, because when it is not needed, `Thing` should be used as a type. Its absence is therefore likely a sign of an error."
+          ],
+          "required": true
+        }
+      }
+    },
+    "Annotation": {
+      "name": "Annotation",
+      "description": "A tag/value pair with the semantics of OWL Annotation.",
+      "from_schema": "https://concepts.datalad.org/s/things/v1",
+      "slots": [
+        "annotation_tag",
+        "annotation_value"
+      ],
+      "slot_usage": {
+        "annotation_tag": {
+          "name": "annotation_tag",
+          "key": true,
+          "required": true
+        },
+        "annotation_value": {
+          "name": "annotation_value",
+          "required": true
+        }
+      }
+    },
+    "Identifier": {
+      "name": "Identifier",
+      "description": "An identifier is a label that uniquely identifies an item in a particular context. Some identifiers are globally unique. All identifiers are unique within their individual scope.",
+      "from_schema": "https://concepts.datalad.org/s/identifiers/unreleased",
+      "close_mappings": [
+        "ADMS:Identifier"
+      ],
+      "slots": [
+        "creator",
+        "notation",
+        "schema_type"
+      ],
+      "slot_usage": {
+        "notation": {
+          "name": "notation",
+          "required": true
+        }
+      },
+      "class_uri": "dlidentifiers:Identifier"
+    },
+    "IssuedIdentifier": {
+      "name": "IssuedIdentifier",
+      "description": "An identifier that was issued by a particular agent with a notation that has no (or an undefined) relation to the nature of the identified entity.",
+      "from_schema": "https://concepts.datalad.org/s/identifiers/unreleased",
+      "see_also": [
+        "https://semiceu.github.io/ADMS/releases/2.00/#Identifier"
+      ],
+      "exact_mappings": [
+        "ADMS:Identifier"
+      ],
+      "is_a": "Identifier",
+      "slots": [
+        "schema_agency"
+      ],
+      "class_uri": "dlidentifiers:IssuedIdentifier"
+    },
+    "ComputedIdentifier": {
+      "name": "ComputedIdentifier",
+      "description": "An identifier that has been derived from information on the identified entity.",
+      "from_schema": "https://concepts.datalad.org/s/identifiers/unreleased",
+      "narrow_mappings": [
+        "spdx:Checksum"
+      ],
+      "is_a": "Identifier",
+      "class_uri": "dlidentifiers:ComputedIdentifier"
+    },
+    "Checksum": {
+      "name": "Checksum",
+      "description": "A Checksum is a value that allows to check the integrity of the contents of a file. Even small changes to the content of the file will change its checksum. This class allows the results of a variety of checksum and cryptographic message digest algorithms to be represented.",
+      "from_schema": "https://concepts.datalad.org/s/identifiers/unreleased",
+      "exact_mappings": [
+        "spdx:Checksum"
+      ],
+      "is_a": "ComputedIdentifier",
+      "slot_usage": {
+        "creator": {
+          "name": "creator",
+          "description": "Identifies the software agent (algorithm) used to produce the subject `Checksum`.",
+          "exact_mappings": [
+            "spdx:algorithm"
+          ],
+          "required": true
+        },
+        "notation": {
+          "name": "notation",
+          "description": "Lower case hexadecimal encoded checksum digest value.",
+          "exact_mappings": [
+            "spdx:checksumValue"
+          ],
+          "range": "HexBinary",
+          "required": true
+        }
+      },
+      "class_uri": "dlidentifiers:Checksum"
+    },
+    "DOI": {
+      "name": "DOI",
+      "description": "Digital Object Identifier (DOI; ISO 26324), an identifier system governed by the DOI Foundation, where individual identifiers are issued by one of several registration agencies.",
+      "from_schema": "https://concepts.datalad.org/s/identifiers/unreleased",
+      "is_a": "IssuedIdentifier",
+      "slot_usage": {
+        "creator": {
+          "name": "creator",
+          "description": "By default, the creator is identified as \"https://doi.org\".",
+          "ifabsent": "string(https://doi.org)"
+        },
+        "notation": {
+          "name": "notation",
+          "description": "The identifier notation is specified without a URL-prefix, or a `doi:` prefix."
+        },
+        "schema_agency": {
+          "name": "schema_agency",
+          "description": "By default, the schema agency is identified as `DOI Foundation`.",
+          "ifabsent": "string(DOI Foundation)"
+        }
+      },
+      "class_uri": "dlidentifiers:DOI",
+      "unique_keys": {
+        "value": {
+          "unique_key_name": "value",
+          "unique_key_slots": [
+            "notation"
+          ],
+          "description": "The DOI notation is globally unique within the scope of DOIs"
+        }
+      }
+    },
+    "Location": {
+      "name": "Location",
+      "description": "A location can be an identifiable geographic place (ISO 19112), but it can also be a non-geographic place such as a directory, row, or column. As such, there are numerous ways in which location can be expressed, such as by a coordinate, address, landmark, and so forth.",
+      "from_schema": "https://concepts.datalad.org/s/spatial/unreleased",
+      "exact_mappings": [
+        "prov:Location"
+      ],
+      "is_a": "Thing",
+      "slots": [
+        "identifiers",
+        "qualified_relations"
+      ],
+      "class_uri": "dlspatial:Location"
+    }
+  },
+  "source_file": "base_unreleased.yaml"
+}
