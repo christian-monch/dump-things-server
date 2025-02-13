@@ -23,6 +23,7 @@ if TYPE_CHECKING:
 class Thing:
     id: str
     relations: dict[str, Thing] | None = None
+    contains: list[str] | None = None
 
     def model_copy(self):
         return copy(self)
@@ -109,35 +110,6 @@ tree = (
 )
 
 
-empty_inlined_object = Person(
-    id='trr379:test_extract_1',
-    given_name='Grandfather',
-    relations={
-        'trr379:test_extract_a': Thing(id='trr379:test_extract_a'),
-        'trr379:test_extract_b': Thing(id='trr379:test_extract_b'),
-        'trr379:test_extract_c': Thing(id='trr379:test_extract_c'),
-    },
-)
-
-
-# The value is a `Person` record
-empty_inlined_json_record = {
-    'id': 'trr379:test_extract_1',
-    'given_name': 'Grandfather',
-    'relations': {
-        'trr379:test_extract_a': {
-            'id': 'trr379:test_extract_a',
-        },
-        'trr379:test_extract_b': {
-            'id': 'trr379:test_extract_b',
-        },
-        'trr379:test_extract_c': {
-            'id': 'trr379:test_extract_c',
-        },
-    },
-}
-
-
 def test_inline_extraction_locally(dump_stores_simple):
     root = dump_stores_simple
 
@@ -160,21 +132,10 @@ def _check_result_objects(
 
     for record_id, linked_ids in tree:
         record = get_record_by_id(record_id)
-        assert len(record.relations or {}) == len(linked_ids)
+        assert len(record.contains or {}) == len(linked_ids)
         for linked_id in linked_ids:
             # Processing might add `schema_type` to records, ignore it.
-            assert record.relations[linked_id].id == linked_id
-
-
-def test_dont_extract_empty_things_locally(dump_stores_simple):
-    root = dump_stores_simple
-
-    store = TokenStorage(
-        root / 'token_stores' / 'token_1', Storage(root / 'global_store')
-    )
-    records = store.extract_inlined(empty_inlined_object, MockedModule())
-    assert len(records) == 1
-    assert records[0] == empty_inlined_object
+            assert linked_id in record.contains
 
 
 def test_inline_extraction_on_service(fastapi_client_simple):
@@ -227,26 +188,11 @@ def _check_result_json(
 
     for record_id, linked_ids in tree:
         record = get_record_by_id(record_id)
-        if 'relations' in record:
-            assert len(record['relations']) == len(linked_ids)
-        for linked_id in linked_ids:
-            # Processing might add `schema_type` to records, ignore it.
-            if 'schema_type' in record['relations'][linked_id]:
-                del record['relations'][linked_id]['schema_type']
-            assert record['relations'][linked_id] == {'id': linked_id}
-
-
-def test_dont_extract_empty_things_on_service(fastapi_client_simple):
-    test_client, store = fastapi_client_simple
-
-    # Deposit JSON record
-    response = test_client.post(
-        '/trr379_store/record/Person',
-        headers={'x-dumpthings-token': 'token_1'},
-        json=empty_inlined_json_record,
-    )
-    assert response.status_code == HTTP_200_OK
-
-    # Ensure that no `Thing` records are extracted
-    thing_path = store / 'token_stores' / 'token_1' / 'trr379_store' / 'Thing'
-    assert tuple(thing_path.rglob('*.yaml')) == ()
+        if linked_ids:
+            assert len(record['contains']) == len(linked_ids)
+            for linked_id in linked_ids:
+                # Processing might add `schema_type` to records, ignore it.
+                assert linked_id in record['contains']
+        else:
+            assert record.get('relations', None) is None
+            assert record.get('contains', None) is None

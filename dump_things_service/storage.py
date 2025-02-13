@@ -14,6 +14,7 @@ from typing import (
 
 import yaml
 from fastapi import HTTPException
+from jeepney import new_method_return
 from pydantic import (
     BaseModel,
     TypeAdapter,
@@ -252,12 +253,11 @@ class TokenStorage(Storage):
                 ]
             )
         )
-        # Simplify the relations in this record
+        # Add `contains`-entries for every record previously in `relations`
         new_record = record.model_copy()
-        new_record.relations = {
-            sub_record_id: model.Thing(id=sub_record_id)
-            for sub_record_id in record.relations
-        }
+        new_record.contains = (new_record.contains or []) + list(record.relations)
+        # Clean `relations` of the new record
+        new_record.relations = None
         return [new_record, *extracted_sub_records]
 
 
