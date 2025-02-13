@@ -38,7 +38,7 @@ def dump_stores_simple(tmp_path_factory):
         root_dir=tmp_path,
         collection_info={
             'trr379_store': (
-                'https://concepts.trr379.de/s/base/unreleased.yaml',
+                '/home/cristian/Develop/dump-things-service/schemas/base_unreleased-full.json',
                 'digest-md5',
             ),
         },
