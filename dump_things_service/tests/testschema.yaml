@@ -9,12 +9,24 @@ imports:
 default_range: string
 default_prefix: abc
 
+
 classes:
+  Any:
+    class_uri: "linkml:Any"
+
   Thing:
     attributes:
       id:
         identifier: true
         required: true
+      relations:
+        range: Any
+        any_of:
+          - range: string
+          - range: Thing
+        multivalued: true
+        inlined: true
+        inlined_as_list: false
   Person:
     is_a: Thing
     attributes:
