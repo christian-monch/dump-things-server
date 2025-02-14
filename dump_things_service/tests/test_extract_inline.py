@@ -48,6 +48,7 @@ class MockedModule:
     Agent = Agent
     Thing = Thing
     Person = Person
+    InstantaneousEvent = InstantaneousEvent
 
 
 # The value is a `Person` record
@@ -75,12 +76,6 @@ inlined_json_record = {
             'at_time': '2028-12-31',
         },
     },
-    # Preset `contains` to test honoring of existing ids and uniqueness property of `contains`
-    'contains': [
-        'abc',
-        'def',
-        'trr379:test_extract_1_1',
-    ],
 }
 
 
@@ -105,17 +100,11 @@ inlined_object = Person(
             relations=None,
         ),
     },
-    # Preset `contains` to test honoring of existing ids and uniqueness property of `contains`
-    contains=[
-        'abc',
-        'def',
-        'trr379:test_extract_1_1',
-    ],
 )
 
 
 tree = (
-    ('trr379:test_extract_1', ('trr379:test_extract_1_1', 'trr379:test_extract_1_2'), ('abc', 'def')),
+    ('trr379:test_extract_1', ('trr379:test_extract_1_1', 'trr379:test_extract_1_2'), ()),
     ('trr379:test_extract_1_1', ('trr379:test_extract_1_1_1',), ()),
     ('trr379:test_extract_1_2', (), ()),
     ('trr379:test_extract_1_1_1', (), ()),
@@ -145,11 +134,11 @@ def _check_result_objects(
     for record_id, linked_ids, pre_existing in tree:
         record = get_record_by_id(record_id)
         for identifier in pre_existing:
-            record.contains.remove(identifier)
-        assert len(record.contains or []) == len(linked_ids)
+            del record.relations[identifier]
+        assert len(record.relations or []) == len(linked_ids)
         for linked_id in linked_ids:
             # Processing might add `schema_type` to records, ignore it.
-            assert linked_id in record.contains
+            assert record.relations[linked_id] == ''
 
 
 def test_inline_extraction_on_service(fastapi_client_simple):
@@ -203,12 +192,11 @@ def _check_result_json(
     for record_id, linked_ids, pre_existing in tree:
         record = get_record_by_id(record_id)
         for identifier in pre_existing:
-            record['contains'].remove(identifier)
+            del record['contains'][identifier]
         if linked_ids:
-            assert len(record['contains']) == len(linked_ids)
+            assert len(record['relations']) == len(linked_ids)
             for linked_id in linked_ids:
                 # Processing might add `schema_type` to records, ignore it.
-                assert linked_id in record['contains']
+                assert record['relations'][linked_id] == ''
         else:
             assert record.get('relations', None) is None
-            assert record.get('contains', None) is None

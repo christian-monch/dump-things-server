@@ -247,16 +247,16 @@ class TokenStorage(Storage):
                 *[
                     self.extract_inlined(sub_record, model)
                     for sub_record in record.relations.values()
+                    if sub_record != ''
                 ]
             )
         )
-        # Add `contains`-entries for every record previously in `relations`
+        # Create simplified `relations` in the new copy
         new_record = record.model_copy()
-        new_record.contains = list(
-            set((new_record.contains or []) + list(record.relations))
-        )
-        # Clean `relations` of the new record
-        new_record.relations = None
+        new_record.relations = {
+            identifier: ''
+            for identifier in record.relations
+        }
         return [new_record, *extracted_sub_records]
 
 

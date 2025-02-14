@@ -1063,26 +1063,14 @@
       "slot_uri": "dlthings:relation",
       "symmetric": true,
       "relational_role": "OBJECT",
-      "range": "Thing",
+      "range": "Any",
+      "any_of": [
+        {"range": "Thing"},
+        {"range": "string"}
+      ],
       "multivalued": true,
       "inlined": true,
       "inlined_as_list": false
-    },
-    "contains": {
-      "name": "contains",
-      "description": "Previously inlined `Thing` instances.",
-      "from_schema": "https://concepts.datalad.org/s/things/v1",
-      "exact_mappings": [
-        "dcat:relation",
-        "dcterms:relation"
-      ],
-      "domain": "Thing",
-      "slot_uri": "dlthings:contains",
-      "symmetric": true,
-      "relational_role": "OBJECT",
-      "range": "string",
-      "multivalued": true,
-      "inlined": false
     },
     "value": {
       "name": "value",
@@ -1165,6 +1153,9 @@
     }
   },
   "classes": {
+    "Any": {
+      "class_uri": "linkml:Any"
+    },
     "Role": {
       "name": "Role",
       "description": "A role is the function of a resource or agent with respect to a subject, in the context of resource attribution or relationships.",
@@ -1644,8 +1635,7 @@
       ],
       "slots": [
         "id",
-        "relations",
-        "contains"
+        "relations"
       ],
       "slot_usage": {
         "id": {

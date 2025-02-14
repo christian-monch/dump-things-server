@@ -3,6 +3,7 @@ name: person_schema
 prefixes:
   abc: http://example.org/person-schema/abc/
   xyz: http://example.org/person-schema/xyz/
+  trr379: http://example.org/person-schema/trr379/
   linkml: https://w3id.org/linkml/
 imports:
   - linkml:types
@@ -27,6 +28,19 @@ classes:
         multivalued: true
         inlined: true
         inlined_as_list: false
+
+  Agent:
+    is_a: Thing
+    attributes:
+      acted_on_behalf_of:
+        range: string
+        multivalued: true
+
+  InstantaneousEvent:
+    is_a: Thing
+    attributes:
+      at_time:
+
   Person:
     is_a: Thing
     attributes:
