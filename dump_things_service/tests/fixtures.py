@@ -37,10 +37,7 @@ def dump_stores_simple(tmp_path_factory):
     create_stores(
         root_dir=tmp_path,
         collection_info={
-            'trr379_store': (
-                '/home/cristian/Develop/dump-things-service/schemas/base_unreleased-full.json',
-                'digest-md5',
-            ),
+            'trr379_store': (str(schema_path), 'digest-md5'),
         },
         token_stores=['token_1'],
         default_entries=[('Person', identifier_trr, test_record_trr)],

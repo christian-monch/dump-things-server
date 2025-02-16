@@ -1,11 +1,16 @@
 from __future__ import annotations
 
+import json
+import sys
 from copy import copy
 from dataclasses import dataclass
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 import pytest  # noqa F401
+from pydantic import ValidationError
 
+from dump_things_service.model import build_model
 from dump_things_service.storage import (
     Storage,
     TokenStorage,
@@ -79,28 +84,32 @@ inlined_json_record = {
 }
 
 
-inlined_object = Person(
-    id='trr379:test_extract_1',
-    given_name='Grandfather',
-    relations={
-        'trr379:test_extract_1_1': Person(
-            id='trr379:test_extract_1_1',
-            given_name='Father',
-            relations={
-                'trr379:test_extract_1_1_1': Agent(
-                    id='trr379:test_extract_1_1_1',
-                    acted_on_behalf_of=['trr379:test_extract_1_1'],
-                    relations=None,
-                ),
-            },
-        ),
-        'trr379:test_extract_1_2': InstantaneousEvent(
-            id='trr379:test_extract_1_2',
-            at_time='2028-12-31',
-            relations=None,
-        ),
-    },
-)
+def get_inlined_object(model_module):
+    return model_module.Person(
+        id='trr379:test_extract_1',
+        given_name='Grandfather',
+        relations={
+            'trr379:test_extract_1_1': model_module.Person(
+                id='trr379:test_extract_1_1',
+                given_name='Father',
+                relations={
+                    'trr379:test_extract_1_1_1': model_module.Agent(
+                        id='trr379:test_extract_1_1_1',
+                        acted_on_behalf_of=['trr379:test_extract_1_1'],
+                        relations=None,
+                    ),
+                },
+            ),
+            'trr379:test_extract_1_2': model_module.InstantaneousEvent(
+                id='trr379:test_extract_1_2',
+                at_time='2028-12-31',
+                relations=None,
+            ),
+        },
+    )
+
+
+inlined_object = get_inlined_object(sys.modules[__name__])
 
 
 tree = (
@@ -109,6 +118,38 @@ tree = (
     ('trr379:test_extract_1_2', (), ()),
     ('trr379:test_extract_1_1_1', (), ()),
 )
+
+
+def test_testschema(dump_stores_simple):
+    schema_path = Path(__file__).parent / 'testschema.yaml'
+    model_module = build_model(str(schema_path))
+
+    # Get an inlined object with testschema-classes and validate it
+    local_inlined_object = get_inlined_object(model_module)
+    x = model_module.Person.model_validate(local_inlined_object)
+    print(repr(x))
+
+    # Do the same for JSON
+    x = model_module.Person.model_validate_json(json.dumps(inlined_json_record))
+    print(repr(x))
+
+    # Set the related objects to empty strings and validate it
+    local_inlined_object.relations = {
+        'trr379:test_extract_1_1': '',
+        'trr379:test_extract_1_2': ''
+    }
+    x = model_module.Person.model_validate(local_inlined_object)
+    print(repr(x))
+
+    # Do the same for JSON
+    old_relations = inlined_json_record['relations']
+    inlined_json_record['relations'] = {
+        'trr379:test_extract_1_1': '',
+        'trr379:test_extract_1_2': '',
+    }
+    x = model_module.Person.model_validate_json(json.dumps(inlined_json_record), strict=False)
+    print(repr(x))
+    inlined_json_record['relations'] = old_relations
 
 
 def test_inline_extraction_locally(dump_stores_simple):
@@ -143,6 +184,21 @@ def _check_result_objects(
 
 def test_inline_extraction_on_service(fastapi_client_simple):
     test_client, store = fastapi_client_simple
+
+    # Deposit JSON record with extracted records
+    response = test_client.post(
+        '/trr379_store/record/Person',
+        headers={'x-dumpthings-token': 'token_1'},
+        json={
+            'id': 'trr379:test_extract_two_1',
+            'given_name': 'Grandfather',
+            'relations': {
+                'trr379:test_extract_two_1_1': '',
+                'trr379:test_extract_two_1_2': '',
+            },
+        },
+    )
+    assert response.status_code == HTTP_200_OK
 
     # Deposit JSON record
     response = test_client.post(
