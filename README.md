@@ -67,8 +67,8 @@ The service provides the following endpoints:
  In addition, the `content-type`-header must be set to `application/json`.
  The endpoints supports the query parameter `format`, to select the format of the posted data.
  It can be set to `json` (the default) or to `ttl`.
- If the `ttl`-format is selected, the content-type should be `text/turtle`.
-
+ If the `ttl`-format is selected, the content-type should be `text/turtle`.  
+ The service supports extraction of inlined records as described in [Dump Things Service](https://concepts.datalad.org/dump-things/).
   
 - `GET /<interoperability-label>/records/<class>`: retrieve all objects of type `<class>` (defined by the schema associated with `<interoperability-label>`) that are stored in the global storage space of the service.
  If a token is provided, all matching objects from the token storage space are returned in addition.
@@ -89,7 +89,6 @@ The service provides the following endpoints:
 The current implementation has the following restrictions:
 
 - does not yet support any other data format than `yaml`
-- does not yet support extraction of inlined records
 - does not yet find subclasses of a searched class
 
 
