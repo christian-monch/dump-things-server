@@ -16,6 +16,10 @@ jobs:
         run: |
           pip install -r requirements.txt
 
+      - name: Install subdatasets
+        run: |
+          git submodule update --init --recursive
+
       - name: run tests
         run: |
           hatch run tests:run
