@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import sys
 from copy import copy
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
@@ -47,6 +48,7 @@ class MockedModule:
     Agent = Agent
     Thing = Thing
     Person = Person
+    InstantaneousEvent = InstantaneousEvent
 
 
 # The value is a `Person` record
@@ -77,28 +79,32 @@ inlined_json_record = {
 }
 
 
-inlined_object = Person(
-    id='trr379:test_extract_1',
-    given_name='Grandfather',
-    relations={
-        'trr379:test_extract_1_1': Person(
-            id='trr379:test_extract_1_1',
-            given_name='Father',
-            relations={
-                'trr379:test_extract_1_1_1': Agent(
-                    id='trr379:test_extract_1_1_1',
-                    acted_on_behalf_of=['trr379:test_extract_1_1'],
-                    relations=None,
-                ),
-            },
-        ),
-        'trr379:test_extract_1_2': InstantaneousEvent(
-            id='trr379:test_extract_1_2',
-            at_time='2028-12-31',
-            relations=None,
-        ),
-    },
-)
+def get_inlined_object(model_module):
+    return model_module.Person(
+        id='trr379:test_extract_1',
+        given_name='Grandfather',
+        relations={
+            'trr379:test_extract_1_1': model_module.Person(
+                id='trr379:test_extract_1_1',
+                given_name='Father',
+                relations={
+                    'trr379:test_extract_1_1_1': model_module.Agent(
+                        id='trr379:test_extract_1_1_1',
+                        acted_on_behalf_of=['trr379:test_extract_1_1'],
+                        relations=None,
+                    ),
+                },
+            ),
+            'trr379:test_extract_1_2': model_module.InstantaneousEvent(
+                id='trr379:test_extract_1_2',
+                at_time='2028-12-31',
+                relations=None,
+            ),
+        },
+    )
+
+
+inlined_object = get_inlined_object(sys.modules[__name__])
 
 
 tree = (
