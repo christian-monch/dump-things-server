@@ -57,11 +57,11 @@ hatch run fastapi:run /data-storage/store --host 127.0.0.1 --port 8000
 
 ### Endpoints
 
-Most endpoints require an *interoperability-label*. These correspond to the names of the "data record collection"-directories (for example `myschema-v3-fmta` in [Dump Things Service](https://concepts.datalad.org/dump-things/)) in the stores.
+Most endpoints require an *collection*. These correspond to the names of the "data record collection"-directories (for example `myschema-v3-fmta` in [Dump Things Service](https://concepts.datalad.org/dump-things/)) in the stores.
 
 The service provides the following endpoints:
 
-- `POST /<interoperability-label>/record/<class>`: an object of type `<class>` (defined by the schema associated with `<interoperability-label>`) can be posted to this endpoint.
+- `POST /<collection>/record/<class>`: an object of type `<class>` (defined by the schema associated with `<collection>`) can be posted to this endpoint.
  The object-content must be JSON-encoded.
  In order to `POST` an object to the service, you MUST provide a valid token in the HTTP-header `X-DumpThings-Token`. This token has to correspond to a token value defined in the configuration file.
  In addition, the `content-type`-header must be set to `application/json`.
@@ -70,14 +70,14 @@ The service provides the following endpoints:
  If the `ttl`-format is selected, the content-type should be `text/turtle`.  
  The service supports extraction of inlined records as described in [Dump Things Service](https://concepts.datalad.org/dump-things/).
   
-- `GET /<interoperability-label>/records/<class>`: retrieve all objects of type `<class>` or any of its subclasses that are stored in the global storage space of the service.
+- `GET /<collection>/records/<class>`: retrieve all objects of type `<class>` or any of its subclasses that are stored in the global storage space of the service.
  If a token is provided, all matching objects from the token storage space are returned in addition.
  Objects from token space take precedence over objects from the global space.
  The endpoints supports the query parameter `format`, which determines the format of the query result.
  It can be set to `json` (the default) or to `ttl`,
 
 
-- `GET /<interoperability-label>/record?id=<id>`: retrieve an object with the id `<id>` from the global storage of the service. If a token is provided, the object is also searched in the token storage space. Only objects with a type defined by the schema associated with `<interoperability-label>` are considered.
+- `GET /<collection>/record?id=<id>`: retrieve an object with the id `<id>` from the global storage of the service. If a token is provided, the object is also searched in the token storage space. Only objects with a type defined by the schema associated with `<collection>` are considered.
   The endpoints supports the query parameter `format`, which determines the format of the query result.
   It can be set to `json` (the default) or to `ttl`,
 
