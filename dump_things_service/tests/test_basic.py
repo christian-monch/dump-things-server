@@ -62,6 +62,23 @@ def test_store_record(fastapi_client_simple):
             key=lambda x: x['id'],
         )
 
+    # Check that subclasses are retrieved
+    for i in range(1, 6):
+        response = test_client.get(
+            f'/store_{i}/records/Thing',
+            headers={'x-dumpthings-token': 'token_1'},
+        )
+        assert sorted(
+            json.loads(response.text),
+            key=lambda x: x['id'],
+        ) == sorted(
+            [
+                {'id': identifier, 'given_name': given_name},
+                extra_record,
+            ],
+            key=lambda x: x['id'],
+        )
+
 
 def test_global_store_fails(fastapi_client_simple):
     test_client, _ = fastapi_client_simple

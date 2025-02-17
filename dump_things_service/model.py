@@ -1,11 +1,17 @@
 from __future__ import annotations
 
+import dataclasses  # noqa F401 -- used by generated code
 import importlib
 import subprocess
 import tempfile
 from itertools import count
 from pathlib import Path
 from typing import Any
+
+import annotated_types  # noqa F401 -- used by generated code
+import pydantic  # noqa F401 -- used by generated code
+import pydantic_core  # noqa F401 -- used by generated code
+from pydantic._internal._model_construction import ModelMetaclass
 
 from dump_things_service.utils import (
     read_url,
@@ -43,3 +49,19 @@ def get_classes(
         return False
 
     return [name for name, obj in model.__dict__.items() if is_thing_subclass(obj)]
+
+
+def get_subclasses(
+    model: Any,
+    class_name: str,
+) -> list:
+    """get names of all subclasses (includes class_name itself)"""
+
+    def is_subclass(obj) -> bool:
+        while obj is not None and isinstance(obj, ModelMetaclass):
+            if obj.__name__ == class_name:
+                return True
+            obj = getattr(obj, '__base__', None)
+        return False
+
+    return [name for name, obj in model.__dict__.items() if is_subclass(obj)]

@@ -26,6 +26,7 @@ from dump_things_service import Format
 from dump_things_service.model import (
     build_model,
     get_classes,
+    get_subclasses,
 )
 from dump_things_service.storage import (
     Storage,
@@ -205,12 +206,21 @@ async def read_records_of_type(
     from dump_things_service.convert import convert_format
 
     records = {}
-    for record in global_store.get_all_records(collection, class_name):
-        records[record['id']] = record
+    try:
+        model = model_info[collection][0]
+    except KeyError:
+        raise HTTPException(
+            status_code=401, detail=f'No such collection: "{collection}".'
+        ) from None
+
+    for search_class_name in get_subclasses(model, class_name):
+        for record in global_store.get_all_records(collection, search_class_name):
+            records[record['id']] = record
     store = _get_store_for_token(api_key)
     if store:
-        for record in store.get_all_records(collection, class_name):
-            records[record['id']] = record
+        for search_class_name in get_subclasses(model, class_name):
+            for record in store.get_all_records(collection, search_class_name):
+                records[record['id']] = record
 
     if format == Format.ttl:
         ttls = [
