@@ -147,7 +147,7 @@ def test_testschema(dump_stores_simple):
         'trr379:test_extract_1_1': '',
         'trr379:test_extract_1_2': '',
     }
-    x = model_module.Person.model_validate_json(json.dumps(inlined_json_record), strict=False)
+    x = model_module.Person.model_validate_json(json.dumps(inlined_json_record))
     print(repr(x))
     inlined_json_record['relations'] = old_relations
 
