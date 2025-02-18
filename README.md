@@ -72,7 +72,7 @@ The service provides the following endpoints:
   
 - `GET /<collection>/records/<class>`: retrieve all objects of type `<class>` or any of its subclasses that are stored in the global storage space of the service.
  If a token is provided, all matching objects from the token storage space are returned in addition.
- Objects from token space take precedence over objects from the global space.
+ Objects from token space take precedence over objects from the global space, i.e. if there are two objects with identical `id` in the global store and the object store, the record from the token store will be returned.
  The endpoints supports the query parameter `format`, which determines the format of the query result.
  It can be set to `json` (the default) or to `ttl`,
 
