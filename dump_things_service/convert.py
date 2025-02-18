@@ -45,7 +45,7 @@ def convert_format(
         )
     except Exception as e:  # BLE001
         raise HTTPException(
-            status_code=500, detail='Conversion error: ' + str(e)
+            status_code=404, detail='Conversion error: ' + str(e)
         ) from e
 
 
