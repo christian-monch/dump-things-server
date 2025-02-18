@@ -209,11 +209,15 @@ async def read_records_of_type(
     from dump_things_service.convert import convert_format
 
     if collection not in model_info:
-        raise HTTPException(status_code=401, detail=f'No such collection: "{collection}".')
+        raise HTTPException(
+            status_code=401, detail=f'No such collection: "{collection}".'
+        )
 
     model = model_info[collection][0]
     if class_name not in get_classes(model):
-        raise HTTPException(status_code=401, detail=f'Unsupported class: "{class_name}".')
+        raise HTTPException(
+            status_code=401, detail=f'Unsupported class: "{class_name}".'
+        )
 
     records = {}
     for search_class_name in get_subclasses(model, class_name):
