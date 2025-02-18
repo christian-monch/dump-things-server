@@ -205,14 +205,11 @@ async def read_records_of_type(
 ):
     from dump_things_service.convert import convert_format
 
-    records = {}
-    try:
-        model = model_info[collection][0]
-    except KeyError:
-        raise HTTPException(
-            status_code=401, detail=f'No such collection: "{collection}".'
-        ) from None
+    if collection not in model_info:
+        raise HTTPException(status_code=401, detail=f'No such collection: "{collection}".')
 
+    model = model_info[collection][0]
+    records = {}
     for search_class_name in get_subclasses(model, class_name):
         for record in global_store.get_all_records(collection, search_class_name):
             records[record['id']] = record
