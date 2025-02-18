@@ -82,6 +82,9 @@ def store_record(
     if input_format == Format.json and isinstance(data, str):
         raise HTTPException(status_code=404, detail='Invalid JSON data provided.')
 
+    if input_format == Format.ttl and not isinstance(data, str):
+        raise HTTPException(status_code=404, detail='Invalid ttl data provided.')
+
     store = _get_store_for_token(token)
     if store:
         store.store_record(
@@ -209,6 +212,9 @@ async def read_records_of_type(
         raise HTTPException(status_code=401, detail=f'No such collection: "{collection}".')
 
     model = model_info[collection][0]
+    if class_name not in get_classes(model):
+        raise HTTPException(status_code=401, detail=f'Unsupported class: "{class_name}".')
+
     records = {}
     for search_class_name in get_subclasses(model, class_name):
         for record in global_store.get_all_records(collection, search_class_name):
