@@ -39,11 +39,11 @@ def test_web_interface_post_errors(
     tuple(product(*(collection_names, class_names, queries, format_names))),
 )
 def test_web_interface_get_class_errors(
-        fastapi_client_simple,
-        collection_name,
-        class_name,
-        query,
-        format_name,
+    fastapi_client_simple,
+    collection_name,
+    class_name,
+    query,
+    format_name,
 ):
     """Check that no internal server error occurs with weird input"""
     test_client, _ = fastapi_client_simple
@@ -64,11 +64,11 @@ def test_web_interface_get_class_errors(
     tuple(product(*(collection_names, identifiers, queries, format_names))),
 )
 def test_web_interface_get_id_errors(
-        fastapi_client_simple,
-        collection_name,
-        identifier,
-        query,
-        format_name,
+    fastapi_client_simple,
+    collection_name,
+    identifier,
+    query,
+    format_name,
 ):
     """Check that no internal server error occurs with weird input"""
     test_client, _ = fastapi_client_simple
