@@ -3,19 +3,93 @@ name: person_schema
 prefixes:
   abc: http://example.org/person-schema/abc/
   xyz: http://example.org/person-schema/xyz/
+  trr379: http://example.org/person-schema/trr379/
   linkml: https://w3id.org/linkml/
 imports:
   - linkml:types
 default_range: string
 default_prefix: abc
 
+slots:
+  relations:
+    range: Any
+    any_of:
+      - range: string
+      - range: Thing
+      - range: Person
+      - range: Agent
+      - range: InstantaneousEvent
+      - range: Activity
+      - range: ValueSpecification
+      - range: Role
+      - range: Location
+      - range: SoftwareAgent
+      - range: Entity
+      - range: Organization
+      - range: Project
+      - range: Author
+      - range: Interviewer
+    multivalued: true
+    inlined: true
+    inlined_as_list: false
+
+  acted_on_behalf_of:
+    multivalued: true
+
 classes:
+  Any:
+    class_uri: "linkml:Any"
+
   Thing:
+    slots: relations
     attributes:
       id:
         identifier: true
         required: true
-  Person:
+
+  Agent:
     is_a: Thing
+    slots: acted_on_behalf_of
+
+  Property:
+    is_a: Thing
+
+  ValueSpecification:
+    is_a: Thing
+
+  Role:
+    is_a: Thing
+
+  Location:
+    is_a: Thing
+
+  Activity:
+    is_a: Thing
+
+  Entity:
+    is_a: Thing
+
+  SoftwareAgent:
+    is_a: Agent
+
+  Organization:
+    is_a: Agent
+
+  Project:
+    is_a: Activity
+
+  Author:
+    is_a: Role
+
+  Interviewer:
+    is_a: Role
+
+  InstantaneousEvent:
+    is_a: Thing
+    attributes:
+      at_time:
+
+  Person:
+    is_a: Agent
     attributes:
       given_name:

@@ -18,9 +18,13 @@ from fastapi import (
     FastAPI,
     HTTPException,
 )
+from fastapi.encoders import jsonable_encoder
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import APIKeyHeader
-from starlette.responses import PlainTextResponse
+from starlette.responses import (
+    JSONResponse,
+    PlainTextResponse,
+)
 
 from dump_things_service import Format
 from dump_things_service.model import (
@@ -32,7 +36,10 @@ from dump_things_service.storage import (
     Storage,
     TokenStorage,
 )
-from dump_things_service.utils import combine_ttl
+from dump_things_service.utils import (
+    cleaned_json,
+    combine_ttl,
+)
 
 if TYPE_CHECKING:
     from pydantic import BaseModel
@@ -65,7 +72,7 @@ async def {name}(
         data: {model_var_name}.{class_name} | Annotated[str, Body(media_type='text/plain')],
         api_key: str = Depends(api_key_header_scheme),
         format: Format = Format.json,
-):
+) -> JSONResponse | PlainTextResponse:
     lgr.info('{name}(%s, %s, %s, %s, %s)', repr(data), repr('{class_name}'), repr({model_var_name}), repr(format), repr(api_key))
     return store_record('{collection}', data, '{class_name}', {model_var_name}, format, api_key)
 """
@@ -78,7 +85,7 @@ def store_record(
     model: Any,
     input_format: Format,
     token: str | None,
-) -> Any:
+) -> JSONResponse | PlainTextResponse:
     if input_format == Format.json and isinstance(data, str):
         raise HTTPException(status_code=404, detail='Invalid JSON data provided.')
 
@@ -87,7 +94,7 @@ def store_record(
 
     store = _get_store_for_token(token)
     if store:
-        store.store_record(
+        stored_records = store.store_record(
             record=data,
             collection=collection,
             model=model,
@@ -96,7 +103,9 @@ def store_record(
         )
         if input_format == Format.ttl:
             return PlainTextResponse(data, media_type='text/turtle')
-        return data
+        return JSONResponse(
+            list(map(cleaned_json, map(jsonable_encoder, stored_records)))
+        )
     raise HTTPException(status_code=403, detail='Invalid token.')
 
 

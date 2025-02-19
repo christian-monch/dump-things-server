@@ -167,7 +167,7 @@ class TokenStorage(Storage):
         model: Any,
         input_format: Format,
         class_name: str | None = None,
-    ):
+    ) -> list[BaseModel]:
         from dump_things_service.convert import convert_format
 
         # If the input is ttl, get a JSON object representing the record and
@@ -194,6 +194,7 @@ class TokenStorage(Storage):
                 record=final_record,
                 collection=collection,
             )
+        return final_records
 
     def store_single_record(
         self,
