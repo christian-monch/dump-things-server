@@ -1,8 +1,8 @@
 from __future__ import annotations
 
+import dataclasses
 import sys
 from copy import copy
-from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 import pytest  # noqa F401
@@ -12,6 +12,7 @@ from dump_things_service.storage import (
     TokenStorage,
 )
 
+from ..utils import cleaned_json
 from . import HTTP_200_OK
 
 if TYPE_CHECKING:
@@ -20,7 +21,7 @@ if TYPE_CHECKING:
     from dump_things_service import JSON
 
 
-@dataclass
+@dataclasses.dataclass
 class Thing:
     id: str
     relations: dict[str, Thing] | None = None
@@ -29,17 +30,17 @@ class Thing:
         return copy(self)
 
 
-@dataclass
+@dataclasses.dataclass
 class Agent(Thing):
     acted_on_behalf_of: list[str] | None = None
 
 
-@dataclass
+@dataclasses.dataclass
 class InstantaneousEvent(Thing):
     at_time: str | None = None
 
 
-@dataclass
+@dataclasses.dataclass
 class Person(Thing):
     given_name: str | None = None
 
@@ -49,34 +50,6 @@ class MockedModule:
     Thing = Thing
     Person = Person
     InstantaneousEvent = InstantaneousEvent
-
-
-# The value is a `Person` record
-inlined_json_record = {
-    'id': 'trr379:test_extract_1',
-    'given_name': 'Grandfather',
-    'relations': {
-        # The value is a `Person` record
-        'trr379:test_extract_1_1': {
-            'id': 'trr379:test_extract_1_1',
-            'given_name': 'Father',
-            'relations': {
-                # The value is an `Agent` record
-                'trr379:test_extract_1_1_1': {
-                    'id': 'trr379:test_extract_1_1_1',
-                    'acted_on_behalf_of': [
-                        'trr379:test_extract_1_1',
-                    ],
-                },
-            },
-        },
-        # The value is an `InstantaneousEvent` record
-        'trr379:test_extract_1_2': {
-            'id': 'trr379:test_extract_1_2',
-            'at_time': '2028-12-31',
-        },
-    },
-}
 
 
 def get_inlined_object(model_module):
@@ -91,20 +64,32 @@ def get_inlined_object(model_module):
                     'trr379:test_extract_1_1_1': model_module.Agent(
                         id='trr379:test_extract_1_1_1',
                         acted_on_behalf_of=['trr379:test_extract_1_1'],
-                        relations=None,
                     ),
                 },
             ),
             'trr379:test_extract_1_2': model_module.InstantaneousEvent(
                 id='trr379:test_extract_1_2',
                 at_time='2028-12-31',
-                relations=None,
             ),
         },
     )
 
 
 inlined_object = get_inlined_object(sys.modules[__name__])
+inlined_json_record = cleaned_json(dataclasses.asdict(inlined_object))
+
+
+empty_inlined_object = Person(
+    id='trr379:test_extract_a',
+    given_name='Opa',
+    relations={
+        'trr379:test_extract_a_a': Thing(id='trr379:test_extract_a_a'),
+        'trr379:test_extract_a_b': Thing(id='trr379:test_extract_a_b'),
+        'trr379:test_extract_a_c': Thing(id='trr379:test_extract_a_c'),
+    },
+)
+
+empty_inlined_json_record = cleaned_json(dataclasses.asdict(empty_inlined_object))
 
 
 tree = (
@@ -113,35 +98,6 @@ tree = (
     ('trr379:test_extract_1_2', ()),
     ('trr379:test_extract_1_1_1', ()),
 )
-
-
-empty_inlined_object = Person(
-    id='trr379:test_extract_1',
-    given_name='Grandfather',
-    relations={
-        'trr379:test_extract_a': Thing(id='trr379:test_extract_a'),
-        'trr379:test_extract_b': Thing(id='trr379:test_extract_b'),
-        'trr379:test_extract_c': Thing(id='trr379:test_extract_c'),
-    },
-)
-
-
-# The value is a `Person` record
-empty_inlined_json_record = {
-    'id': 'trr379:test_extract_1',
-    'given_name': 'Grandfather',
-    'relations': {
-        'trr379:test_extract_a': {
-            'id': 'trr379:test_extract_a',
-        },
-        'trr379:test_extract_b': {
-            'id': 'trr379:test_extract_b',
-        },
-        'trr379:test_extract_c': {
-            'id': 'trr379:test_extract_c',
-        },
-    },
-}
 
 
 def test_inline_extraction_locally(dump_stores_simple):
