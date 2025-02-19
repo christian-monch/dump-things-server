@@ -3,19 +3,41 @@ name: person_schema
 prefixes:
   abc: http://example.org/person-schema/abc/
   xyz: http://example.org/person-schema/xyz/
+  trr379: http://example.org/person-schema/trr379/
   linkml: https://w3id.org/linkml/
 imports:
   - linkml:types
 default_range: string
 default_prefix: abc
 
+slots:
+  relations:
+    range: Thing
+    multivalued: true
+    inlined: true
+    inlined_as_list: false
+
+  acted_on_behalf_of:
+    multivalued: true
+
 classes:
   Thing:
+    slots: relations
     attributes:
       id:
         identifier: true
         required: true
-  Person:
+
+  Agent:
     is_a: Thing
+    slots: acted_on_behalf_of
+
+  InstantaneousEvent:
+    is_a: Thing
+    attributes:
+      at_time:
+
+  Person:
+    is_a: Agent
     attributes:
       given_name:

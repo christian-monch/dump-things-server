@@ -41,7 +41,7 @@ class InstantaneousEvent(Thing):
 
 
 @dataclasses.dataclass
-class Person(Thing):
+class Person(Agent):
     given_name: str | None = None
 
 
