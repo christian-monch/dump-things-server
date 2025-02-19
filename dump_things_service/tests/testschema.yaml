@@ -12,7 +12,23 @@ default_prefix: abc
 
 slots:
   relations:
-    range: Thing
+    range: Any
+    any_of:
+      - range: string
+      - range: Thing
+      - range: Person
+      - range: Agent
+      - range: InstantaneousEvent
+      - range: Activity
+      - range: ValueSpecification
+      - range: Role
+      - range: Location
+      - range: SoftwareAgent
+      - range: Entity
+      - range: Organization
+      - range: Project
+      - range: Author
+      - range: Interviewer
     multivalued: true
     inlined: true
     inlined_as_list: false
@@ -21,6 +37,9 @@ slots:
     multivalued: true
 
 classes:
+  Any:
+    class_uri: "linkml:Any"
+
   Thing:
     slots: relations
     attributes:
@@ -31,6 +50,39 @@ classes:
   Agent:
     is_a: Thing
     slots: acted_on_behalf_of
+
+  Property:
+    is_a: Thing
+
+  ValueSpecification:
+    is_a: Thing
+
+  Role:
+    is_a: Thing
+
+  Location:
+    is_a: Thing
+
+  Activity:
+    is_a: Thing
+
+  Entity:
+    is_a: Thing
+
+  SoftwareAgent:
+    is_a: Agent
+
+  Organization:
+    is_a: Agent
+
+  Project:
+    is_a: Activity
+
+  Author:
+    is_a: Role
+
+  Interviewer:
+    is_a: Role
 
   InstantaneousEvent:
     is_a: Thing
