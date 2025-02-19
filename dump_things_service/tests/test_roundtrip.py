@@ -20,7 +20,7 @@ def test_json_ttl_json(fastapi_client_simple):
 
     # Deposit JSON records
     response = test_client.post(
-        '/store_1/record/Person',
+        '/collection_1/record/Person',
         headers={'x-dumpthings-token': 'token_1'},
         json=json_record,
     )
@@ -28,7 +28,7 @@ def test_json_ttl_json(fastapi_client_simple):
 
     # Retrieve TTL records
     response = test_client.get(
-        f'/store_1/record?id={json_record["id"]}&format=ttl',
+        f'/collection_1/record?id={json_record["id"]}&format=ttl',
         headers={'x-dumpthings-token': 'token_1'},
     )
     assert response.status_code == HTTP_200_OK
@@ -38,7 +38,7 @@ def test_json_ttl_json(fastapi_client_simple):
     ttl = ttl.replace(json_record['id'], new_ttl_id)
 
     response = test_client.post(
-        '/store_1/record/Person?format=ttl',
+        '/collection_1/record/Person?format=ttl',
         headers={'content-type': 'text/turtle', 'x-dumpthings-token': 'token_1'},
         data=ttl,
     )
@@ -46,7 +46,7 @@ def test_json_ttl_json(fastapi_client_simple):
 
     # Retrieve JSON record
     response = test_client.get(
-        f'/store_1/record?id={new_ttl_id}&format=json',
+        f'/collection_1/record?id={new_ttl_id}&format=json',
         headers={'x-dumpthings-token': 'token_1'},
     )
     assert response.status_code == HTTP_200_OK
@@ -61,7 +61,7 @@ def test_ttl_json_ttl(fastapi_client_simple):
 
     # Deposit a ttl record
     response = test_client.post(
-        '/store_1/record/Person?format=ttl',
+        '/collection_1/record/Person?format=ttl',
         headers={
             'x-dumpthings-token': 'token_1',
             'content-type': 'text/turtle',
@@ -72,7 +72,7 @@ def test_ttl_json_ttl(fastapi_client_simple):
 
     # Retrieve JSON records
     response = test_client.get(
-        '/store_1/record?id=xyz:HenryAdams&format=json',
+        '/collection_1/record?id=xyz:HenryAdams&format=json',
         headers={'x-dumpthings-token': 'token_1'},
     )
     assert response.status_code == HTTP_200_OK
@@ -82,7 +82,7 @@ def test_ttl_json_ttl(fastapi_client_simple):
     json_object['id'] = new_json_id
 
     response = test_client.post(
-        '/store_1/record/Person?format=json',
+        '/collection_1/record/Person?format=json',
         headers={'x-dumpthings-token': 'token_1'},
         json=json_object,
     )
@@ -90,7 +90,7 @@ def test_ttl_json_ttl(fastapi_client_simple):
 
     # Retrieve ttl record
     response = test_client.get(
-        f'/store_1/record?id={new_json_id}&format=ttl',
+        f'/collection_1/record?id={new_json_id}&format=ttl',
         headers={'x-dumpthings-token': 'token_1'},
     )
     assert response.status_code == HTTP_200_OK

@@ -184,11 +184,11 @@ def test_dont_extract_empty_things_locally(dump_stores_simple):
 
 
 def test_inline_extraction_on_service(fastapi_client_simple):
-    test_client, store = fastapi_client_simple
+    test_client, _ = fastapi_client_simple
 
     # Deposit JSON record
     response = test_client.post(
-        '/trr379_store/record/Person',
+        '/collection_trr379/record/Person',
         headers={'x-dumpthings-token': 'token_1'},
         json=inlined_json_record,
     )
@@ -198,7 +198,7 @@ def test_inline_extraction_on_service(fastapi_client_simple):
     records = []
     for record_id in (entry[0] for entry in tree):
         response = test_client.get(
-            f'/trr379_store/record?id={record_id}',
+            f'/collection_trr379/record?id={record_id}',
             headers={'x-dumpthings-token': 'token_1'},
         )
         assert response.status_code == HTTP_200_OK
@@ -214,7 +214,7 @@ def test_inline_extraction_on_service(fastapi_client_simple):
         ('InstantaneousEvent', ('trr379:test_extract_1_2',)),
     ):
         records = test_client.get(
-            f'/trr379_store/records/{class_name}',
+            f'/collection_trr379/records/{class_name}',
             headers={'x-dumpthings-token': 'token_1'},
         ).json()
         for identifier in identifiers:
@@ -247,12 +247,12 @@ def test_dont_extract_empty_things_on_service(fastapi_client_simple):
 
     # Deposit JSON record
     response = test_client.post(
-        '/trr379_store/record/Person',
+        '/collection_trr379/record/Person',
         headers={'x-dumpthings-token': 'token_1'},
         json=empty_inlined_json_record,
     )
     assert response.status_code == HTTP_200_OK
 
     # Ensure that no `Thing` records are extracted
-    thing_path = store / 'token_stores' / 'token_1' / 'trr379_store' / 'Thing'
+    thing_path = store / 'token_stores' / 'token_1' / 'collection_trr379' / 'Thing'
     assert tuple(thing_path.rglob('*.yaml')) == ()
