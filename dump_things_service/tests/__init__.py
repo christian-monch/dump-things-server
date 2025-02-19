@@ -2,10 +2,12 @@ from starlette.status import (
     HTTP_200_OK,
     HTTP_401_UNAUTHORIZED,
     HTTP_403_FORBIDDEN,
+    HTTP_500_INTERNAL_SERVER_ERROR,
 )
 
 __all__ = [
     'HTTP_200_OK',
     'HTTP_401_UNAUTHORIZED',
     'HTTP_403_FORBIDDEN',
+    'HTTP_500_INTERNAL_SERVER_ERROR',
 ]

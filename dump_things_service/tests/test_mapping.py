@@ -22,22 +22,22 @@ def test_mapping_functions_ignore_data(fastapi_client_simple):
 
     for i in range(1, 6):
         response = test_client.post(
-            f'/store_{i}/record/Person',
+            f'/collection_{i}/record/Person',
             headers={'x-dumpthings-token': 'token_1'},
             json=record_a,
         )
         assert response.status_code == HTTP_200_OK
 
         response = test_client.post(
-            f'/store_{i}/record/Person',
+            f'/collection_{i}/record/Person',
             headers={'x-dumpthings-token': 'token_1'},
             json=record_b,
         )
         assert response.status_code == HTTP_200_OK
 
-        # Check that only one record with the given id exists in the store
+        # Check that only one record with the given id exists in the collection
         id_counter = defaultdict(int)
-        token_store_path = store_path / 'token_stores' / 'token_1' / f'store_{i}'
+        token_store_path = store_path / 'token_stores' / 'token_1' / f'collection_{i}'
         for path in token_store_path.rglob('*.yaml'):
             if path.is_file():
                 record = yaml.load(path.read_text(), Loader=yaml.SafeLoader)

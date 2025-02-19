@@ -116,7 +116,7 @@ class Storage:
         collection_path = self.root / collection
         if not collection_path.exists() or not collection_path.is_dir():
             raise HTTPException(
-                status_code=404, detail=f'Application {collection} not found.'
+                status_code=404, detail=f'No such collection: "{collection}".'
             )
         return collection_path
 

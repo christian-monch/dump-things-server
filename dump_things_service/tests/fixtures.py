@@ -25,11 +25,11 @@ def dump_stores_simple(tmp_path_factory):
     create_stores(
         root_dir=tmp_path,
         collection_info={
-            'store_1': (str(schema_path), 'digest-md5'),
-            'store_2': (str(schema_path), 'digest-md5-p3'),
-            'store_3': (str(schema_path), 'digest-sha1'),
-            'store_4': (str(schema_path), 'digest-sha1-p3'),
-            'store_5': (str(schema_path), 'after-last-colon'),
+            'collection_1': (str(schema_path), 'digest-md5'),
+            'collection_2': (str(schema_path), 'digest-md5-p3'),
+            'collection_3': (str(schema_path), 'digest-sha1'),
+            'collection_4': (str(schema_path), 'digest-sha1-p3'),
+            'collection_5': (str(schema_path), 'after-last-colon'),
         },
         token_stores=['token_1'],
         default_entries=[('Person', identifier, test_record)],
@@ -37,7 +37,7 @@ def dump_stores_simple(tmp_path_factory):
     create_stores(
         root_dir=tmp_path,
         collection_info={
-            'trr379_store': (
+            'collection_trr379': (
                 'https://concepts.trr379.de/s/base/unreleased.yaml',
                 'digest-md5',
             ),

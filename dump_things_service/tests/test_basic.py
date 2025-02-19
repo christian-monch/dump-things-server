@@ -21,7 +21,7 @@ extra_record = {
 def test_search_by_id(fastapi_client_simple):
     test_client, _ = fastapi_client_simple
     for i in range(1, 6):
-        response = test_client.get(f'/store_{i}/record?id={identifier}')
+        response = test_client.get(f'/collection_{i}/record?id={identifier}')
         assert json.loads(response.text) == {'id': identifier, 'given_name': given_name}
 
 
@@ -29,7 +29,7 @@ def test_store_record(fastapi_client_simple):
     test_client, _ = fastapi_client_simple
     for i in range(1, 6):
         response = test_client.post(
-            f'/store_{i}/record/Person',
+            f'/collection_{i}/record/Person',
             headers={'x-dumpthings-token': 'token_1'},
             json=extra_record,
         )
@@ -38,7 +38,7 @@ def test_store_record(fastapi_client_simple):
     # Check that all stores can retrieve the record
     for i in range(1, 6):
         response = test_client.get(
-            f'/store_{i}/record?id={extra_record["id"]}',
+            f'/collection_{i}/record?id={extra_record["id"]}',
             headers={'x-dumpthings-token': 'token_1'},
         )
         assert response.status_code == HTTP_200_OK
@@ -48,7 +48,7 @@ def test_store_record(fastapi_client_simple):
     # and the newly added record
     for i in range(1, 6):
         response = test_client.get(
-            f'/store_{i}/records/Person',
+            f'/collection_{i}/records/Person',
             headers={'x-dumpthings-token': 'token_1'},
         )
         assert sorted(
@@ -65,7 +65,7 @@ def test_store_record(fastapi_client_simple):
     # Check that subclasses are retrieved
     for i in range(1, 6):
         response = test_client.get(
-            f'/store_{i}/records/Thing',
+            f'/collection_{i}/records/Thing',
             headers={'x-dumpthings-token': 'token_1'},
         )
         assert sorted(
@@ -84,7 +84,7 @@ def test_global_store_fails(fastapi_client_simple):
     test_client, _ = fastapi_client_simple
     for i in range(1, 6):
         response = test_client.post(
-            f'/store_{i}/record/Person', json={'id': extra_record['id']}
+            f'/collection_{i}/record/Person', json={'id': extra_record['id']}
         )
         assert response.status_code == HTTP_403_FORBIDDEN
 
@@ -92,7 +92,7 @@ def test_global_store_fails(fastapi_client_simple):
 def test_token_store_adding(fastapi_client_simple):
     test_client, store_dir = fastapi_client_simple
     response = test_client.post(
-        '/store_1/record/Person',
+        '/collection_1/record/Person',
         headers={'x-dumpthings-token': 'david_bowie'},
         json={'id': extra_record['id']},
     )
@@ -101,7 +101,7 @@ def test_token_store_adding(fastapi_client_simple):
     # Create token directory and retry
     (store_dir / 'token_stores' / 'david_bowie').mkdir()
     response = test_client.post(
-        '/store_1/record/Person',
+        '/collection_1/record/Person',
         headers={'x-dumpthings-token': 'david_bowie'},
         json={'id': extra_record['id']},
     )
@@ -113,7 +113,7 @@ def test_funky_id(fastapi_client_simple):
     record_id = 'trr379:contributors/someone'
     for i in range(1, 6):
         response = test_client.post(
-            f'/store_{i}/record/Person',
+            f'/collection_{i}/record/Person',
             headers={'x-dumpthings-token': 'token_1'},
             json={'id': record_id},
         )
@@ -122,7 +122,7 @@ def test_funky_id(fastapi_client_simple):
     # Try to find it
     for i in range(1, 6):
         response = test_client.get(
-            f'/store_{i}/record?id={record_id}',
+            f'/collection_{i}/record?id={record_id}',
             headers={'x-dumpthings-token': 'token_1'},
         )
         assert response.status_code == HTTP_200_OK
@@ -137,7 +137,7 @@ def test_token_store_priority(fastapi_client_simple):
     # Post a record with the same id as the test record in the global store,
     # but use a different name.
     response = test_client.post(
-        '/store_1/record/Person',
+        '/collection_1/record/Person',
         headers={'x-dumpthings-token': 'david_bowie'},
         json={'id': identifier, 'given_name': 'David'},
     )
@@ -145,7 +145,7 @@ def test_token_store_priority(fastapi_client_simple):
 
     # Check that the new record is returned with a token
     response = test_client.get(
-        f'/store_1/record?id={identifier}',
+        f'/collection_1/record?id={identifier}',
         headers={'x-dumpthings-token': 'david_bowie'},
     )
     assert response.status_code == HTTP_200_OK
@@ -153,7 +153,7 @@ def test_token_store_priority(fastapi_client_simple):
 
     # Check that the global test record is returned without a token
     response = test_client.get(
-        f'/store_1/record?id={identifier}',
+        f'/collection_1/record?id={identifier}',
     )
     assert response.status_code == HTTP_200_OK
     assert response.json()['given_name'] == 'Wolfgang'
