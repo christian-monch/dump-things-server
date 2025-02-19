@@ -65,10 +65,12 @@ The service provides the following endpoints:
  The object-content must be JSON-encoded.
  In order to `POST` an object to the service, you MUST provide a valid token in the HTTP-header `X-DumpThings-Token`. This token has to correspond to a token value defined in the configuration file.
  In addition, the `content-type`-header must be set to `application/json`.
- The endpoints supports the query parameter `format`, to select the format of the posted data.
- It can be set to `json` (the default) or to `ttl`.
+ The endpoint supports the query parameter `format`, to select the format of the posted data.
+ It can be set to `json` (the default) or to `ttl` (Terse RDF Triple Language, a.k.a. Turtle).
  If the `ttl`-format is selected, the content-type should be `text/turtle`.  
  The service supports extraction of inlined records as described in [Dump Things Service](https://concepts.datalad.org/dump-things/).
+ On success the endpoint will return a list of all stored records.
+ This might be more than one record if the posted object contains inlined records.
   
 - `GET /<collection>/records/<class>`: retrieve all objects of type `<class>` or any of its subclasses that are stored in the global storage space of the service.
  If a token is provided, all matching objects from the token storage space are returned in addition.
