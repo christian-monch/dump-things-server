@@ -36,7 +36,10 @@ from dump_things_service.storage import (
     Storage,
     TokenStorage,
 )
-from dump_things_service.utils import combine_ttl
+from dump_things_service.utils import (
+    cleaned_json,
+    combine_ttl,
+)
 
 if TYPE_CHECKING:
     from pydantic import BaseModel
@@ -100,7 +103,9 @@ def store_record(
         )
         if input_format == Format.ttl:
             return PlainTextResponse(data, media_type='text/turtle')
-        return JSONResponse(list(map(jsonable_encoder, stored_records)))
+        return JSONResponse(
+            list(map(cleaned_json, map(jsonable_encoder, stored_records)))
+        )
     raise HTTPException(status_code=403, detail='Invalid token.')
 
 
