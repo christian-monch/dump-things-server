@@ -21,7 +21,10 @@ from fastapi import (
 from fastapi.encoders import jsonable_encoder
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import APIKeyHeader
-from starlette.responses import PlainTextResponse, JSONResponse
+from starlette.responses import (
+    JSONResponse,
+    PlainTextResponse,
+)
 
 from dump_things_service import Format
 from dump_things_service.model import (
