@@ -16,7 +16,7 @@ format_names = ('json', 'ttl', 'sdfsdfkjsdkfsd')
     'store_name,class_name,query,format_name',  # noqa PT006
     tuple(product(*(store_names, class_names, queries, format_names))),
 )
-def test_web_interface_fuzzing(
+def test_web_interface_errors(
     fastapi_client_simple,
     store_name,
     class_name,
