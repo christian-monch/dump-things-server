@@ -149,8 +149,11 @@ def test_inline_extraction_on_service(fastapi_client_simple):
         json=inlined_json_record,
     )
     assert response.status_code == HTTP_200_OK
+    # Check linkage between records
+    _check_result_json(response.json(), tree)
 
-    # Expect records with no inlined data but minimal `relations`-entries
+    # Verify that the records are actually stored individually and can be
+    # retrieved by their id.
     records = []
     for record_id in (entry[0] for entry in tree):
         response = test_client.get(
@@ -163,7 +166,7 @@ def test_inline_extraction_on_service(fastapi_client_simple):
     # Check linkage between records
     _check_result_json(records, tree)
 
-    # Check that individual record classes are recognized
+    # Check that individual record classes were recognized
     for class_name, identifiers in (
         ('Person', ('trr379:test_extract_1', 'trr379:test_extract_1_1')),
         ('Agent', ('trr379:test_extract_1_1_1',)),
