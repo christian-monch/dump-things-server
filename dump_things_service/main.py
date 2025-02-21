@@ -24,7 +24,12 @@ from starlette.responses import (
 )
 
 from dump_things_service import Format
-from dump_things_service.backends.filesystem_records import FileSystemRecords
+from dump_things_service.backends.filesystem_records import (
+    AuthorizationError,
+    FileSystemRecords,
+)
+from dump_things_service.backends.interface import UnknownClassError, \
+    UnknownCollectionError
 
 if TYPE_CHECKING:
     from pydantic import BaseModel
@@ -72,14 +77,12 @@ def store_record(
     if input_format == Format.ttl and not isinstance(data, str):
         raise HTTPException(status_code=404, detail='Invalid ttl data provided.')
 
-    return JSONResponse([
-        record.model_dump(exclude_none=True)
-        for record in store.store(
-            collection=collection,
-            record=data,
-            authorization_info = token,
-        )
-    ])
+    try:
+        result = store.store(collection=collection, record=data, authorization_info = token)
+    except AuthorizationError as e:
+        raise HTTPException(status_code=401, detail=str(e)) from e
+
+    return JSONResponse([record.model_dump(exclude_none=True) for record in result])
 
 
 app = FastAPI()
@@ -142,7 +145,12 @@ async def read_record_with_id(
     format: Format = Format.json,  # noqa A002
     api_key: str = Depends(api_key_header_scheme),
 ):
-    record = store.record_with_id(collection, id, api_key)
+    try:
+        record = store.record_with_id(collection, id, api_key)
+    except AuthorizationError as e:
+        raise HTTPException(status_code=401, detail=str(e)) from e
+    except (UnknownClassError, UnknownCollectionError) as e:
+        raise HTTPException(status_code=404, detail=str(e)) from e
     if record:
         return JSONResponse(record.model_dump(exclude_none=True))
     return None
@@ -155,10 +163,15 @@ async def read_records_of_type(
     format: Format = Format.json,  # noqa A002
     api_key: str = Depends(api_key_header_scheme),
 ):
-    return JSONResponse([
-        record.model_dump(exclude_none=True)
-        for record in store.records_of_class(collection, class_name, api_key)
-    ])
+    try:
+        return JSONResponse([
+            record.model_dump(exclude_none=True)
+            for record in store.records_of_class(collection, class_name, api_key)
+        ])
+    except AuthorizationError as e:
+        raise HTTPException(status_code=401, detail=str(e)) from e
+    except (UnknownClassError, UnknownCollectionError) as e:
+        raise HTTPException(status_code=404, detail=str(e)) from e
 
 
 # Rebuild the app to include all dynamically created endpoints

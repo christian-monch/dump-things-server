@@ -86,7 +86,7 @@ def test_global_store_fails(fastapi_client_simple):
         response = test_client.post(
             f'/collection_{i}/record/Person', json={'id': extra_record['id']}
         )
-        assert response.status_code == HTTP_403_FORBIDDEN
+        assert response.status_code == HTTP_401_UNAUTHORIZED
 
 
 def test_token_store_adding(fastapi_client_simple):
