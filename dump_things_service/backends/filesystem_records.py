@@ -232,13 +232,10 @@ class Storage:
             self,
             root: str | Path,
     ) -> None:
-        from dump_things_service.convert import get_conversion_objects
-
         self.root = Path(root)
         if not isinstance(self, TokenStorage):
             self.global_config = GlobalConfig(**(self.get_config(self.root)))
             self.collections = self._get_collections()
-            self.conversion_objects = get_conversion_objects(self.collections)
 
     @staticmethod
     def get_config(path: Path) -> YAML:

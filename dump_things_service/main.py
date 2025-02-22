@@ -1,6 +1,46 @@
+"""
+The dump-things-service
+
+General:
+
+- Support multiple collections, eeach collection has an associated schema
+- Every schema has a `Thing`-based class hierarchy, for example,
+  <https://concepts.trr379.de/s/base/unreleased.yaml>.
+- Store and retrieve records the conform to the schema
+
+
+Structure:
+
+- Receive pydantic models and requests via web-interface (fastapi)
+- Send pydantic models to storage backend
+- Receive pydantic models from storage backend
+- Send pydantic models as result
+
+Supported formats for input- and output-data are `JSON` and `Turtle`. Requests
+with input format X will generate results of format X.
+
+
+Implementation details:
+
+- POST-endpoints are dynamically created for every class in every collection.
+
+- GET-endpoints are static endpoints that are parameterized by collection,
+  class-name, and record-id.
+
+- All endpoints return JSONResponse (if the selected format is JSON) or
+  PlainTextResponse (if the selected format is Turtle).
+
+- In case of JSON-format results, the service could return pydantic models. That
+  is currently not done for two reasons:
+  1. It would lead to results with a large number of `null`-fields
+  2. It requires dynamic definition of the result type, which makes the code
+     less readable and debuggable.
+
+"""
 from __future__ import annotations
 
 import argparse
+import json
 import logging
 from itertools import count
 from typing import (
@@ -30,6 +70,8 @@ from dump_things_service.backends.filesystem_records import (
 )
 from dump_things_service.backends.interface import UnknownClassError, \
     UnknownCollectionError
+from dump_things_service.convert import convert_format
+from dump_things_service.utils import combine_ttl
 
 if TYPE_CHECKING:
     from pydantic import BaseModel
@@ -62,27 +104,6 @@ async def {name}(
     lgr.info('{name}(%s, %s, %s, %s, %s)', repr(data), repr('{class_name}'), repr(format), repr(api_key))
     return store_record('{collection}', data, '{class_name}', format, api_key)
 """
-
-
-def store_record(
-    collection: str,
-    data: BaseModel | str,
-    class_name: str,
-    input_format: Format,
-    token: str | None,
-) -> JSONResponse | PlainTextResponse:
-    if input_format == Format.json and isinstance(data, str):
-        raise HTTPException(status_code=404, detail='Invalid JSON data provided.')
-
-    if input_format == Format.ttl and not isinstance(data, str):
-        raise HTTPException(status_code=404, detail='Invalid ttl data provided.')
-
-    try:
-        result = store.store(collection=collection, record=data, authorization_info = token)
-    except AuthorizationError as e:
-        raise HTTPException(status_code=401, detail=str(e)) from e
-
-    return JSONResponse([record.model_dump(exclude_none=True) for record in result])
 
 
 app = FastAPI()
@@ -138,6 +159,48 @@ for collection_name, collection_info in store.collections.items():
 lgr.info('Creation of %d endpoints completed.', next(serial_number))
 
 
+def _check_input_format(data: BaseModel | str, input_format: Format) -> None:
+    if input_format == Format.json and isinstance(data, str):
+        raise HTTPException(status_code=404, detail='Invalid JSON data provided.')
+
+    # If input is ttl, convert input data to pydantic model objects
+    if input_format == Format.ttl and not isinstance(data, str):
+        raise HTTPException(status_code=404, detail='Invalid ttl data provided.')
+
+
+def store_record(
+        collection: str,
+        data: BaseModel | str,
+        class_name: str,
+        input_format: Format,
+        token: str | None,
+) -> JSONResponse | PlainTextResponse:
+    _check_input_format(data, input_format)
+
+    if input_format == Format.ttl:
+        data = convert_format(class_name, data, Format.ttl, Format.json, store.collections[collection])
+
+    try:
+        result = store.store(collection=collection, record=data, authorization_info=token)
+    except AuthorizationError as e:
+        raise HTTPException(status_code=401, detail=str(e)) from e
+
+    # If input was ttl, convert the response to ttl
+    if input_format == Format.ttl:
+        ttl_result = combine_ttl([
+            convert_format(
+                target_class=record.__class__.__name__,
+                data=record,
+                input_format=Format.json,
+                output_format=Format.ttl,
+                collection_info=store.collections[collection],
+            )
+            for record in result
+        ])
+        return PlainTextResponse(ttl_result)
+    return JSONResponse([record.model_dump(exclude_none=True) for record in result])
+
+
 @app.get('/{collection}/record')
 async def read_record_with_id(
     collection: str,
@@ -152,6 +215,15 @@ async def read_record_with_id(
     except (UnknownClassError, UnknownCollectionError) as e:
         raise HTTPException(status_code=404, detail=str(e)) from e
     if record:
+        if format == Format.ttl:
+            ttl_result = convert_format(
+                target_class=record.__class__.__name__,
+                data=record,
+                input_format=Format.json,
+                output_format=Format.ttl,
+                collection_info=store.collections[collection],
+            )
+            return PlainTextResponse(ttl_result, media_type='text/turtle')
         return JSONResponse(record.model_dump(exclude_none=True))
     return None
 
@@ -164,14 +236,25 @@ async def read_records_of_type(
     api_key: str = Depends(api_key_header_scheme),
 ):
     try:
-        return JSONResponse([
-            record.model_dump(exclude_none=True)
-            for record in store.records_of_class(collection, class_name, api_key)
-        ])
+        result = store.records_of_class(collection, class_name, api_key)
     except AuthorizationError as e:
         raise HTTPException(status_code=401, detail=str(e)) from e
     except (UnknownClassError, UnknownCollectionError) as e:
         raise HTTPException(status_code=404, detail=str(e)) from e
+
+    if format == Format.ttl:
+        ttl_result = combine_ttl([
+            convert_format(
+                target_class=record.__class__.__name__,
+                data=record,
+                input_format=Format.json,
+                output_format=Format.ttl,
+                collection_info=store.collections[collection],
+            )
+            for record in result
+        ])
+        return PlainTextResponse(ttl_result, media_type='text/turtle')
+    return JSONResponse([record.model_dump(exclude_none=True) for record in result])
 
 
 # Rebuild the app to include all dynamically created endpoints

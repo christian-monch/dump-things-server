@@ -4,9 +4,10 @@ import dataclasses  # noqa F401 -- used by generated code
 import importlib
 import subprocess
 import tempfile
+import types
 from itertools import count
 from pathlib import Path
-from typing import Any
+from typing import Any, TYPE_CHECKING
 
 import annotated_types  # noqa F401 -- used by generated code
 import pydantic  # noqa F401 -- used by generated code
@@ -18,12 +19,15 @@ from dump_things_service.utils import (
     sys_path,
 )
 
+if TYPE_CHECKING:
+    import types
+
 serial_number = count()
 
 
 def build_model(
     source_url: str,
-) -> Any:
+) -> types.ModuleType:
     with tempfile.TemporaryDirectory() as temp_dir:
         module_name = f'model_{next(serial_number)}'
         definition_file = Path(temp_dir) / 'definition.yaml'

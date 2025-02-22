@@ -1,34 +1,29 @@
 from __future__ import annotations
 
+import json
 from typing import TYPE_CHECKING
 
 from fastapi import HTTPException
-from linkml.generators import PythonGenerator
 from linkml.utils.datautils import (
     get_dumper,
     get_loader,
 )
-from linkml_runtime import SchemaView
+from pydantic import BaseModel
 
-from dump_things_service import (
-    JSON,
-    Format,
-)
+from dump_things_service import Format
+from dump_things_service.utils import cleaned_json
 
 if TYPE_CHECKING:
-    import types
-
-    from dump_things_service.storage import CollectionConfig
+    from dump_things_service.backends.interface import CollectionInfo
 
 
 def convert_format(
     target_class: str,
-    data: JSON | str,
+    data: BaseModel | str,
     input_format: Format,
     output_format: Format,
-    schema_module: types.ModuleType,
-    schema_view: SchemaView,
-) -> str:
+    collection_info: CollectionInfo,
+) -> BaseModel | str:
     """Convert between different representations of schema:target_class instances
 
     The schema information is provided by `schema_module` and `schema_view`.
@@ -40,8 +35,7 @@ def convert_format(
             data=data,
             input_format=input_format,
             output_format=output_format,
-            schema_module=schema_module,
-            schema_view=schema_view,
+            collection_info=collection_info,
         )
     except Exception as e:  # BLE001
         raise HTTPException(
@@ -51,12 +45,11 @@ def convert_format(
 
 def _convert_format(
     target_class: str,
-    data: JSON | str,
+    data: BaseModel | str,
     input_format: Format,
     output_format: Format,
-    schema_module: types.ModuleType,
-    schema_view: SchemaView,
-) -> str:
+    collection_info: CollectionInfo,
+) -> BaseModel | str:
     """Convert between different representations of schema:target_class instances
 
     The schema information is provided by `schema_module` and `schema_view`.
@@ -66,12 +59,15 @@ def _convert_format(
     if input_format == output_format:
         return data
 
+    schema_module, schema_view = collection_info.schema_module, collection_info.schema_view
+
     py_target_class = schema_module.__dict__[target_class]
     loader = get_loader(input_format.value)
     if input_format.value in ('ttl',):
         input_args = {'schemaview': schema_view, 'fmt': input_format.value}
     else:
         input_args = {}
+        data = cleaned_json(data.model_dump(exclude_none=True))
 
     data_obj = loader.load(
         source=data,
@@ -80,16 +76,11 @@ def _convert_format(
     )
 
     dumper = get_dumper(output_format.value)
-    return dumper.dumps(
+    result = dumper.dumps(
         data_obj, **({'schemaview': schema_view} if output_format == Format.ttl else {})
     )
-
-
-def get_conversion_objects(collections: dict[str, CollectionConfig]):
-    return {
-        collection: {
-            'schema_module': PythonGenerator(config.schema).compile_module(),
-            'schema_view': SchemaView(config.schema),
-        }
-        for collection, config in collections.items()
-    }
+    if output_format == Format.json:
+        return collection_info.model.__dict__[target_class](
+            **cleaned_json(json.loads(result))
+        )
+    return result

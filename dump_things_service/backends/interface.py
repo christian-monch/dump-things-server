@@ -22,6 +22,8 @@ from typing import (
     Iterable,
 )
 
+from linkml.generators import PythonGenerator
+from linkml_runtime import SchemaView
 from pydantic import BaseModel
 
 from dump_things_service.model import (
@@ -51,6 +53,8 @@ class CollectionInfo:
     def __init__(self, schema_location: str):
         self.schema_location = schema_location
         self.model, self.classes = self._create_model(schema_location)
+        self.schema_module = PythonGenerator(schema_location).compile_module()
+        self.schema_view = SchemaView(schema_location)
 
     @staticmethod
     def _create_model(schema_location: str) -> tuple[Any, dict[str, Iterable[str]]]:
