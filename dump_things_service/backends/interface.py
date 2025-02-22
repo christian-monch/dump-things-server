@@ -52,13 +52,37 @@ class AuthorizationError(StorageError):
 class CollectionInfo:
     def __init__(self, schema_location: str):
         self.schema_location = schema_location
-        self.model, self.classes = self._create_model(schema_location)
-        self.schema_module = PythonGenerator(schema_location).compile_module()
-        self.schema_view = SchemaView(schema_location)
+        self._model = None
+        self._classes = None
+        self._schema_module = None
+        self._schema_view = None
 
-    @staticmethod
-    def _create_model(schema_location: str) -> tuple[Any, dict[str, Iterable[str]]]:
-        model = build_model(schema_location)
+    @property
+    def model(self):
+        if not self._model:
+            self._model, self._classes = self._create_model()
+        return self._model
+
+    @property
+    def classes(self):
+        if not self._classes:
+            self._model, self._classes = self._create_model()
+        return self._classes
+
+    @property
+    def schema_module(self):
+        if not self._schema_module:
+            self._schema_module = PythonGenerator(self.schema_location).compile_module()
+        return self._schema_module
+
+    @property
+    def schema_view(self):
+        if not self._schema_view:
+            self._schema_view = SchemaView(self.schema_location)
+        return self._schema_view
+
+    def _create_model(self) -> tuple[Any, dict[str, Iterable[str]]]:
+        model = build_model(self.schema_location)
         return (
             model,
             {
