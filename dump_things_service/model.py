@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import types
 from itertools import count
-from typing import Any, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from linkml.generators import PydanticGenerator
 from pydantic._internal._model_construction import ModelMetaclass

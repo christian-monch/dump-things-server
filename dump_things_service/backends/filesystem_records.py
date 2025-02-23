@@ -7,9 +7,9 @@ from functools import partial
 from itertools import chain
 from pathlib import Path
 from typing import (
+    TYPE_CHECKING,
     Any,
     Callable,
-    Iterable,
     Literal,
 )
 
@@ -19,13 +19,18 @@ from pydantic import (
     BaseModel,
 )
 
-from dump_things_service import YAML
 from dump_things_service.backends.interface import (
     AuthorizationError,
     CollectionInfo,
     StorageBackendInterface,
-    UnknownCollectionError, UnknownClassError,
+    UnknownClassError,
+    UnknownCollectionError,
 )
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
+
+    from dump_things_service import YAML
 
 
 config_file_name = '.dumpthings.yaml'
@@ -66,9 +71,9 @@ def get_hex_digest(hasher: Callable, data: str) -> str:
 
 
 def mapping_digest_p3(
-        hasher: Callable,
-        identifier: str,
-        suffix: str,
+    hasher: Callable,
+    identifier: str,
+    suffix: str,
 ) -> Path:
     hex_digest = get_hex_digest(hasher, identifier)
     return Path(hex_digest[:3]) / (hex_digest[3:] + '.' + suffix)
@@ -103,11 +108,16 @@ class FileSystemRecords(StorageBackendInterface):
         self.global_store = None
         self.root = Path(root)
         self.global_store = Storage(self.root / 'global_store')
-        self.collections.update([
-            (path.name, CollectionInfo(schema_location=self._get_config(path)['schema']))
-            for path in (self.root / 'global_store').iterdir()
-            if path.is_dir() and path not in ignored_paths
-        ])
+        self.collections.update(
+            [
+                (
+                    path.name,
+                    CollectionInfo(schema_location=self._get_config(path)['schema']),
+                )
+                for path in (self.root / 'global_store').iterdir()
+                if path.is_dir() and path not in ignored_paths
+            ]
+        )
         self.token_stores = {
             path.name: TokenStorage(path, self.global_store)
             for path in (self.root / 'token_stores').glob('*')
@@ -123,7 +133,9 @@ class FileSystemRecords(StorageBackendInterface):
         added = 0
         for element in (self.root / 'token_stores').glob('*'):
             if element.is_dir() and element.name not in self.token_stores:
-                self.token_stores[element.name] = TokenStorage(element, self.global_store)
+                self.token_stores[element.name] = TokenStorage(
+                    element, self.global_store
+                )
                 added += 1
         return added
 
@@ -153,7 +165,9 @@ class FileSystemRecords(StorageBackendInterface):
             raise AuthorizationError(msg)
 
     def _create_result(self, collection: str, record_info: RecordInfo):
-        constructor = getattr(self.collections[collection].model, record_info.class_name)
+        constructor = getattr(
+            self.collections[collection].model, record_info.class_name
+        )
         return constructor(**record_info.record)
 
     def _check_collection(self, collection: str) -> None:
@@ -198,10 +212,7 @@ class FileSystemRecords(StorageBackendInterface):
         return None
 
     def records_of_class(
-        self,
-        collection: str,
-        class_name: str,
-        authorization_info: Any | None = None
+        self, collection: str, class_name: str, authorization_info: Any | None = None
     ) -> Iterable[BaseModel]:
         if authorization_info:
             self._check_token(authorization_info)
@@ -214,7 +225,9 @@ class FileSystemRecords(StorageBackendInterface):
 
         record_infos = {}
         for search_class_name in collection_info.classes[class_name]:
-            for record_info in self.global_store.get_all_records(collection, search_class_name):
+            for record_info in self.global_store.get_all_records(
+                collection, search_class_name
+            ):
                 record_infos[record_info.record['id']] = record_info
         if authorization_info:
             store = self._get_store_for_token(authorization_info)
@@ -229,8 +242,8 @@ class FileSystemRecords(StorageBackendInterface):
 
 class Storage:
     def __init__(
-            self,
-            root: str | Path,
+        self,
+        root: str | Path,
     ) -> None:
         self.root = Path(root)
         if not isinstance(self, TokenStorage):
@@ -257,11 +270,7 @@ class Storage:
             )
         return collection_path
 
-    def get_record(
-        self,
-        collection: str,
-        identifier: str
-    ) -> RecordInfo | None:
+    def get_record(self, collection: str, identifier: str) -> RecordInfo | None:
         for path in self.get_collection_path(collection).rglob('*'):
             if path.is_file() and path.name not in ignored_files:
                 record = yaml.load(path.read_text(), Loader=yaml.SafeLoader)
@@ -283,19 +292,19 @@ class Storage:
 
 class TokenStorage(Storage):
     def __init__(
-            self,
-            root: str | Path,
-            canonical_store: Storage,
+        self,
+        root: str | Path,
+        canonical_store: Storage,
     ) -> None:
         super().__init__(root)
         self.canonical_store = canonical_store
 
     def store_record(
-            self,
-            *,
-            record: BaseModel,
-            collection: str,
-            model: Any,
+        self,
+        *,
+        record: BaseModel,
+        collection: str,
+        model: Any,
     ) -> list[BaseModel]:
         final_records = self.extract_inlined(record, model)
         for final_record in final_records:
@@ -306,10 +315,10 @@ class TokenStorage(Storage):
         return final_records
 
     def store_single_record(
-            self,
-            *,
-            record: BaseModel,
-            collection: str,
+        self,
+        *,
+        record: BaseModel,
+        collection: str,
     ):
         # Generate the class directory
         class_name = record.__class__.__name__

@@ -8,12 +8,13 @@ from linkml.utils.datautils import (
     get_dumper,
     get_loader,
 )
-from pydantic import BaseModel
 
 from dump_things_service import Format
 from dump_things_service.utils import cleaned_json
 
 if TYPE_CHECKING:
+    from pydantic import BaseModel
+
     from dump_things_service.backends.interface import CollectionInfo
 
 
@@ -59,7 +60,10 @@ def _convert_format(
     if input_format == output_format:
         return data
 
-    schema_module, schema_view = collection_info.schema_module, collection_info.schema_view
+    schema_module, schema_view = (
+        collection_info.schema_module,
+        collection_info.schema_view,
+    )
 
     py_target_class = schema_module.__dict__[target_class]
     loader = get_loader(input_format.value)
@@ -80,6 +84,7 @@ def _convert_format(
         data_obj, **({'schemaview': schema_view} if output_format == Format.ttl else {})
     )
     if output_format == Format.json:
+        # Convert result to pydantic model
         return collection_info.model.__dict__[target_class](
             **cleaned_json(json.loads(result))
         )

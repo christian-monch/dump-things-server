@@ -11,6 +11,7 @@ collections. Note: a valid authorization key can store records in every
 collection.
 
 """
+
 from __future__ import annotations
 
 from abc import (
@@ -18,19 +19,23 @@ from abc import (
     abstractmethod,
 )
 from typing import (
+    TYPE_CHECKING,
     Any,
-    Iterable,
 )
 
 from linkml.generators import PythonGenerator
 from linkml_runtime import SchemaView
-from pydantic import BaseModel
 
 from dump_things_service.model import (
     build_model,
     get_classes,
     get_subclasses,
 )
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
+
+    from pydantic import BaseModel
 
 
 class StorageError(Exception):
@@ -88,7 +93,7 @@ class CollectionInfo:
             {
                 class_name: get_subclasses(model, class_name)
                 for class_name in get_classes(model)
-            }
+            },
         )
 
 
@@ -97,12 +102,13 @@ class StorageBackendInterface(metaclass=ABCMeta):
         self.collections = {}
 
     @abstractmethod
-    def store(self,
+    def store(
+        self,
         collection: str,
         record: BaseModel,
         authorization_info: Any,
     ):
-        raise NotImplementedError('subclass responsibility')
+        raise NotImplementedError
 
     @abstractmethod
     def record_with_id(
@@ -116,10 +122,7 @@ class StorageBackendInterface(metaclass=ABCMeta):
 
     @abstractmethod
     def records_of_class(
-        self,
-        collection: str,
-        class_name: str,
-        authorization_info: Any | None = None
+        self, collection: str, class_name: str, authorization_info: Any | None = None
     ) -> Iterable[BaseModel]:
         """Return classname and record data for all instances of class or it subclass."""
         raise NotImplementedError

@@ -37,15 +37,16 @@ Implementation details:
      less readable and debuggable.
 
 """
+
 from __future__ import annotations
 
 import argparse
 import logging
+from collections.abc import Iterable  # noqa F401 -- used by generated code
 from itertools import count
 from typing import (
     TYPE_CHECKING,
     Annotated,  # noqa F401 -- used by generated code
-    Iterable,  # noqa F401 -- used by generated code
 )
 
 import uvicorn
@@ -67,8 +68,10 @@ from dump_things_service.backends.filesystem_records import (
     AuthorizationError,
     FileSystemRecords,
 )
-from dump_things_service.backends.interface import UnknownClassError, \
-    UnknownCollectionError
+from dump_things_service.backends.interface import (
+    UnknownClassError,
+    UnknownCollectionError,
+)
 from dump_things_service.convert import convert_format
 from dump_things_service.utils import combine_ttl
 
@@ -168,34 +171,40 @@ def _check_input_format(data: BaseModel | str, input_format: Format) -> None:
 
 
 def store_record(
-        collection: str,
-        data: BaseModel | str,
-        class_name: str,
-        input_format: Format,
-        token: str | None,
+    collection: str,
+    data: BaseModel | str,
+    class_name: str,
+    input_format: Format,
+    token: str | None,
 ) -> JSONResponse | PlainTextResponse:
     _check_input_format(data, input_format)
 
     if input_format == Format.ttl:
-        data = convert_format(class_name, data, Format.ttl, Format.json, store.collections[collection])
+        data = convert_format(
+            class_name, data, Format.ttl, Format.json, store.collections[collection]
+        )
 
     try:
-        result = store.store(collection=collection, record=data, authorization_info=token)
+        result = store.store(
+            collection=collection, record=data, authorization_info=token
+        )
     except AuthorizationError as e:
         raise HTTPException(status_code=401, detail=str(e)) from e
 
     # If input was ttl, convert the response to ttl
     if input_format == Format.ttl:
-        ttl_result = combine_ttl([
-            convert_format(
-                target_class=record.__class__.__name__,
-                data=record,
-                input_format=Format.json,
-                output_format=Format.ttl,
-                collection_info=store.collections[collection],
-            )
-            for record in result
-        ])
+        ttl_result = combine_ttl(
+            [
+                convert_format(
+                    target_class=record.__class__.__name__,
+                    data=record,
+                    input_format=Format.json,
+                    output_format=Format.ttl,
+                    collection_info=store.collections[collection],
+                )
+                for record in result
+            ]
+        )
         return PlainTextResponse(ttl_result)
     return JSONResponse([record.model_dump(exclude_none=True) for record in result])
 
@@ -242,16 +251,18 @@ async def read_records_of_type(
         raise HTTPException(status_code=404, detail=str(e)) from e
 
     if format == Format.ttl:
-        ttl_result = combine_ttl([
-            convert_format(
-                target_class=record.__class__.__name__,
-                data=record,
-                input_format=Format.json,
-                output_format=Format.ttl,
-                collection_info=store.collections[collection],
-            )
-            for record in result
-        ])
+        ttl_result = combine_ttl(
+            [
+                convert_format(
+                    target_class=record.__class__.__name__,
+                    data=record,
+                    input_format=Format.json,
+                    output_format=Format.ttl,
+                    collection_info=store.collections[collection],
+                )
+                for record in result
+            ]
+        )
         return PlainTextResponse(ttl_result, media_type='text/turtle')
     return JSONResponse([record.model_dump(exclude_none=True) for record in result])
 
