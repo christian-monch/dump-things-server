@@ -290,10 +290,6 @@ class TokenStorage(Storage):
         super().__init__(root)
         self.canonical_store = canonical_store
 
-    @property
-    def conversion_objects(self):
-        return self.canonical_store.conversion_objects
-
     def store_record(
             self,
             *,
