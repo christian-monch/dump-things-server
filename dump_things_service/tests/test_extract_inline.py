@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 
 import pytest  # noqa F401
 
-from dump_things_service.storage import (
+from dump_things_service.backends.filesystem_records import (
     Storage,
     TokenStorage,
 )
