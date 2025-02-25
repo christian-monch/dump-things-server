@@ -14,17 +14,6 @@ if TYPE_CHECKING:
     from dump_things_service import JSON
 
 
-@contextmanager
-def sys_path(paths: list[str | Path]):
-    """Patch the `Path` class to return the paths in `paths` in order."""
-    original_path = sys.path
-    try:
-        sys.path = [str(path) for path in paths]
-        yield
-    finally:
-        sys.path = original_path
-
-
 def read_url(url: str) -> str:
     """
     Read the content of an URL into memory.

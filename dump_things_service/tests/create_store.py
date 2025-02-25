@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from dump_things_service.storage import (
+from dump_things_service.backends.filesystem_records import (
     MappingMethod,
     config_file_name,
     mapping_functions,
