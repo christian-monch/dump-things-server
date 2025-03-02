@@ -123,16 +123,15 @@ for collection, configuration in global_store.collections.items():
             f'Building model for collection {collection} from schema {schema_location}.'
         )
         model = build_model(schema_location)
-        created_models[schema_location] = model
+        classes = get_classes(model)
+        model_var_name = f'model_{next(model_counter)}'
+        created_models[schema_location] = model, classes, model_var_name
+        globals()[model_var_name] = model
     else:
         lgr.info(
             f'Using existing model for collection {collection} from schema {schema_location}.'
         )
-        model = created_models[schema_location]
-    classes = get_classes(model)
-    model_var_name = f'model_{next(model_counter)}'
-    model_info[collection] = model, classes, model_var_name
-    globals()[model_var_name] = model
+    model_info[collection] = created_models[schema_location]
 
 
 app = FastAPI()
