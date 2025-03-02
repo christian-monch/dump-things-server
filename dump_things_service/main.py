@@ -179,7 +179,7 @@ for collection, (model, classes, model_var_name) in model_info.items():
             endpoint=locals()[endpoint_name],
             methods=['POST'],
             name=f'handle "{class_name}" of schema "{model.linkml_meta["id"]}" objects',
-            response_model=getattr(model, class_name),
+            response_model=Any,
         )
 
 lgr.info('Creation of %d endpoints completed.', next(serial_number))
