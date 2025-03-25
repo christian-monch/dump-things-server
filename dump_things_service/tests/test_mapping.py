@@ -4,15 +4,15 @@ import yaml
 
 from . import HTTP_200_OK
 
-identifier = 'abc:this_is_an_identifier'
+pid = 'abc:this_is_a_persistent_identifier'
 
 record_a = {
-    'id': identifier,
+    'pid': pid,
     'given_name': 'James',
 }
 
 record_b = {
-    'id': identifier,
+    'pid': pid,
     'given_name': 'Zulu',
 }
 
@@ -35,11 +35,11 @@ def test_mapping_functions_ignore_data(fastapi_client_simple):
         )
         assert response.status_code == HTTP_200_OK
 
-        # Check that only one record with the given id exists in the collection
-        id_counter = defaultdict(int)
+        # Check that only one record with the given pid exists in the collection
+        pid_counter = defaultdict(int)
         token_store_path = store_path / 'token_stores' / 'token_1' / f'collection_{i}'
         for path in token_store_path.rglob('*.yaml'):
             if path.is_file():
                 record = yaml.load(path.read_text(), Loader=yaml.SafeLoader)
-                id_counter[record['id']] += 1
-        assert all(v == 1 for v in id_counter.values())
+                pid_counter[record['pid']] += 1
+        assert all(v == 1 for v in pid_counter.values())

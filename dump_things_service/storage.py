@@ -57,21 +57,21 @@ def get_hex_digest(hasher: Callable, data: str) -> str:
 
 def mapping_digest_p3(
     hasher: Callable,
-    identifier: str,
+    pid: str,
     suffix: str,
 ) -> Path:
-    hex_digest = get_hex_digest(hasher, identifier)
+    hex_digest = get_hex_digest(hasher, pid)
     return Path(hex_digest[:3]) / (hex_digest[3:] + '.' + suffix)
 
 
-def mapping_digest(hasher: Callable, identifier: str, suffix: str) -> Path:
-    hex_digest = get_hex_digest(hasher, identifier)
+def mapping_digest(hasher: Callable, pid: str, suffix: str) -> Path:
+    hex_digest = get_hex_digest(hasher, pid)
     return Path(hex_digest + '.' + suffix)
 
 
-def mapping_after_last_colon(identifier: str, suffix: str) -> Path:
-    plain_result = identifier.split(':')[-1]
-    # Escape any colons and slashes in the identifier
+def mapping_after_last_colon(pid: str, suffix: str) -> Path:
+    plain_result = pid.split(':')[-1]
+    # Escape any colons and slashes in the pid
     escaped_result = (
         plain_result.replace('_', '__').replace('/', '_s').replace('.', '_d')
     )
@@ -121,14 +121,14 @@ class Storage:
         return collection_path
 
     def get_record(
-        self, collection: str, identifier: str, output_format: Format
+        self, collection: str, pid: str, output_format: Format
     ) -> dict | str | None:
         from dump_things_service.convert import convert_format
 
         for path in self.get_collection_path(collection).rglob('*'):
             if path.is_file() and path.name not in ignored_files:
                 record = yaml.load(path.read_text(), Loader=yaml.SafeLoader)
-                if record['id'] == identifier:
+                if record['pid'] == pid:
                     if output_format == Format.ttl:
                         record = convert_format(
                             target_class=get_class_from_path(path),
@@ -210,17 +210,17 @@ class TokenStorage(Storage):
         # Convert the record object into a YAML object
         data = yaml.dump(data=record.model_dump(exclude_none=True), sort_keys=False)
 
-        # Apply the mapping function to the record id to get the final storage path
+        # Apply the mapping function to the record pid to get the final storage path
         config = self.canonical_store.collections[collection]
         storage_path = record_root / mapping_functions[config.idfx](
-            identifier=record.id, suffix=config.format
+            pid=record.pid, suffix=config.format
         )
 
         # Ensure that the storage path is within the record root
         try:
             storage_path.relative_to(record_root)
         except ValueError as e:
-            raise HTTPException(status_code=400, detail='Invalid identifier.') from e
+            raise HTTPException(status_code=400, detail='Invalid pid.') from e
 
         # Ensure all intermediate directories exist and save the yaml document
         storage_path.parent.mkdir(parents=True, exist_ok=True)
@@ -249,15 +249,15 @@ class TokenStorage(Storage):
                     self.extract_inlined(sub_record, model)
                     for sub_record in record.relations.values()
                     # Do not extract 'empty'-Thing records, those are just placeholders
-                    if sub_record != model.Thing(id=sub_record.id)
+                    if sub_record != model.Thing(pid=sub_record.pid)
                 ]
             )
         )
         # Simplify the relations in this record
         new_record = record.model_copy()
         new_record.relations = {
-            sub_record_id: model.Thing(id=sub_record_id)
-            for sub_record_id in record.relations
+            sub_record_pid: model.Thing(pid=sub_record_pid)
+            for sub_record_pid in record.relations
         }
         return [new_record, *extracted_sub_records]
 

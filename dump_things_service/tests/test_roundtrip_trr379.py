@@ -3,12 +3,12 @@ import pytest  # noqa F401
 from . import HTTP_200_OK
 
 json_record = {
-    'id': 'trr379:test_john_json',
+    'pid': 'trr379:test_john_json',
     'schema_type': 'dlsocial:Person',
     'given_name': 'John',
 }
 
-new_ttl_id = 'trr379:another_john_json'
+new_ttl_pid = 'trr379:another_john_json'
 
 
 ttl_record = """
@@ -19,7 +19,7 @@ trr379:test_john_ttl a dlsocial:Person ;
     dlsocial:given_name "John" .
 """
 
-new_json_id = 'trr379:another_john_ttl'
+new_json_pid = 'trr379:another_john_ttl'
 
 
 def test_json_ttl_json_trr379(fastapi_client_simple):
@@ -35,14 +35,14 @@ def test_json_ttl_json_trr379(fastapi_client_simple):
 
     # Retrieve TTL records
     response = test_client.get(
-        f'/collection_trr379/record?id={json_record["id"]}&format=ttl',
+        f'/collection_trr379/record?pid={json_record["pid"]}&format=ttl',
         headers={'x-dumpthings-token': 'token_1'},
     )
     assert response.status_code == HTTP_200_OK
     ttl = response.text
 
-    # modify the id
-    ttl = ttl.replace(json_record['id'], new_ttl_id)
+    # modify the pid
+    ttl = ttl.replace(json_record['pid'], new_ttl_pid)
 
     response = test_client.post(
         '/collection_trr379/record/Person?format=ttl',
@@ -53,13 +53,13 @@ def test_json_ttl_json_trr379(fastapi_client_simple):
 
     # Retrieve JSON record
     response = test_client.get(
-        f'/collection_trr379/record?id={new_ttl_id}&format=json',
+        f'/collection_trr379/record?pid={new_ttl_pid}&format=json',
         headers={'x-dumpthings-token': 'token_1'},
     )
     assert response.status_code == HTTP_200_OK
     json_object = response.json()
     assert json_object != json_record
-    json_object['id'] = json_record['id']
+    json_object['pid'] = json_record['pid']
     assert json_object == json_record
 
 
@@ -79,14 +79,14 @@ def test_ttl_json_ttl_trr379(fastapi_client_simple):
 
     # Retrieve JSON records
     response = test_client.get(
-        '/collection_trr379/record?id=trr379:test_john_ttl&format=json',
+        '/collection_trr379/record?pid=trr379:test_john_ttl&format=json',
         headers={'x-dumpthings-token': 'token_1'},
     )
     assert response.status_code == HTTP_200_OK
     json_object = response.json()
 
-    # modify the id
-    json_object['id'] = new_json_id
+    # modify the pid
+    json_object['pid'] = new_json_pid
 
     response = test_client.post(
         '/collection_trr379/record/Person?format=json',
@@ -97,11 +97,11 @@ def test_ttl_json_ttl_trr379(fastapi_client_simple):
 
     # Retrieve ttl record
     response = test_client.get(
-        f'/collection_trr379/record?id={new_json_id}&format=ttl',
+        f'/collection_trr379/record?pid={new_json_pid}&format=ttl',
         headers={'x-dumpthings-token': 'token_1'},
     )
     assert response.status_code == HTTP_200_OK
     assert (
         response.text.strip()
-        == ttl_record.replace('trr379:test_john_ttl', new_json_id).strip()
+        == ttl_record.replace('trr379:test_john_ttl', new_json_pid).strip()
     )
