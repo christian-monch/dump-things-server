@@ -3,7 +3,7 @@ from dump_things_service.utils import cleaned_json
 
 def test_cleaned_json():
     dirty_data = {
-        'id': 'trr379:contributors/michael-hanke',
+        'pid': 'trr379:contributors/michael-hanke',
         'schema_type': 'dlsocial:Person',
         'identifiers': [
             {
@@ -22,7 +22,7 @@ def test_cleaned_json():
     clean_data = cleaned_json(dirty_data)
     assert clean_data is not dirty_data
     assert clean_data == {
-        'id': 'trr379:contributors/michael-hanke',
+        'pid': 'trr379:contributors/michael-hanke',
         'schema_type': 'dlsocial:Person',
         'identifiers': [
             {

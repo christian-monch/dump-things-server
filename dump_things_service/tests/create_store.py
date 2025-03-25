@@ -25,15 +25,15 @@ format: yaml
 idfx: {mapping_function}
 """
 
-identifier = 'abc:some_timee@x.com'
+pid = 'abc:some_timee@x.com'
 given_name = 'Wolfgang'
-test_record = f"""id: {identifier}
+test_record = f"""pid: {pid}
 given_name: {given_name}
 """
 
-identifier_trr = 'trr379:amadeus'
+pid_trr = 'trr379:amadeus'
 given_name_trr = 'Amadeus'
-test_record_trr = f"""id: {identifier_trr}
+test_record_trr = f"""pid: {pid_trr}
 given_name: {given_name_trr}
 """
 
@@ -78,12 +78,12 @@ def create_store(
 
         # Add default entries
         mapper = mapping_functions[MappingMethod(mapping_function)]
-        for class_name, identifier, record in default_entries or []:
+        for class_name, pid, record in default_entries or []:
             record_path = (
                 collection_dir
                 / class_name
                 / mapper(
-                    identifier=identifier,
+                    pid=pid,
                     suffix='yaml',
                 )
             )

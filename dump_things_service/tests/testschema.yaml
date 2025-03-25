@@ -27,7 +27,7 @@ classes:
   Thing:
     slots: relations
     attributes:
-      id:
+      pid:
         identifier: true
         required: true
 

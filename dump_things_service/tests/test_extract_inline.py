@@ -23,7 +23,7 @@ if TYPE_CHECKING:
 
 @dataclasses.dataclass
 class Thing:
-    id: str
+    pid: str
     relations: dict[str, Thing] | None = None
 
     def model_copy(self):
@@ -54,21 +54,21 @@ class MockedModule:
 
 def get_inlined_object(model_module):
     return model_module.Person(
-        id='trr379:test_extract_1',
+        pid='trr379:test_extract_1',
         given_name='Grandfather',
         relations={
             'trr379:test_extract_1_1': model_module.Person(
-                id='trr379:test_extract_1_1',
+                pid='trr379:test_extract_1_1',
                 given_name='Father',
                 relations={
                     'trr379:test_extract_1_1_1': model_module.Agent(
-                        id='trr379:test_extract_1_1_1',
+                        pid='trr379:test_extract_1_1_1',
                         acted_on_behalf_of=['trr379:test_extract_1_1'],
                     ),
                 },
             ),
             'trr379:test_extract_1_2': model_module.InstantaneousEvent(
-                id='trr379:test_extract_1_2',
+                pid='trr379:test_extract_1_2',
                 at_time='2028-12-31',
             ),
         },
@@ -80,12 +80,12 @@ inlined_json_record = cleaned_json(dataclasses.asdict(inlined_object))
 
 
 empty_inlined_object = Person(
-    id='trr379:test_extract_a',
+    pid='trr379:test_extract_a',
     given_name='Opa',
     relations={
-        'trr379:test_extract_a_a': Thing(id='trr379:test_extract_a_a'),
-        'trr379:test_extract_a_b': Thing(id='trr379:test_extract_a_b'),
-        'trr379:test_extract_a_c': Thing(id='trr379:test_extract_a_c'),
+        'trr379:test_extract_a_a': Thing(pid='trr379:test_extract_a_a'),
+        'trr379:test_extract_a_b': Thing(pid='trr379:test_extract_a_b'),
+        'trr379:test_extract_a_c': Thing(pid='trr379:test_extract_a_c'),
     },
 )
 
@@ -114,18 +114,18 @@ def _check_result_objects(
     records: list[BaseModel],
     tree: tuple[tuple[str, tuple[str, ...]]],
 ):
-    def get_record_by_id(record_id: str):
+    def get_record_by_pid(record_pid: str):
         for record in records:
-            if record.id == record_id:
+            if record.pid == record_pid:
                 return record
         return None
 
-    for record_id, linked_ids in tree:
-        record = get_record_by_id(record_id)
-        assert len(record.relations or {}) == len(linked_ids)
-        for linked_id in linked_ids:
+    for record_pid, linked_pids in tree:
+        record = get_record_by_pid(record_pid)
+        assert len(record.relations or {}) == len(linked_pids)
+        for linked_pid in linked_pids:
             # Processing might add `schema_type` to records, ignore it.
-            assert record.relations[linked_id].id == linked_id
+            assert record.relations[linked_pid].pid == linked_pid
 
 
 def test_dont_extract_empty_things_locally(dump_stores_simple):
@@ -153,11 +153,11 @@ def test_inline_extraction_on_service(fastapi_client_simple):
     _check_result_json(response.json(), tree)
 
     # Verify that the records are actually stored individually and can be
-    # retrieved by their id.
+    # retrieved by their pid.
     records = []
-    for record_id in (entry[0] for entry in tree):
+    for record_pid in (entry[0] for entry in tree):
         response = test_client.get(
-            f'/collection_trr379/record?id={record_id}',
+            f'/collection_trr379/record?pid={record_pid}',
             headers={'x-dumpthings-token': 'token_1'},
         )
         assert response.status_code == HTTP_200_OK
@@ -167,7 +167,7 @@ def test_inline_extraction_on_service(fastapi_client_simple):
     _check_result_json(records, tree)
 
     # Check that individual record classes were recognized
-    for class_name, identifiers in (
+    for class_name, pids in (
         ('Person', ('trr379:test_extract_1', 'trr379:test_extract_1_1')),
         ('Agent', ('trr379:test_extract_1_1_1',)),
         ('InstantaneousEvent', ('trr379:test_extract_1_2',)),
@@ -176,29 +176,29 @@ def test_inline_extraction_on_service(fastapi_client_simple):
             f'/collection_trr379/records/{class_name}',
             headers={'x-dumpthings-token': 'token_1'},
         ).json()
-        for identifier in identifiers:
-            assert any(record['id'] == identifier for record in records)
+        for pid in pids:
+            assert any(record['pid'] == pid for record in records)
 
 
 def _check_result_json(
     records: list[JSON],
     tree: tuple[tuple[str, tuple[str, ...]]],
 ):
-    def get_record_by_id(record_id: str):
+    def get_record_by_pid(record_pid: str):
         for record in records:
-            if record['id'] == record_id:
+            if record['pid'] == record_pid:
                 return record
         return None
 
-    for record_id, linked_ids in tree:
-        record = get_record_by_id(record_id)
+    for record_pid, linked_pids in tree:
+        record = get_record_by_pid(record_pid)
         if 'relations' in record:
-            assert len(record['relations']) == len(linked_ids)
-        for linked_id in linked_ids:
+            assert len(record['relations']) == len(linked_pids)
+        for linked_pid in linked_pids:
             # Processing might add `schema_type` to records, ignore it.
-            if 'schema_type' in record['relations'][linked_id]:
-                del record['relations'][linked_id]['schema_type']
-            assert record['relations'][linked_id] == {'id': linked_id}
+            if 'schema_type' in record['relations'][linked_pid]:
+                del record['relations'][linked_pid]['schema_type']
+            assert record['relations'][linked_pid] == {'pid': linked_pid}
 
 
 def test_dont_extract_empty_things_on_service(fastapi_client_simple):

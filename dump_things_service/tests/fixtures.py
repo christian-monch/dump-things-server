@@ -5,15 +5,15 @@ import pytest
 
 from dump_things_service.tests.create_store import create_stores
 
-identifier = 'abc:some_timee@x.com'
+pid = 'abc:some_timee@x.com'
 given_name = 'Wolfgang'
-test_record = f"""id: {identifier}
+test_record = f"""pid: {pid}
 given_name: {given_name}
 """
 
-identifier_trr = 'trr379:amadeus'
+pid_trr = 'trr379:amadeus'
 given_name_trr = 'Amadeus'
-test_record_trr = f"""id: {identifier_trr}
+test_record_trr = f"""pid: {pid_trr}
 given_name: {given_name_trr}
 """
 
@@ -32,7 +32,7 @@ def dump_stores_simple(tmp_path_factory):
             'collection_5': (str(schema_path), 'after-last-colon'),
         },
         token_stores=['token_1'],
-        default_entries=[('Person', identifier, test_record)],
+        default_entries=[('Person', pid, test_record)],
     )
     create_stores(
         root_dir=tmp_path,
@@ -43,7 +43,7 @@ def dump_stores_simple(tmp_path_factory):
             ),
         },
         token_stores=['token_1'],
-        default_entries=[('Person', identifier_trr, test_record_trr)],
+        default_entries=[('Person', pid_trr, test_record_trr)],
     )
     return tmp_path
 

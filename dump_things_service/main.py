@@ -186,19 +186,18 @@ lgr.info('Creation of %d endpoints completed.', next(serial_number))
 
 
 @app.get('/{collection}/record')
-async def read_record_with_id(
+async def read_record_with_pid(
     collection: str,
-    id: str,  # noqa A002
+    pid: str,  # noqa A002
     format: Format = Format.json,  # noqa A002
     api_key: str = Depends(api_key_header_scheme),
 ):
-    identifier = id
     store = _get_store_for_token(api_key)
     record = None
     if store:
-        record = store.get_record(collection, identifier, format)
+        record = store.get_record(collection, pid, format)
     if not record:
-        record = global_store.get_record(collection, identifier, format)
+        record = global_store.get_record(collection, pid, format)
 
     if record:
         if format == Format.ttl:
@@ -230,12 +229,12 @@ async def read_records_of_type(
     records = {}
     for search_class_name in get_subclasses(model, class_name):
         for record in global_store.get_all_records(collection, search_class_name):
-            records[record['id']] = record
+            records[record['pid']] = record
     store = _get_store_for_token(api_key)
     if store:
         for search_class_name in get_subclasses(model, class_name):
             for record in store.get_all_records(collection, search_class_name):
-                records[record['id']] = record
+                records[record['pid']] = record
 
     if format == Format.ttl:
         ttls = [

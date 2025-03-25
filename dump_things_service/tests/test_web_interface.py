@@ -10,7 +10,7 @@ collection_names = ('collection_1', 'xasdasd', '../../../abc')
 class_names = ('Thing', 'Mosdlkjsdfnmxcfd', '../../../abc')
 queries = ('format', 'somerslkhjsdfsdf')
 format_names = ('json', 'ttl', 'sdfsdfkjsdkfsd')
-identifiers = ('', '--------', '&&&&&', 'abc', 'abc&', 'abc&format=ttl')
+pids = ('', '--------', '&&&&&', 'abc', 'abc&', 'abc&format=ttl')
 
 
 @pytest.mark.parametrize(
@@ -29,7 +29,7 @@ def test_web_interface_post_errors(
     result = test_client.post(
         f'/{collection_name}/record/{class_name}?{query}={format_name}',
         headers={'x-dumpthings-token': 'token_1'},
-        json={'id': 'xyz:bbbb'},
+        json={'pid': 'xyz:bbbb'},
     )
     assert result.status_code < HTTP_500_INTERNAL_SERVER_ERROR
 
@@ -60,25 +60,25 @@ def test_web_interface_get_class_errors(
 
 
 @pytest.mark.parametrize(
-    'collection_name,identifier,query,format_name',  # noqa PT006
-    tuple(product(*(collection_names, identifiers, queries, format_names))),
+    "collection_name,pid,query,format_name",  # noqa PT006
+    tuple(product(*(collection_names, pids, queries, format_names))),
 )
-def test_web_interface_get_id_errors(
+def test_web_interface_get_pid_errors(
     fastapi_client_simple,
     collection_name,
-    identifier,
+    pid,
     query,
     format_name,
 ):
     """Check that no internal server error occurs with weird input"""
     test_client, _ = fastapi_client_simple
     result = test_client.get(
-        f'/{collection_name}/records?{identifier}&{query}={format_name}',
+        f'/{collection_name}/records?{pid}&{query}={format_name}',
     )
     assert result.status_code < HTTP_500_INTERNAL_SERVER_ERROR
 
     result = test_client.get(
-        f'/{collection_name}/records?{identifier}&{query}={format_name}',
+        f'/{collection_name}/records?{pid}&{query}={format_name}',
         headers={'x-dumpthings-token': 'token_1'},
     )
     assert result.status_code < HTTP_500_INTERNAL_SERVER_ERROR
