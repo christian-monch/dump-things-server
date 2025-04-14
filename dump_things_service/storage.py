@@ -50,6 +50,11 @@ class CollectionConfig(BaseModel):
     idfx: MappingMethod
 
 
+class TokenStorageConfig(BaseModel):
+    read_access: bool = True
+    write_access: bool = True
+
+
 def get_hex_digest(hasher: Callable, data: str) -> str:
     hash_context = hasher(data.encode())
     return hash_context.hexdigest()
@@ -101,8 +106,8 @@ class Storage:
             self.conversion_objects = get_conversion_objects(self.collections)
 
     @staticmethod
-    def get_config(path: Path) -> YAML:
-        return yaml.load((path / config_file_name).read_text(), Loader=yaml.SafeLoader)
+    def get_config(path: Path, file_name=config_file_name) -> YAML:
+        return yaml.load((path / file_name).read_text(), Loader=yaml.SafeLoader)
 
     def _get_collections(self) -> dict[str, CollectionConfig]:
         # read all record collections
@@ -154,6 +159,19 @@ class TokenStorage(Storage):
     ) -> None:
         super().__init__(root)
         self.canonical_store = canonical_store
+        self.config = self.get_token_config(root)
+
+    @staticmethod
+    def get_token_config(path: Path) -> TokenStorageConfig:
+        try:
+            return TokenStorageConfig(
+                **Storage.get_config(path, '.token_config.yaml')
+            )
+        except FileNotFoundError:
+            return TokenStorageConfig(
+                read_access=True,
+                write_access=True,
+            )
 
     @property
     def conversion_objects(self):
