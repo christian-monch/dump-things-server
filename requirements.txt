@@ -1,5 +1,5 @@
 aiohttp
-fastapi[standard]==0.113.0
+fastapi
 fsspec
 hatch
 hatch-vcs
