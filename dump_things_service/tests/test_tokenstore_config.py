@@ -1,4 +1,5 @@
 import pytest  # noqa F401
+from starlette.status import HTTP_403_FORBIDDEN
 
 from . import (
     HTTP_200_OK,
@@ -30,7 +31,7 @@ def test_read_access(fastapi_client_simple):
         f'/collection_1/record?pid={pid}',
         headers={'x-dumpthings-token': 'token_1_ox'}
     )
-    assert response.status_code == HTTP_401_UNAUTHORIZED
+    assert response.status_code == HTTP_403_FORBIDDEN
 
 
 def test_write_access(fastapi_client_simple):
@@ -56,4 +57,4 @@ def test_write_access(fastapi_client_simple):
         headers={'x-dumpthings-token': 'token_1_xo'},
         json=json_record,
     )
-    assert response.status_code == HTTP_401_UNAUTHORIZED
+    assert response.status_code == HTTP_403_FORBIDDEN

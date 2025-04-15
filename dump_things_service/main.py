@@ -96,7 +96,7 @@ def store_record(
     store = _get_store_for_token(token)
     if store:
         if not store.config.write_access:
-            raise HTTPException(status_code=401, detail='No write access.')
+            raise HTTPException(status_code=403, detail='No write access.')
         stored_records = store.store_record(
             record=data,
             collection=collection,
@@ -109,7 +109,7 @@ def store_record(
         return JSONResponse(
             list(map(cleaned_json, map(jsonable_encoder, stored_records)))
         )
-    raise HTTPException(status_code=403, detail='Invalid token.')
+    raise HTTPException(status_code=401, detail='Invalid token.')
 
 
 lgr = logging.getLogger('uvicorn')
@@ -191,18 +191,18 @@ lgr.info('Creation of %d endpoints completed.', next(serial_number))
 @app.get('/{collection}/record')
 async def read_record_with_pid(
     collection: str,
-    pid: str,  # noqa A002
+    pid: str,
     format: Format = Format.json,  # noqa A002
     api_key: str = Depends(api_key_header_scheme),
 ):
     if collection not in model_info:
         raise HTTPException(
-            status_code=401, detail=f'No such collection: "{collection}".'
+            status_code=404, detail=f'No such collection: "{collection}".'
         )
 
     token_store = _get_store_for_token(api_key)
     if token_store and not token_store.config.read_access:
-        raise HTTPException(status_code=401, detail='No read access.')
+        raise HTTPException(status_code=403, detail='No read access.')
 
     record = None
     if token_store:
@@ -210,9 +210,8 @@ async def read_record_with_pid(
     if not record and not arguments.no_standard_store:
         record = global_store.get_record(collection, pid, format)
 
-    if record:
-        if format == Format.ttl:
-            return PlainTextResponse(record, media_type='text/turtle')
+    if record and format == Format.ttl:
+        return PlainTextResponse(record, media_type='text/turtle')
     return record
 
 
@@ -227,19 +226,19 @@ async def read_records_of_type(
 
     if collection not in model_info:
         raise HTTPException(
-            status_code=401, detail=f'No such collection: "{collection}".'
+            status_code=404, detail=f'No such collection: "{collection}".'
         )
 
     model = model_info[collection][0]
     if class_name not in get_classes(model):
         raise HTTPException(
-            status_code=401,
+            status_code=404,
             detail=f'No "{class_name}"-class in collection "{collection}".',
         )
 
     token_store = _get_store_for_token(api_key)
     if token_store and not token_store.config.read_access:
-        raise HTTPException(status_code=401, detail='No read access.')
+        raise HTTPException(status_code=403, detail='No read access.')
 
     records = {}
     if not arguments.no_standard_store:
