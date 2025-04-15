@@ -26,6 +26,7 @@ from dump_things_service import (
 from dump_things_service.utils import cleaned_json
 
 config_file_name = '.dumpthings.yaml'
+token_config_file_name = '.token_config.yaml'  # noqa: S105
 ignored_files = {'.', '..', config_file_name}
 
 
@@ -165,7 +166,7 @@ class TokenStorage(Storage):
     def get_token_config(path: Path) -> TokenStorageConfig:
         try:
             return TokenStorageConfig(
-                **Storage.get_config(path, '.token_config.yaml')
+                **Storage.get_config(path, token_config_file_name)
             )
         except FileNotFoundError:
             return TokenStorageConfig(
