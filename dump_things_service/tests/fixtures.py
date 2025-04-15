@@ -31,8 +31,13 @@ def dump_stores_simple(tmp_path_factory):
             'collection_4': (str(schema_path), 'digest-sha1-p3'),
             'collection_5': (str(schema_path), 'after-last-colon'),
         },
-        token_stores=['token_1'],
+        token_stores=['token_1', 'token_1_xx', 'token_1_xo', 'token_1_ox'],
         default_entries=[('Person', pid, test_record)],
+        token_configs={
+            'token_1_oo': (False, False),
+            'token_1_ox': (False, True),
+            'token_1_xo': (True, False),
+        },
     )
     create_stores(
         root_dir=tmp_path,
