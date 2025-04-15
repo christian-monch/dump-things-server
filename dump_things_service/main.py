@@ -49,6 +49,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--host', default='0.0.0.0')  # noqa S104
 parser.add_argument('--port', default=8000, type=int)
 parser.add_argument('--origins', action='append', default=[])
+parser.add_argument('--no-standard-store', action='store_true')
 parser.add_argument(
     'store',
     help='The root of the data stores, it should contain a global_store and token_stores.',
@@ -58,11 +59,11 @@ arguments = parser.parse_args()
 
 
 # Instantiate storage objects
-store = Path(arguments.store)
-global_store = Storage(store / 'global_store')
+store_path = Path(arguments.store)
+global_store = Storage(store_path / 'global_store')
 token_stores = {
     element.name: TokenStorage(element, global_store)
-    for element in (store / 'token_stores').glob('*')
+    for element in (store_path / 'token_stores').glob('*')
     if element.is_dir()
 }
 
@@ -94,6 +95,8 @@ def store_record(
 
     store = _get_store_for_token(token)
     if store:
+        if not store.config.write_access:
+            raise HTTPException(status_code=403, detail='No write access.')
         stored_records = store.store_record(
             record=data,
             collection=collection,
@@ -106,7 +109,7 @@ def store_record(
         return JSONResponse(
             list(map(cleaned_json, map(jsonable_encoder, stored_records)))
         )
-    raise HTTPException(status_code=403, detail='Invalid token.')
+    raise HTTPException(status_code=401, detail='Invalid token.')
 
 
 lgr = logging.getLogger('uvicorn')
@@ -188,22 +191,28 @@ lgr.info('Creation of %d endpoints completed.', next(serial_number))
 @app.get('/{collection}/record')
 async def read_record_with_pid(
     collection: str,
-    pid: str,  # noqa A002
+    pid: str,
     format: Format = Format.json,  # noqa A002
     api_key: str = Depends(api_key_header_scheme),
 ):
-    store = _get_store_for_token(api_key)
+    if collection not in model_info:
+        raise HTTPException(
+            status_code=404, detail=f'No such collection: "{collection}".'
+        )
+
+    token_store = _get_store_for_token(api_key)
+    if token_store and not token_store.config.read_access:
+        raise HTTPException(status_code=403, detail='No read access.')
+
     record = None
-    if store:
-        record = store.get_record(collection, pid, format)
-    if not record:
+    if token_store:
+        record = token_store.get_record(collection, pid, format)
+    if not record and not arguments.no_standard_store:
         record = global_store.get_record(collection, pid, format)
 
-    if record:
-        if format == Format.ttl:
-            return PlainTextResponse(record, media_type='text/turtle')
-        return record
-    return None
+    if record and format == Format.ttl:
+        return PlainTextResponse(record, media_type='text/turtle')
+    return record
 
 
 @app.get('/{collection}/records/{class_name}')
@@ -217,23 +226,29 @@ async def read_records_of_type(
 
     if collection not in model_info:
         raise HTTPException(
-            status_code=401, detail=f'No such collection: "{collection}".'
+            status_code=404, detail=f'No such collection: "{collection}".'
         )
 
     model = model_info[collection][0]
     if class_name not in get_classes(model):
         raise HTTPException(
-            status_code=401, detail=f'Unsupported class: "{class_name}".'
+            status_code=404,
+            detail=f'No "{class_name}"-class in collection "{collection}".',
         )
 
+    token_store = _get_store_for_token(api_key)
+    if token_store and not token_store.config.read_access:
+        raise HTTPException(status_code=403, detail='No read access.')
+
     records = {}
-    for search_class_name in get_subclasses(model, class_name):
-        for record in global_store.get_all_records(collection, search_class_name):
-            records[record['pid']] = record
-    store = _get_store_for_token(api_key)
-    if store:
+    if not arguments.no_standard_store:
         for search_class_name in get_subclasses(model, class_name):
-            for record in store.get_all_records(collection, search_class_name):
+            for record in global_store.get_all_records(collection, search_class_name):
+                records[record['pid']] = record
+
+    if token_store:
+        for search_class_name in get_subclasses(model, class_name):
+            for record in token_store.get_all_records(collection, search_class_name):
                 records[record['pid']] = record
 
     if format == Format.ttl:
@@ -257,18 +272,18 @@ def _get_store_for_token(token: str | None):
     if token is None:
         return None
     if token not in token_stores:
-        _update_token_stores(store, token_stores)
+        _update_token_stores(store_path, token_stores)
     if token not in token_stores:
         raise HTTPException(status_code=401, detail='Invalid token.')
     return token_stores[token]
 
 
 def _update_token_stores(
-    store: Path,
+    store_path: Path,
     token_stores: dict,
 ) -> int:
     added = 0
-    for element in (store / 'token_stores').glob('*'):
+    for element in (store_path / 'token_stores').glob('*'):
         if element.is_dir() and element.name not in token_stores:
             token_stores[element.name] = TokenStorage(element, global_store)
             added += 1

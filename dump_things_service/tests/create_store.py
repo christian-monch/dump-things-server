@@ -2,10 +2,13 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+import yaml
+
 from dump_things_service.storage import (
     MappingMethod,
     config_file_name,
     mapping_functions,
+    token_config_file_name,
 )
 
 if TYPE_CHECKING:
@@ -43,6 +46,7 @@ def create_stores(
     collection_info: dict[str, tuple[str, str]],
     token_stores: list[str] | None = None,
     default_entries: list[tuple[str, str, str]] | None = None,
+    token_configs: dict[str, tuple[bool, bool]] | None = None,
 ):
     global_store = root_dir / 'global_store'
     global_store.mkdir(parents=True, exist_ok=True)
@@ -50,9 +54,17 @@ def create_stores(
     global_store.mkdir(parents=True, exist_ok=True)
 
     create_store(global_store, collection_info, default_entries)
+    token_configs = token_configs or {}
     for token in token_stores or []:
         (token_store_dir / token).mkdir(parents=True, exist_ok=True)
-
+        if token in token_configs:
+            config = yaml.dump(
+                data=dict(
+                    zip(['read_access', 'write_access'], token_configs[token])
+                ),
+                sort_keys=False,
+            )
+            (token_store_dir / token / token_config_file_name).write_text(config)
 
 def create_store(
     temp_dir: Path,
