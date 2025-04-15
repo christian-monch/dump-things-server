@@ -35,12 +35,31 @@ The following shows an example for a store that is at location `data-storage/sto
 │               └── dfa3142add5791dc6fe45209206fd.yaml
 └── token_stores
     └── token_1
+        ├── .token_config.yaml
+        :
 ```
+
+#### Configuring token stores
+
+To write records to the service, a token must be provided.
+This token must match a subdirectory-name in `token_stores`, in the example above `token_1` would be a valid token.
+Token stores can be configured to allow or disallow reading of records and to allow or disallow writing of records.
+This is done via the configuration file `.token_config.yaml` in the token store.
+The token configuration supports two keys: `read_access` and `write_access`.
+The values of the keys should be boolean values, i.e. `true` or `false`.
+If no configuration file is present, the default values are `true` for both keys.
+
+#### Command line parameters:
+
+The service supports the following command line parameters:
 
 - `--host` (optional): the IP address of the host the service should run on
 
 
 - `--port`: the port number the service should listen on
+
+
+- `--no-standard-store`: if set, the service will only search for records in the token-store associated with a token. If no token is provided, no records will be found.
 
 The service can be started via `hatch` like this:
 
@@ -57,7 +76,7 @@ hatch run fastapi:run /data-storage/store --host 127.0.0.1 --port 8000
 
 ### Endpoints
 
-Most endpoints require an *collection*. These correspond to the names of the "data record collection"-directories (for example `myschema-v3-fmta` in [Dump Things Service](https://concepts.datalad.org/dump-things/)) in the stores.
+Most endpoints require a *collection*. These correspond to the names of the "data record collection"-directories (for example `myschema-v3-fmta` in [Dump Things Service](https://concepts.datalad.org/dump-things/)) in the stores.
 
 The service provides the following endpoints:
 
@@ -72,15 +91,21 @@ The service provides the following endpoints:
  On success the endpoint will return a list of all stored records.
  This might be more than one record if the posted object contains inlined records.
   
-- `GET /<collection>/records/<class>`: retrieve all objects of type `<class>` or any of its subclasses that are stored in the global storage space of the service.
- If a token is provided, all matching objects from the token storage space are returned in addition.
+- `GET /<collection>/records/<class>`: retrieve all objects of type `<class>` or any of its subclasses that are stored in a token storage space or the global storage space of the service.
+ If the service was started with the `--no-standard-store` flag, records in the global storage space will be ignored. 
+ If a token is provided, all matching objects from the token storage space are returned.
+  If the service was started with the `--no-standard-store` flag, it will only return objects from the token storage space, otherwise the service returns objects from the global storage space in addition.
  Objects from token space take precedence over objects from the global space, i.e. if there are two objects with identical `pid` in the global store and the object store, the record from the token store will be returned.
- The endpoints supports the query parameter `format`, which determines the format of the query result.
+ The endpoint supports the query parameter `format`, which determines the format of the query result.
  It can be set to `json` (the default) or to `ttl`,
 
 
-- `GET /<collection>/record?pid=<pid>`: retrieve an object with the pid `<pid>` from the global storage of the service. If a token is provided, the object is also searched in the token storage space. Only objects with a type defined by the schema associated with `<collection>` are considered.
-  The endpoints supports the query parameter `format`, which determines the format of the query result.
+- `GET /<collection>/record?pid=<pid>`: retrieve an object with the pid `<pid>` from a token storage space or from the global storage of the service.
+  If the service was started with the `--no-standard-store` flag, records in the global storage space will be  ignored.
+  If a token is provided, the object is first searched in the token storage space.
+  If the service was started with the `--no-standard-store` flag, it will only search in the token storage space, otherwise the service will also search in the global storage space in addition.
+  Only objects with a type defined by the schema associated with `<collection>` are considered.
+  The endpoint supports the query parameter `format`, which determines the format of the query result.
   It can be set to `json` (the default) or to `ttl`,
 
 
