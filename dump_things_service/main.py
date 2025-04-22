@@ -49,7 +49,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--host', default='0.0.0.0')  # noqa S104
 parser.add_argument('--port', default=8000, type=int)
 parser.add_argument('--origins', action='append', default=[])
-parser.add_argument('--no-standard-store', action='store_true')
+parser.add_argument('--no-global-store', action='store_true')
 parser.add_argument(
     'store',
     help='The root of the data stores, it should contain a global_store and token_stores.',
@@ -207,7 +207,7 @@ async def read_record_with_pid(
     record = None
     if token_store:
         record = token_store.get_record(collection, pid, format)
-    if not record and not arguments.no_standard_store:
+    if not record and not arguments.no_global_store:
         record = global_store.get_record(collection, pid, format)
 
     if record and format == Format.ttl:
@@ -241,7 +241,7 @@ async def read_records_of_type(
         raise HTTPException(status_code=403, detail='No read access.')
 
     records = {}
-    if not arguments.no_standard_store:
+    if not arguments.no_global_store:
         for search_class_name in get_subclasses(model, class_name):
             for record in global_store.get_all_records(collection, search_class_name):
                 records[record['pid']] = record
