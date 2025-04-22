@@ -17,7 +17,7 @@ The following parameters are supported:
  `token_stores` should contain zero or more subdirectories.
  The names of these subdirectories act as token values.
  If a respective token value is used, data will be stored in the token store.
- Configuration values, for example mapping function settings, are read from the global store.
+ Configuration values, for example, mapping function settings, are read from the global store.
 The following shows an example for a store that is at location `data-storage/store`, has two record collections, `schema_1` and `schema_2`, and a single token store, named `token_1` (both record collections contains the same object of type `Person`, but they have a different file-system layout because they use different mapping functions):
 
 ```
@@ -59,7 +59,7 @@ The service supports the following command line parameters:
 - `--port`: the port number the service should listen on
 
 
-- `--no-standard-store`: if set, the service will only search for records in the token-store associated with a token. If no token is provided, no records will be found.
+- `--no-global-store`: if set, the service will only search for records in the token-store associated with a token. If no token is provided, no records will be found.
 
 The service can be started via `hatch` like this:
 
@@ -92,18 +92,18 @@ The service provides the following endpoints:
  This might be more than one record if the posted object contains inlined records.
   
 - `GET /<collection>/records/<class>`: retrieve all objects of type `<class>` or any of its subclasses that are stored in a token storage space or the global storage space of the service.
- If the service was started with the `--no-standard-store` flag, records in the global storage space will be ignored. 
+ If the service was started with the `--no-global-store` flag, records in the global storage space will be ignored. 
  If a token is provided, all matching objects from the token storage space are returned.
-  If the service was started with the `--no-standard-store` flag, it will only return objects from the token storage space, otherwise the service returns objects from the global storage space in addition.
+  If the service was started with the `--no-global-store` flag, it will only return objects from the token storage space, otherwise the service returns objects from the global storage space in addition.
  Objects from token space take precedence over objects from the global space, i.e. if there are two objects with identical `pid` in the global store and the object store, the record from the token store will be returned.
  The endpoint supports the query parameter `format`, which determines the format of the query result.
  It can be set to `json` (the default) or to `ttl`,
 
 
 - `GET /<collection>/record?pid=<pid>`: retrieve an object with the pid `<pid>` from a token storage space or from the global storage of the service.
-  If the service was started with the `--no-standard-store` flag, records in the global storage space will be  ignored.
+  If the service was started with the `--no-global-store` flag, records in the global storage space will be  ignored.
   If a token is provided, the object is first searched in the token storage space.
-  If the service was started with the `--no-standard-store` flag, it will only search in the token storage space, otherwise the service will also search in the global storage space in addition.
+  If the service was started with the `--no-global-store` flag, it will only search in the token storage space, otherwise the service will also search in the global storage space in addition.
   Only objects with a type defined by the schema associated with `<collection>` are considered.
   The endpoint supports the query parameter `format`, which determines the format of the query result.
   It can be set to `json` (the default) or to `ttl`,

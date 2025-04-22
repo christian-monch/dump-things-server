@@ -29,12 +29,12 @@ def _get_responses(test_client, *, headers=None):
     )
     assert overlay_response.status_code == HTTP_200_OK
 
-    arguments.no_standard_store = True
+    arguments.no_global_store = True
     non_overlay_response = test_client.get(
         '/collection_1/records/Thing',
         headers=headers,
     )
     assert non_overlay_response.status_code == HTTP_200_OK
-    arguments.no_standard_store = False
+    arguments.no_global_store = False
 
     return overlay_response.json(), non_overlay_response.json()
