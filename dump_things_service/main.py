@@ -51,6 +51,11 @@ parser.add_argument('--port', default=8000, type=int)
 parser.add_argument('--origins', action='append', default=[])
 parser.add_argument('--no-global-store', action='store_true')
 parser.add_argument(
+    '--root-path',
+    default='',
+    help="Set the ASGI 'root_path' for applications submounted below a given URL path.",
+)
+parser.add_argument(
     'store',
     help='The root of the data stores, it should contain a global_store and token_stores.',
 )
@@ -300,4 +305,5 @@ if __name__ == '__main__':
         app,
         host=arguments.host,
         port=arguments.port,
+        root_path=arguments.root_path,
     )
