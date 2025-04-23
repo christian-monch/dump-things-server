@@ -18,17 +18,17 @@ The following parameters are supported:
  The names of these subdirectories act as token values.
  If a respective token value is used, data will be stored in the token store.
  Configuration values, for example, mapping function settings, are read from the global store.
-The following shows an example for a store that is at location `data-storage/store`, has two record collections, `schema_1` and `schema_2`, and a single token store, named `token_1` (both record collections contains the same object of type `Person`, but they have a different file-system layout because they use different mapping functions):
+The following shows an example for a store that is at location `data-storage/store`, has two record collections, `collection_1` and `collection_2`, and a single token store, named `token_1` (both record collections contains the same object of type `Person`, but they have a different file-system layout because they use different mapping functions):
 
 ```
 /data-storage/store
 ├── global_store
 │   ├── .dumpthings.yaml
-│   ├── schema_1
+│   ├── collection_1
 │   │   ├── .dumpthings.yaml
 │   │   └── Person
 │   │       └── f2cdfa3142add5791dc6fe45209206fd.yaml
-│   └── schema_2
+│   └── collection_2
 │       ├── .dumpthings.yaml
 │       └── Person
 │           └── f2c
@@ -36,7 +36,8 @@ The following shows an example for a store that is at location `data-storage/sto
 └── token_stores
     └── token_1
         ├── .token_config.yaml
-        :
+        ├── collection_1
+        :   :
 ```
 
 #### Configuring token stores
@@ -48,6 +49,20 @@ This is done via the configuration file `.token_config.yaml` in the token store.
 The token configuration supports two keys: `read_access` and `write_access`.
 The values of the keys should be boolean values, i.e. `true` or `false`.
 If no configuration file is present, the default values are `true` for both keys.
+
+
+###### Example: configure a site to allow only token-based read and write access to token store data and global data.
+
+With token store configurations the service can be configured in such a way that any API operation requires a recognized token, without a token no records are reported or accepted.
+This includes records that are stored in the global store.
+To implement this scenario, the service must be started with the `--no-global-store` flag.
+The flag will ensure that the service only looks for records in the token stores.
+If records from the global store should be accessible in addition via a specific token, the corresponding token store must contain links to the respective collection or classes in the global store.
+The `.token_config.yaml` files of the individual token stores determine whether the tokens can be used to read or write records.
+
+A word of caution: if the token store is configured to allow write access and contains links into the global store, a write operation would modify the global store, i.e. the curated data.
+
+
 
 #### Command line parameters:
 
