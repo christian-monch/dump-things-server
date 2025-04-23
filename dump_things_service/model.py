@@ -41,14 +41,8 @@ def build_model(
 def get_classes(
     model: Any,
 ) -> list:
-    def is_thing_subclass(obj) -> bool:
-        while obj is not None:
-            if obj is model.Thing:
-                return True
-            obj = getattr(obj, '__base__', None)
-        return False
-
-    return [name for name, obj in model.__dict__.items() if is_thing_subclass(obj)]
+    """get names of all subclasses of Thing"""
+    return get_subclasses(model, 'Thing')
 
 
 def get_subclasses(
@@ -56,12 +50,9 @@ def get_subclasses(
     class_name: str,
 ) -> list:
     """get names of all subclasses (includes class_name itself)"""
-
-    def is_subclass(obj) -> bool:
-        while obj is not None and isinstance(obj, ModelMetaclass):
-            if obj.__name__ == class_name:
-                return True
-            obj = getattr(obj, '__base__', None)
-        return False
-
-    return [name for name, obj in model.__dict__.items() if is_subclass(obj)]
+    super_class = getattr(model, class_name)
+    return [
+        name
+        for name, obj in model.__dict__.items()
+        if isinstance(obj, ModelMetaclass) and issubclass(obj, super_class)
+    ]
