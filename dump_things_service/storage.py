@@ -227,7 +227,10 @@ class TokenStorage(Storage):
         record_root.mkdir(exist_ok=True)
 
         # Convert the record object into a YAML object
-        data = yaml.dump(data=record.model_dump(exclude_none=True), sort_keys=False)
+        data = yaml.dump(
+            data=record.model_dump(exclude_none=True, mode='json'),
+            sort_keys=False,
+        )
 
         # Apply the mapping function to the record pid to get the final storage path
         config = self.canonical_store.collections[collection]
