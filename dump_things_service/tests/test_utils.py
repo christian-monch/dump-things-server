@@ -1,6 +1,10 @@
 from dump_things_service.utils import cleaned_json
 
 
+basic_write_locations = ((x, f'token_{x}') for x in range(1, 3))
+unauthorized_write_locations = ((x, 'token_1') for x in range(3, 6))
+
+
 def test_cleaned_json():
     dirty_data = {
         'pid': 'trr379:contributors/michael-hanke',

@@ -44,7 +44,7 @@ given_name: {given_name_trr}
 def create_stores(
     root_dir: Path,
     collection_info: dict[str, tuple[str, str]],
-    token_stores: list[str] | None = None,
+    token_stores: list[tuple[str, str]] | None = None,
     default_entries: list[tuple[str, str, str]] | None = None,
     token_configs: dict[str, tuple[bool, bool]] | None = None,
 ):
@@ -55,8 +55,9 @@ def create_stores(
 
     create_store(global_store, collection_info, default_entries)
     token_configs = token_configs or {}
-    for token in token_stores or []:
-        (token_store_dir / token).mkdir(parents=True, exist_ok=True)
+    for collection, token in token_stores or []:
+        token_dir = token_store_dir / collection / token
+        token_dir.mkdir(parents=True, exist_ok=True)
         if token in token_configs:
             config = yaml.dump(
                 data=dict(
@@ -64,7 +65,7 @@ def create_stores(
                 ),
                 sort_keys=False,
             )
-            (token_store_dir / token / token_config_file_name).write_text(config)
+            (token_dir / token_config_file_name).write_text(config)
 
 def create_store(
     temp_dir: Path,

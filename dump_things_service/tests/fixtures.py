@@ -31,7 +31,13 @@ def dump_stores_simple(tmp_path_factory):
             'collection_4': (str(schema_path), 'digest-sha1-p3'),
             'collection_5': (str(schema_path), 'after-last-colon'),
         },
-        token_stores=['token_1', 'token_1_xx', 'token_1_xo', 'token_1_ox'],
+        token_stores=[
+            ('collection_1', 'token_1'),
+            ('collection_1', 'token_1_xx'),
+            ('collection_1', 'token_1_xo'),
+            ('collection_1', 'token_1_ox'),
+            ('collection_2', 'token_2'),
+        ],
         default_entries=[('Person', pid, test_record)],
         token_configs={
             'token_1_oo': (False, False),
@@ -47,7 +53,7 @@ def dump_stores_simple(tmp_path_factory):
                 'digest-md5',
             ),
         },
-        token_stores=['token_1'],
+        token_stores=[('collection_trr379', 'token_1')],
         default_entries=[('Person', pid_trr, test_record_trr)],
     )
     return tmp_path
