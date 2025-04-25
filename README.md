@@ -15,10 +15,15 @@ The following parameters are supported:
 - `<storage root>` (mandatory): the path of a directory in which the record stores are kept. It must contain two subdirectories: `global_store` and `token_stores`.
  `global_store` should be the root of a dump-thing-service store, as described in [Dump Things Service](https://concepts.datalad.org/dump-things).
  `token_stores` should contain zero or more subdirectories.
- The names of these subdirectories act as token values.
- If a respective token value is used, data will be stored in the token store.
+ The names of these subdirectories correspond to collection subdirectories in `global_store`.
+ Each of these collection level subdirectories should contain zero or more token subdirectories.
+ The name of the token subdirectories act as token values.
+ Each of these tokens will enable access (depending on the token configuration) to the respective collection.
+ If records are deposited, their content will be stored in the respective token directory.
  Configuration values, for example, mapping function settings, are read from the global store.
-The following shows an example for a store that is at location `data-storage/store`, has two record collections, `collection_1` and `collection_2`, and a single token store, named `token_1` (both record collections contains the same object of type `Person`, but they have a different file-system layout because they use different mapping functions):
+ The following shows an example for a store that is at location `data-storage/store`,
+ has two record collections, `collection_1` and `collection_2`  (both record collections contains the same object of type `Person`, but they have a different file-system layout because they use different mapping functions), and a single token store for
+ collection `collection_1` with a single token named `token_1`:
 
 ```
 /data-storage/store
@@ -34,10 +39,9 @@ The following shows an example for a store that is at location `data-storage/sto
 │           └── f2c
 │               └── dfa3142add5791dc6fe45209206fd.yaml
 └── token_stores
-    └── token_1
-        ├── .token_config.yaml
-        ├── collection_1
-        :   :
+    └── collection_1
+        └── token_1
+            └── .token_config.yaml
 ```
 
 #### Configuring token stores
