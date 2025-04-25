@@ -34,7 +34,8 @@ from dump_things_service.model import (
 )
 from dump_things_service.storage import (
     Storage,
-    TokenStorage,
+    read_token_stores,
+    update_token_stores,
 )
 from dump_things_service.utils import (
     cleaned_json,
@@ -66,11 +67,7 @@ arguments = parser.parse_args()
 # Instantiate storage objects
 store_path = Path(arguments.store)
 global_store = Storage(store_path / 'global_store')
-token_stores = {
-    element.name: TokenStorage(element, global_store)
-    for element in (store_path / 'token_stores').glob('*')
-    if element.is_dir()
-}
+token_stores = read_token_stores(global_store, store_path)
 
 
 _endpoint_template = """
@@ -98,13 +95,12 @@ def store_record(
     if input_format == Format.ttl and not isinstance(data, str):
         raise HTTPException(status_code=404, detail='Invalid ttl data provided.')
 
-    store = _get_store_for_token(token)
+    store = _get_token_store(collection, token)
     if store:
         if not store.config.write_access:
             raise HTTPException(status_code=403, detail='No write access.')
         stored_records = store.store_record(
             record=data,
-            collection=collection,
             model=model,
             class_name=class_name,
             input_format=input_format,
@@ -205,7 +201,7 @@ async def read_record_with_pid(
             status_code=404, detail=f'No such collection: "{collection}".'
         )
 
-    token_store = _get_store_for_token(api_key)
+    token_store = _get_token_store(collection, api_key)
     if token_store and not token_store.config.read_access:
         raise HTTPException(status_code=403, detail='No read access.')
 
@@ -241,7 +237,7 @@ async def read_records_of_type(
             detail=f'No "{class_name}"-class in collection "{collection}".',
         )
 
-    token_store = _get_store_for_token(api_key)
+    token_store = _get_token_store(collection, api_key)
     if token_store and not token_store.config.read_access:
         raise HTTPException(status_code=403, detail='No read access.')
 
@@ -273,26 +269,20 @@ async def read_records_of_type(
     return list(records.values())
 
 
-def _get_store_for_token(token: str | None):
+def _get_token_store(
+    collection: str,
+    token: str | None
+):
     if token is None:
         return None
-    if token not in token_stores:
-        _update_token_stores(store_path, token_stores)
-    if token not in token_stores:
-        raise HTTPException(status_code=401, detail='Invalid token.')
-    return token_stores[token]
-
-
-def _update_token_stores(
-    store_path: Path,
-    token_stores: dict,
-) -> int:
-    added = 0
-    for element in (store_path / 'token_stores').glob('*'):
-        if element.is_dir() and element.name not in token_stores:
-            token_stores[element.name] = TokenStorage(element, global_store)
-            added += 1
-    return added
+    if collection not in token_stores or token not in token_stores[collection]:
+        update_token_stores(global_store, store_path, collection, token_stores)
+    if collection not in token_stores or token not in token_stores[collection]:
+        raise HTTPException(
+            status_code=401,
+            detail=f'Invalid token for collection "{collection}".'
+        )
+    return token_stores[collection][token]
 
 
 # Rebuild the app to include all dynamically created endpoints

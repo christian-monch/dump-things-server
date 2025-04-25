@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import (
     Any,
     Callable,
+    Iterable,
     Literal,
 )
 
@@ -146,7 +147,7 @@ class Storage:
                     return record
         return None
 
-    def get_all_records(self, collection: str, class_name: str) -> list[dict]:
+    def get_all_records(self, collection: str, class_name: str) -> Iterable[dict]:
         for path in (self.get_collection_path(collection) / class_name).rglob('*'):
             if path.is_file() and path.name not in ignored_files:
                 yield yaml.load(path.read_text(), Loader=yaml.SafeLoader)
@@ -156,17 +157,18 @@ class TokenStorage(Storage):
     def __init__(
         self,
         root: str | Path,
+        collection: str,
         canonical_store: Storage,
     ) -> None:
         super().__init__(root)
+        self.collection = collection
         self.canonical_store = canonical_store
-        self.config = self.get_token_config(root)
+        self.config = self.get_token_config()
 
-    @staticmethod
-    def get_token_config(path: Path) -> TokenStorageConfig:
+    def get_token_config(self) -> TokenStorageConfig:
         try:
             return TokenStorageConfig(
-                **Storage.get_config(path, token_config_file_name)
+                **Storage.get_config(self.root, token_config_file_name)
             )
         except FileNotFoundError:
             return TokenStorageConfig(
@@ -182,7 +184,6 @@ class TokenStorage(Storage):
         self,
         *,
         record: BaseModel | str,
-        collection: str,
         model: Any,
         input_format: Format,
         class_name: str | None = None,
@@ -199,7 +200,7 @@ class TokenStorage(Storage):
                         data=record,
                         input_format=Format.ttl,
                         output_format=Format.json,
-                        **self.canonical_store.conversion_objects[collection],
+                        **self.canonical_store.conversion_objects[self.collection],
                     )
                 )
             )
@@ -209,21 +210,17 @@ class TokenStorage(Storage):
 
         final_records = self.extract_inlined(record, model)
         for final_record in final_records:
-            self.store_single_record(
-                record=final_record,
-                collection=collection,
-            )
+            self.store_single_record(record=final_record)
         return final_records
 
     def store_single_record(
         self,
         *,
         record: BaseModel,
-        collection: str,
     ):
         # Generate the class directory
         class_name = record.__class__.__name__
-        record_root = self.get_collection_path(collection) / class_name
+        record_root = self.root / class_name
         record_root.mkdir(exist_ok=True)
 
         # Convert the record object into a YAML object
@@ -233,7 +230,7 @@ class TokenStorage(Storage):
         )
 
         # Apply the mapping function to the record pid to get the final storage path
-        config = self.canonical_store.collections[collection]
+        config = self.canonical_store.collections[self.collection]
         storage_path = record_root / mapping_functions[config.idfx](
             pid=record.pid, suffix=config.format
         )
@@ -244,21 +241,17 @@ class TokenStorage(Storage):
         except ValueError as e:
             raise HTTPException(status_code=400, detail='Invalid pid.') from e
 
-        # Ensure all intermediate directories exist and save the yaml document
+        # Ensure all intermediate directories exist and save the YAML document
         storage_path.parent.mkdir(parents=True, exist_ok=True)
         storage_path.write_text(data)
 
     def get_collection_path(self, collection: str) -> Path:
-        collection_path = self.root / collection
-        if not collection_path.exists():
-            # This will raise if the canonical store does not have the collection
-            self.canonical_store.get_collection_path(collection)
-            collection_path.mkdir(parents=True)
-        elif not collection_path.is_dir():
+        if self.root.parent.name != collection:
             raise HTTPException(
-                status_code=404, detail=f'{collection_path} is not a directory.'
+                status_code=404,
+                detail=f'collection "{collection}" does not exist in token space.',
             )
-        return collection_path
+        return self.root
 
     def extract_inlined(self, record: BaseModel, model: Any) -> list[BaseModel]:
         # The trivial case: no relations
@@ -285,7 +278,7 @@ class TokenStorage(Storage):
 
 
 def get_class_from_path(path: Path) -> str | None:
-    """Determine the class that is defined by `path`.
+    """Determine the class defined by `path`.
 
     This code relies on the fact that a `.dumpthings.yaml` exists
     on the same level as the class name.
@@ -293,7 +286,8 @@ def get_class_from_path(path: Path) -> str | None:
     if 'token_stores' in path.parts:
         parts = list(path.parts)
         token_store_index = parts.index('token_stores')
-        parts[token_store_index : token_store_index + 2] = ['global_store']
+        parts[token_store_index] = 'global_store'
+        del parts[token_store_index + 2]
         path = Path(*parts)
 
     while path and path != Path('/'):
@@ -301,3 +295,42 @@ def get_class_from_path(path: Path) -> str | None:
             return path.stem
         path = path.parent
     return None
+
+
+def read_token_stores(
+    global_store: Storage,
+    store_path: Path
+) -> dict[str, dict[str, TokenStorage]]:
+    return {
+        collection.name: {
+            token_dir.name: TokenStorage(
+                root=token_dir,
+                collection=collection.name,
+                canonical_store=global_store,
+            )
+            for token_dir in collection.glob('*')
+            if token_dir.is_dir()
+        }
+        for collection in (store_path / 'token_stores').glob('*')
+        if collection.is_dir()
+}
+
+
+def update_token_stores(
+        global_store: Storage,
+        store_path: Path,
+        collection: str,
+        token_stores: dict,
+) -> int:
+    added = 0
+    if collection not in token_stores:
+        token_stores[collection] = {}
+    for element in (store_path / 'token_stores' / collection).glob('*'):
+        if element.is_dir() and element.name not in token_stores[collection]:
+            token_stores[collection][element.name] = TokenStorage(
+                root=element,
+                collection=collection,
+                canonical_store=global_store,
+            )
+            added += 1
+    return added
