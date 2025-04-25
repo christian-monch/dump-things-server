@@ -104,7 +104,9 @@ def test_inline_extraction_locally(dump_stores_simple):
     root = dump_stores_simple
 
     store = TokenStorage(
-        root / 'token_stores' / 'token_1', Storage(root / 'global_store')
+        root=root / 'token_stores' / 'collection_1' / 'token_1',
+        collection='collection_1',
+        canonical_store=Storage(root / 'global_store'),
     )
     records = store.extract_inlined(inlined_object, MockedModule())
     _check_result_objects(records, tree)
@@ -132,7 +134,9 @@ def test_dont_extract_empty_things_locally(dump_stores_simple):
     root = dump_stores_simple
 
     store = TokenStorage(
-        root / 'token_stores' / 'token_1', Storage(root / 'global_store')
+        root=root / 'token_stores' / 'collection_1' / 'token_1',
+        collection='collection_1',
+        canonical_store=Storage(root / 'global_store'),
     )
     records = store.extract_inlined(empty_inlined_object, MockedModule())
     assert len(records) == 1
