@@ -227,6 +227,7 @@ class TokenStorage(Storage):
         data = yaml.dump(
             data=record.model_dump(exclude_none=True, mode='json'),
             sort_keys=False,
+            allow_unicode=True,
         )
 
         # Apply the mapping function to the record pid to get the final storage path
