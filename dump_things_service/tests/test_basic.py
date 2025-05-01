@@ -10,14 +10,11 @@ from .create_store import (
     given_name,
     pid,
 )
-from .test_utils import (
-    basic_write_locations,
-    unauthorized_write_locations,
-)
+from .test_utils import basic_write_locations
 
 extra_record = {
     'pid': 'abc:aaaa',
-    'given_name': 'David',
+    'given_name': 'DavidÖÄÜ',
 }
 
 
@@ -45,19 +42,10 @@ def test_store_record(fastapi_client_simple):
     for i, token in basic_write_locations:
         response = test_client.get(
             f'/collection_{i}/record?pid={extra_record["pid"]}',
-            headers={'x-dumpthings-token': 'token_1'},
+            headers={'x-dumpthings-token': token},
         )
         assert response.status_code == HTTP_200_OK
-        assert sorted(
-            response.json(),
-            key=lambda x: x['pid'],
-        ) == sorted(
-            [
-                {'pid': pid, 'given_name': given_name},
-                extra_record,
-            ],
-            key=lambda x: x['pid'],
-        )
+        assert response.json() == extra_record
 
     # Check that other collections do not report the new record
     for i in range(3, 6):
@@ -144,7 +132,7 @@ def test_token_store_priority(fastapi_client_simple):
     response = test_client.post(
         '/collection_1/record/Person',
         headers={'x-dumpthings-token': 'david_bowie'},
-        json={'pid': pid, 'given_name': 'David'},
+        json={'pid': pid, 'given_name': 'DavidÖÄß'},
     )
     assert response.status_code == HTTP_200_OK
 
@@ -154,11 +142,11 @@ def test_token_store_priority(fastapi_client_simple):
         headers={'x-dumpthings-token': 'david_bowie'},
     )
     assert response.status_code == HTTP_200_OK
-    assert response.json()['given_name'] == 'David'
+    assert response.json()['given_name'] == 'DavidÖÄß'
 
     # Check that the global test record is returned without a token
     response = test_client.get(
         f'/collection_1/record?pid={pid}',
     )
     assert response.status_code == HTTP_200_OK
-    assert response.json()['given_name'] == 'Wolfgang'
+    assert response.json()['given_name'] == given_name

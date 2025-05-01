@@ -5,17 +5,12 @@ import pytest
 
 from dump_things_service.tests.create_store import create_stores
 
-pid = 'abc:some_timee@x.com'
-given_name = 'Wolfgang'
-test_record = f"""pid: {pid}
-given_name: {given_name}
-"""
-
-pid_trr = 'trr379:amadeus'
-given_name_trr = 'Amadeus'
-test_record_trr = f"""pid: {pid_trr}
-given_name: {given_name_trr}
-"""
+from .create_store import (
+    pid,
+    test_record,
+    pid_trr,
+    test_record_trr,
+)
 
 
 @pytest.fixture(scope='session')

@@ -10,7 +10,7 @@ ttl_record = """@prefix abc: <http://example.org/person-schema/abc/> .
 @prefix xyz: <http://example.org/person-schema/xyz/> .
 
 xyz:HenryAdams a abc:Person ;
-    abc:given_name "Henry" .
+    abc:given_name "Henryöäß" .
 """
 new_json_pid = 'xyz:HenryBaites'
 

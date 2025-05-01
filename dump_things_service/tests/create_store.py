@@ -29,13 +29,13 @@ idfx: {mapping_function}
 """
 
 pid = 'abc:some_timee@x.com'
-given_name = 'Wolfgang'
+given_name = 'WolfgangÖÄß'
 test_record = f"""pid: {pid}
 given_name: {given_name}
 """
 
 pid_trr = 'trr379:amadeus'
-given_name_trr = 'Amadeus'
+given_name_trr = 'AmadeusÜÄß'
 test_record_trr = f"""pid: {pid_trr}
 given_name: {given_name_trr}
 """
