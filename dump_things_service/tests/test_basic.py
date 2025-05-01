@@ -17,6 +17,13 @@ extra_record = {
     'given_name': 'DavidÖÄÜ',
 }
 
+unicode_name = 'AlienÖÄÜ-ß👽'
+unicode_bytes = unicode_name.encode('utf-8')
+unicode_record = {
+    'pid': 'abc:unicode-test',
+    'given_name': unicode_name,
+}
+
 
 def test_search_by_pid(fastapi_client_simple):
     test_client, _ = fastapi_client_simple
@@ -68,6 +75,26 @@ def test_store_record(fastapi_client_simple):
             ],
             key=lambda x: x['pid'],
         )
+
+
+def test_encoding(fastapi_client_simple):
+    test_client, store_path = fastapi_client_simple
+
+    # Store a record with non-ASCII characters in collections via the API. that
+    # will trigger the YAML-dumping, which should be checked
+    response = test_client.post(
+        f'/collection_1/record/Person',
+        headers={'x-dumpthings-token': 'token_1'},
+        json=unicode_record,
+    )
+    assert response.status_code == HTTP_200_OK
+
+    # Check that no '\\x'-encoding is present on disk
+    for item in store_path.glob('**/*.yaml'):
+        encoded_content = item.read_bytes()
+        assert b'\\x' not in encoded_content
+        if b'Alien' in encoded_content:
+            assert unicode_bytes in encoded_content
 
 
 def test_global_store_write_fails(fastapi_client_simple):
