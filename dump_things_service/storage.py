@@ -244,7 +244,7 @@ class TokenStorage(Storage):
 
         # Ensure all intermediate directories exist and save the YAML document
         storage_path.parent.mkdir(parents=True, exist_ok=True)
-        storage_path.write_text(data)
+        storage_path.write_text(data, encoding='utf-8')
 
     def get_collection_path(self, collection: str) -> Path:
         if self.root.parent.name != collection:

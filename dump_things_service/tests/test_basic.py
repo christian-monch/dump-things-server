@@ -10,14 +10,18 @@ from .create_store import (
     given_name,
     pid,
 )
-from .test_utils import (
-    basic_write_locations,
-    unauthorized_write_locations,
-)
+from .test_utils import basic_write_locations
 
 extra_record = {
     'pid': 'abc:aaaa',
-    'given_name': 'David',
+    'given_name': 'DavidÖÄÜ',
+}
+
+unicode_name = 'AlienÖÄÜ-ß👽'
+unicode_bytes = unicode_name.encode('utf-8')
+unicode_record = {
+    'pid': 'abc:unicode-test',
+    'given_name': unicode_name,
 }
 
 
@@ -45,19 +49,10 @@ def test_store_record(fastapi_client_simple):
     for i, token in basic_write_locations:
         response = test_client.get(
             f'/collection_{i}/record?pid={extra_record["pid"]}',
-            headers={'x-dumpthings-token': 'token_1'},
+            headers={'x-dumpthings-token': token},
         )
         assert response.status_code == HTTP_200_OK
-        assert sorted(
-            response.json(),
-            key=lambda x: x['pid'],
-        ) == sorted(
-            [
-                {'pid': pid, 'given_name': given_name},
-                extra_record,
-            ],
-            key=lambda x: x['pid'],
-        )
+        assert response.json() == extra_record
 
     # Check that other collections do not report the new record
     for i in range(3, 6):
@@ -80,6 +75,26 @@ def test_store_record(fastapi_client_simple):
             ],
             key=lambda x: x['pid'],
         )
+
+
+def test_encoding(fastapi_client_simple):
+    test_client, store_path = fastapi_client_simple
+
+    # Store a record with non-ASCII characters in collections via the API. that
+    # will trigger the YAML-dumping, which should be checked
+    response = test_client.post(
+        f'/collection_1/record/Person',
+        headers={'x-dumpthings-token': 'token_1'},
+        json=unicode_record,
+    )
+    assert response.status_code == HTTP_200_OK
+
+    # Check that no '\\x'-encoding is present on disk
+    for item in store_path.glob('**/*.yaml'):
+        encoded_content = item.read_bytes()
+        assert b'\\x' not in encoded_content
+        if b'Alien' in encoded_content:
+            assert unicode_bytes in encoded_content
 
 
 def test_global_store_write_fails(fastapi_client_simple):
@@ -144,7 +159,7 @@ def test_token_store_priority(fastapi_client_simple):
     response = test_client.post(
         '/collection_1/record/Person',
         headers={'x-dumpthings-token': 'david_bowie'},
-        json={'pid': pid, 'given_name': 'David'},
+        json={'pid': pid, 'given_name': 'DavidÖÄß'},
     )
     assert response.status_code == HTTP_200_OK
 
@@ -154,11 +169,11 @@ def test_token_store_priority(fastapi_client_simple):
         headers={'x-dumpthings-token': 'david_bowie'},
     )
     assert response.status_code == HTTP_200_OK
-    assert response.json()['given_name'] == 'David'
+    assert response.json()['given_name'] == 'DavidÖÄß'
 
     # Check that the global test record is returned without a token
     response = test_client.get(
         f'/collection_1/record?pid={pid}',
     )
     assert response.status_code == HTTP_200_OK
-    assert response.json()['given_name'] == 'Wolfgang'
+    assert response.json()['given_name'] == given_name

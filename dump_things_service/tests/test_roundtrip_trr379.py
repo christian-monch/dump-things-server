@@ -5,7 +5,7 @@ from . import HTTP_200_OK
 json_record = {
     'pid': 'trr379:test_john_json',
     'schema_type': 'dlsocial:Person',
-    'given_name': 'John',
+    'given_name': 'Johnöüß',
 }
 
 new_ttl_pid = 'trr379:another_john_json'
@@ -16,7 +16,7 @@ ttl_record = """
 @prefix trr379: <https://trr379.de/> .
 
 trr379:test_john_ttl a dlsocial:Person ;
-    dlsocial:given_name "John" .
+    dlsocial:given_name "Johnöüß" .
 """
 
 new_json_pid = 'trr379:another_john_ttl'
