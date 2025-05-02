@@ -18,7 +18,7 @@ from dump_things_service import (
 if TYPE_CHECKING:
     import types
 
-    from dump_things_service.storage import CollectionConfig
+    from dump_things_service.storage import CollectionDirConfig
 
 
 def convert_format(
@@ -85,7 +85,7 @@ def _convert_format(
     )
 
 
-def get_conversion_objects(collections: dict[str, CollectionConfig]):
+def get_conversion_objects(collections: dict[str, CollectionDirConfig]):
     return {
         collection: {
             'schema_module': PythonGenerator(config.schema).compile_module(),

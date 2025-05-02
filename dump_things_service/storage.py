@@ -31,11 +31,6 @@ token_config_file_name = '.token_config.yaml'  # noqa: S105
 ignored_files = {'.', '..', config_file_name}
 
 
-class GlobalConfig(BaseModel):
-    type: Literal['collections']
-    version: Literal[1]
-
-
 class MappingMethod(enum.Enum):
     digest_md5 = 'digest-md5'
     digest_md5_p3 = 'digest-md5-p3'
@@ -44,7 +39,7 @@ class MappingMethod(enum.Enum):
     after_last_colon = 'after-last-colon'
 
 
-class CollectionConfig(BaseModel):
+class CollectionDirConfig(BaseModel):
     type: Literal['records']
     version: Literal[1]
     schema: str
@@ -52,9 +47,53 @@ class CollectionConfig(BaseModel):
     idfx: MappingMethod
 
 
-class TokenStorageConfig(BaseModel):
-    read_access: bool = True
-    write_access: bool = True
+class TokenPermission(BaseModel):
+    curated_read: bool = False
+    incoming_read: bool = False
+    incoming_write: bool = False
+
+
+class TokenModes(enum.Enum):
+    READ_COLLECTION = 'READ_COLLECTION'
+    WRITE_COLLECTION = 'WRITE_COLLECTION'
+    READ_SUBMISSIONS = 'READ_SUBMISSIONS'
+    WRITE_SUBMISSIONS = 'WRITE_SUBMISSIONS'
+    SUBMIT = 'SUBMIT'
+    SUBMIT_ONLY = 'SUBMIT_ONLY'
+    NOTHING = 'NOTHING'
+
+
+mode_mapping = {
+    TokenModes.READ_COLLECTION: TokenPermission(curated_read=True, incoming_read=True),
+    TokenModes.WRITE_COLLECTION: TokenPermission(curated_read=True, incoming_read=True, incoming_write=True),
+    TokenModes.READ_SUBMISSIONS: TokenPermission(incoming_read=True),
+    TokenModes.WRITE_SUBMISSIONS: TokenPermission(incoming_read=True, incoming_write=True),
+    TokenModes.SUBMIT: TokenPermission(curated_read=True, incoming_write=True),
+    TokenModes.SUBMIT_ONLY: TokenPermission(incoming_write=True),
+    TokenModes.NOTHING: TokenPermission(),
+}
+
+
+class TokenCollectionConfig(BaseModel):
+    mode: TokenModes
+    incoming_label: str
+
+
+class TokenConfig(BaseModel):
+    user_id: str
+    collections: dict[str, TokenCollectionConfig]
+
+
+class CollectionConfig(BaseModel):
+    curated: Path
+    incoming: Path | None = None
+
+
+class GlobalConfig(BaseModel):
+    type: Literal['collections']
+    version: Literal[1]
+    collections: dict[str, CollectionConfig]
+    tokens: dict[str, TokenConfig]
 
 
 def get_hex_digest(hasher: Callable, data: str) -> str:
@@ -111,10 +150,10 @@ class Storage:
     def get_config(path: Path, file_name=config_file_name) -> YAML:
         return yaml.load((path / file_name).read_text(), Loader=yaml.SafeLoader)
 
-    def _get_collections(self) -> dict[str, CollectionConfig]:
+    def _get_collections(self) -> dict[str, CollectionDirConfig]:
         # read all record collections
         return {
-            path.name: CollectionConfig(**self.get_config(path))
+            path.name: CollectionDirConfig(**self.get_config(path))
             for path in self.root.iterdir()
             if path.is_dir() and path not in (Path('.'), Path('.'))
         }

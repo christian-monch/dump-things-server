@@ -8,20 +8,15 @@ from dump_things_service.storage import (
     MappingMethod,
     config_file_name,
     mapping_functions,
-    token_config_file_name,
+    GlobalConfig,
+    CollectionConfig,
 )
 
 if TYPE_CHECKING:
     from pathlib import Path
 
-global_config = """
-type: collections
-version: 1
-"""
 
-
-collection_config_template = """
-type: records
+collection_config_template = """type: records
 version: 1
 schema: {schema}
 format: yaml
@@ -41,64 +36,65 @@ given_name: {given_name_trr}
 """
 
 
-def create_stores(
-    root_dir: Path,
-    collection_info: dict[str, tuple[str, str]],
-    token_stores: list[tuple[str, str]] | None = None,
-    default_entries: list[tuple[str, str, str]] | None = None,
-    token_configs: dict[str, tuple[bool, bool]] | None = None,
-):
-    global_store = root_dir / 'global_store'
-    global_store.mkdir(parents=True, exist_ok=True)
-    token_store_dir = root_dir / 'token_stores'
-    global_store.mkdir(parents=True, exist_ok=True)
-
-    create_store(global_store, collection_info, default_entries)
-    token_configs = token_configs or {}
-    for collection, token in token_stores or []:
-        token_dir = token_store_dir / collection / token
-        token_dir.mkdir(parents=True, exist_ok=True)
-        if token in token_configs:
-            config = yaml.dump(
-                data=dict(
-                    zip(['read_access', 'write_access'], token_configs[token])
-                ),
-                sort_keys=False,
-            )
-            (token_dir / token_config_file_name).write_text(config)
-
 def create_store(
-    temp_dir: Path,
-    collection_info: dict[str, tuple[str, str]],
-    default_entries: list[tuple[str, str, str]] | None = None,
+    root_dir: Path,
+    config: GlobalConfig,
+    per_collection_info: dict[str, tuple[str, str]],
+    default_entries: dict[str, list[tuple[str, str, str]]] | None = None,
 ):
-    global_config_file = temp_dir / config_file_name
-    global_config_file.parent.mkdir(parents=True, exist_ok=True)
-    global_config_file.write_text(global_config)
+    # Create the global config file
+    config_text = yaml.safe_dump(
+        config.model_dump(mode='json', exclude_none=True),
+        allow_unicode=True,
+        sort_keys=False,
+    )
+    with open(root_dir / config_file_name, 'wt') as f:
+        f.write(config_text)
 
-    for collection, (schema_url, mapping_function) in collection_info.items():
-        # Create a collection directory
-        collection_dir = temp_dir / collection
-        collection_dir.mkdir(parents=True, exist_ok=True)
-
-        # Add the collection level config file
-        collection_config_file = collection_dir / config_file_name
-        collection_config_file.write_text(
-            collection_config_template.format(
-                schema=schema_url, mapping_function=mapping_function
-            )
+    # Create all collection directories
+    for collection_name, collection_config in config.collections.items():
+        create_collection(
+            root_dir=root_dir,
+            collection_config=collection_config,
+            schema_url=per_collection_info[collection_name][0],
+            mapping_function=per_collection_info[collection_name][1],
+            default_entries=default_entries[collection_name],
         )
 
-        # Add default entries
-        mapper = mapping_functions[MappingMethod(mapping_function)]
-        for class_name, pid, record in default_entries or []:
-            record_path = (
-                collection_dir
-                / class_name
-                / mapper(
-                    pid=pid,
-                    suffix='yaml',
-                )
+
+def create_collection(
+    root_dir: Path,
+    collection_config: CollectionConfig,
+    schema_url: str,
+    mapping_function: str,
+    default_entries: list[tuple[str, str, str]] | None = None,
+):
+    # Create a directory for the curated collection
+    curated_dir = root_dir / collection_config.curated
+    assert curated_dir.is_absolute()
+    if curated_dir.exists():
+        assert curated_dir.is_dir()
+    else:
+        curated_dir.mkdir(parents=True, exist_ok=True)
+
+    # Add the collection level config file
+    collection_config_file = curated_dir / config_file_name
+    collection_config_file.write_text(
+        collection_config_template.format(
+            schema=schema_url, mapping_function=mapping_function
+        )
+    )
+
+    # Add default entries
+    mapper = mapping_functions[MappingMethod(mapping_function)]
+    for class_name, pid, record in default_entries or []:
+        record_path = (
+            curated_dir
+            / class_name
+            / mapper(
+                pid=pid,
+                suffix='yaml',
             )
-            record_path.parent.mkdir(parents=True, exist_ok=True)
-            record_path.write_text(record)
+        )
+        record_path.parent.mkdir(parents=True, exist_ok=True)
+        record_path.write_text(record)
