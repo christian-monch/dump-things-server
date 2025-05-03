@@ -18,7 +18,42 @@ from dump_things_service import (
 if TYPE_CHECKING:
     import types
 
-    from dump_things_service.storage import CollectionDirConfig
+
+def convert_json_to_ttl(
+    collection_name: str,
+    target_class: str,
+    json: JSON,
+) -> str:
+    from main import (
+        g_schemas,
+        g_conversion_objects,
+    )
+
+    return convert_format(
+        target_class=target_class,
+        data=json,
+        input_format=Format.json,
+        output_format=Format.ttl,
+        **g_conversion_objects[g_schemas[collection_name]],
+    )
+
+
+def convert_ttl_to_json(
+        collection_name: str,
+        target_class: str,
+        ttl: str,
+) -> str:
+    from main import (
+        g_schemas,
+        g_conversion_objects,
+    )
+    return convert_format(
+        target_class=target_class,
+        data=ttl,
+        input_format=Format.ttl,
+        output_format=Format.json,
+        **g_conversion_objects[g_schemas[collection_name]],
+    )
 
 
 def convert_format(
@@ -85,11 +120,17 @@ def _convert_format(
     )
 
 
-def get_conversion_objects(collections: dict[str, CollectionDirConfig]):
+def get_conversion_objects(schema: str):
     return {
-        collection: {
-            'schema_module': PythonGenerator(config.schema).compile_module(),
-            'schema_view': SchemaView(config.schema),
-        }
-        for collection, config in collections.items()
+        'schema_module': PythonGenerator(schema).compile_module(),
+        'schema_view': SchemaView(schema),
     }
+
+#def get_conversion_objects(collections: dict[str, tuple[CollectionDirConfig]]):
+#    return {
+#        collection_name: {
+#            'schema_module': PythonGenerator(dir_config.schema).compile_module(),
+#            'schema_view': SchemaView(dir_config.schema),
+#        }
+#        for collection_name, dir_config in collections.items()
+#    }

@@ -7,10 +7,7 @@ from typing import TYPE_CHECKING
 
 import pytest  # noqa F401
 
-from dump_things_service.storage import (
-    Storage,
-    TokenStorage,
-)
+from dump_things_service.record import RecordDirStore
 
 from ..utils import cleaned_json
 from . import HTTP_200_OK

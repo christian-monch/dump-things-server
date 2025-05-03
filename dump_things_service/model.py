@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import dataclasses  # noqa F401 -- used by generated code
 import importlib
+import logging
 import subprocess
 import tempfile
 from itertools import count
@@ -18,7 +19,11 @@ from dump_things_service.utils import (
     sys_path,
 )
 
+lgr = logging.getLogger('uvicorn')
+
 serial_number = count()
+_model_counter = count()
+_model_cache = {}
 
 
 def build_model(
@@ -56,3 +61,15 @@ def get_subclasses(
         for name, obj in model.__dict__.items()
         if isinstance(obj, ModelMetaclass) and issubclass(obj, super_class)
     ]
+
+
+def get_model_for_schema(
+    schema_location: str,
+) -> tuple[Any, list[str]]:
+    if schema_location not in _model_cache:
+        lgr.info(f'Building model for schema {schema_location}.')
+        model = build_model(schema_location)
+        classes = get_classes(model)
+        model_var_name = f'model_{next(_model_counter)}'
+        _model_cache[schema_location] = model, classes, model_var_name
+    return _model_cache[schema_location]

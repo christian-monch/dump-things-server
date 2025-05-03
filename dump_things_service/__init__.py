@@ -12,3 +12,5 @@ class Format(str, Enum):
 
 JSON = Union[dict[str, Any], list[Any], str, int, float, None]
 YAML = JSON
+
+config_file_name = '.dumpthings.yaml'

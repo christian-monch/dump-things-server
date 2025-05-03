@@ -123,6 +123,7 @@ def dump_stores_simple(tmp_path_factory):
             'collection_trr379': [('Person', pid_trr, test_record_trr)],
         },
     )
+    return tmp_path
 
 
 @pytest.fixture(scope='session')

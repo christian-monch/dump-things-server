@@ -29,6 +29,7 @@ def test_search_by_pid(fastapi_client_simple):
     test_client, _ = fastapi_client_simple
     for i in range(1, 6):
         response = test_client.get(f'/collection_{i}/record?pid={pid}')
+        assert response.status_code == HTTP_200_OK
         assert json.loads(response.text) == {'pid': pid, 'given_name': given_name}
 
 
