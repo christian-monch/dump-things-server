@@ -57,7 +57,10 @@ def test_store_record(fastapi_client_simple):
 
     # Check that other collections do not report the new record
     for i in range(3, 6):
-        response = test_client.get(f'/collection_{i}/records/Person')
+        response = test_client.get(
+            f'/collection_{i}/records/Person',
+            headers={'x-dumpthings-token': 'basic_access'},
+        )
         assert response.json() == [{'pid': pid, 'given_name': given_name}]
 
     # Check that subclasses are retrieved

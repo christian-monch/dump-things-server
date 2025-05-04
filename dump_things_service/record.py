@@ -118,7 +118,8 @@ class RecordDirStore:
         submitter_id: str,
     ) -> None:
         # TODO: proper annotation
-        record.annotations.append(('submitter', submitter_id))
+        pass
+        #record.annotations.append(('submitter', submitter_id))
 
     def get_record_by_pid(
         self,

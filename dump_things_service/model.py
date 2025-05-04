@@ -65,7 +65,7 @@ def get_subclasses(
 
 def get_model_for_schema(
     schema_location: str,
-) -> tuple[Any, list[str]]:
+) -> tuple[Any, list[str], str]:
     if schema_location not in _model_cache:
         lgr.info(f'Building model for schema {schema_location}.')
         model = build_model(schema_location)

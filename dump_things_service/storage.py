@@ -54,6 +54,7 @@ class TokenPermission(BaseModel):
 
 
 class TokenModes(enum.Enum):
+    READ_CURATED = 'READ_CURATED'
     READ_COLLECTION = 'READ_COLLECTION'
     WRITE_COLLECTION = 'WRITE_COLLECTION'
     READ_SUBMISSIONS = 'READ_SUBMISSIONS'
@@ -64,6 +65,7 @@ class TokenModes(enum.Enum):
 
 
 mode_mapping = {
+    TokenModes.READ_CURATED: TokenPermission(curated_read=True),
     TokenModes.READ_COLLECTION: TokenPermission(curated_read=True, incoming_read=True),
     TokenModes.WRITE_COLLECTION: TokenPermission(curated_read=True, incoming_read=True, incoming_write=True),
     TokenModes.READ_SUBMISSIONS: TokenPermission(incoming_read=True),

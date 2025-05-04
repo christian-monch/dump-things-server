@@ -43,57 +43,79 @@ collections:
     incoming: {incoming}/collection_trr379
 
 tokens:
+  basic_access:
+    user_id: anonymous
+    collections:
+      collection_1:
+        mode: READ_CURATED
+        incoming_label: ''
+      collection_2:
+        mode: READ_CURATED
+        incoming_label: ''
+      collection_3:
+        mode: READ_CURATED
+        incoming_label: ''
+      collection_4:
+        mode: READ_CURATED
+        incoming_label: ''
+      collection_5:
+        mode: READ_CURATED
+        incoming_label: ''
+      collection_trr379:
+        mode: READ_CURATED
+        incoming_label: ''
+
   token_1:
     user_id: test_user_1
     collections:
       collection_1:
         mode: WRITE_COLLECTION
-        incoming_label: collection_1
+        incoming_label: in_token_1
       collection_trr379:
         mode: WRITE_COLLECTION
-        incoming_label: collection_trr379
+        incoming_label: in_token_1
   token_1_xxo:
     user_id: test_user_1_read_collection
     collections:
       collection_1:
         mode: READ_COLLECTION
-        incoming_label: collection_1
+        incoming_label: in_token_xxo
   token_1_xxx:
     user_id: test_user_1_write_collection
     collections:
       collection_1:
         mode: WRITE_COLLECTION
-        incoming_label: collection_1
+        incoming_label: in_token_1_xxx
   token_1_oxo:
     user_id: test_user_1_read_submissions
     collections:
       collection_1:
         mode: READ_SUBMISSIONS
-        incoming_label: collection_1
+        incoming_label: in_token_1_oxo
   token_1_oxx:
     user_id: test_user_1_write_submissions
     collections:
       collection_1:
         mode: WRITE_SUBMISSIONS
-        incoming_label: collection_1
+        incoming_label: in_token_1_oxx
   token_1_xox:
     user_id: test_user_1_submit
     collections:
       collection_1:
         mode: SUBMIT
-        incoming_label: collection_1
+        incoming_label: in_token_1_xox
   token_1_oox:
     user_id: test_user_1_submit_only
     collections:
       collection_1:
         mode: SUBMIT_ONLY
-        incoming_label: collection_1
+        incoming_label: in_token_1_oox
   token_2:
     user_id: test_user_2
     collections:
       collection_2:
         mode: WRITE_COLLECTION
-        incoming_label: collection_2
+        incoming_label: in_token_2
 """
 
 

@@ -118,20 +118,21 @@ for token_name, token_info in global_config.tokens.items():
     }
     g_token_stores[token_name] = entry
     for collection_name, token_collection_info in token_info.collections.items():
-        if collection_name not in g_incoming:
-            raise HTTPException(
-                status_code=404,
-                detail=f'Collection "{collection_name}" does not support incoming records.'
-            )
-        model = g_curated_stores[collection_name].model
-        mapping_function = g_curated_stores[collection_name].pid_mapping_function
-        token_store = RecordDirStore(
-            store_path / g_incoming[collection_name] / token_collection_info.incoming_label,
-            model,
-            mapping_function
-        )
         entry['collections'][collection_name] = {}
-        entry['collections'][collection_name]['store'] = token_store
+        # A token might be a pure curated read token, i.e., have the mode
+        # `READ_COLLECTION`. In this case there will be no incoming store.
+        if collection_name in g_incoming:
+            model = g_curated_stores[collection_name].model
+            mapping_function = g_curated_stores[collection_name].pid_mapping_function
+            # Ensure that the store directory exists
+            store_dir = store_path / g_incoming[collection_name] / token_collection_info.incoming_label
+            store_dir.mkdir(parents=True, exist_ok=True)
+            token_store = RecordDirStore(
+                store_dir,
+                model,
+                mapping_function
+            )
+            entry['collections'][collection_name]['store'] = token_store
         entry['collections'][collection_name]['permissions'] = get_permissions(
             token_collection_info.mode
         )
@@ -252,11 +253,17 @@ async def read_record_with_pid(
     format: Format = Format.json,  # noqa A002
     api_key: str = Depends(api_key_header_scheme),
 ):
+    if not api_key:
+        if format == Format.ttl:
+            return PlainTextResponse('', media_type='text/turtle')
+        return list()
+
     token_store, token_permissions = _get_token_store(collection, api_key)
 
-    if token_store and token_permissions.icoming_read:
-        class_name, record = token_store.get_record_by_pid(collection, pid, format)
-    else:
+    record = None
+    if token_permissions.incoming_read:
+        class_name, record = token_store.get_record_by_pid(pid)
+    elif token_permissions.curated_read:
         class_name, record = g_curated_stores[collection].get_record_by_pid(pid)
 
     if record and format == Format.ttl:
@@ -272,7 +279,11 @@ async def read_records_of_type(
     format: Format = Format.json,  # noqa A002
     api_key: str = Depends(api_key_header_scheme),
 ):
-    token_store, token_permissions = _get_token_store(collection, api_key)
+    # Without a token, there will be no access
+    if not api_key:
+        if format == Format.ttl:
+            return PlainTextResponse('', media_type='text/turtle')
+        return list()
 
     model = g_model_info[collection][0]
     if class_name not in get_classes(model):
@@ -281,15 +292,17 @@ async def read_records_of_type(
             detail=f'No "{class_name}"-class in collection "{collection}".',
         )
 
+    token_store, token_permissions = _get_token_store(collection, api_key)
+
     records = {}
     if token_permissions.curated_read:
         for search_class_name in get_subclasses(model, class_name):
-            for record in g_curated_stores[collection].get_records_of_class(search_class_name):
+            for _, record in g_curated_stores[collection].get_records_of_class(search_class_name):
                 records[record['pid']] = record
 
-    if token_store and token_permissions.icoming_read:
+    if token_permissions.incoming_read:
         for search_class_name in get_subclasses(model, class_name):
-            for record in token_store.get_records_of_class(search_class_name):
+            for _, record in token_store.get_records_of_class(search_class_name):
                 records[record['pid']] = record
 
     if format == Format.ttl:
@@ -318,16 +331,14 @@ def _get_token_store(
             status_code=404,
             detail=f'No such collection: "{collection_name}".'
         )
-    try:
-        return (
-            g_token_stores[token]['collections'][collection_name]['store'],
-            g_token_stores[token]['collections'][collection_name]['permissions']
-        )
-    except KeyError:
-        raise HTTPException(
-            status_code=403,
-            detail=f'Token not authorized for collection "{collection}".'
-        )
+    if token not in g_token_stores:
+        raise HTTPException(status_code=401, detail='Invalid token.')
+
+    token_store = None
+    permissions = g_token_stores[token]['collections'][collection_name]['permissions']
+    if permissions.incoming_write or permissions.incoming_read:
+        token_store = g_token_stores[token]['collections'][collection_name]['store']
+    return token_store, permissions
 
 
 # Rebuild the app to include all dynamically created endpoints
