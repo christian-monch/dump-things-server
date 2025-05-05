@@ -27,7 +27,13 @@ from starlette.responses import (
 )
 from pydantic import TypeAdapter
 
-from dump_things_service import Format
+from dump_things_service import (
+    Format,
+    HTTP_400_BAD_REQUEST,
+    HTTP_401_UNAUTHORIZED,
+    HTTP_403_FORBIDDEN,
+    HTTP_404_NOT_FOUND,
+)
 from dump_things_service.convert import (
     convert_json_to_ttl,
     convert_ttl_to_json,
@@ -157,19 +163,19 @@ def store_record(
     token: str | None,
 ) -> JSONResponse | PlainTextResponse:
     if input_format == Format.json and isinstance(data, str):
-        raise HTTPException(status_code=404, detail='Invalid JSON data provided.')
+        raise HTTPException(status_code=HTTP_400_BAD_REQUEST, detail='Invalid JSON data provided.')
 
     if input_format == Format.ttl and not isinstance(data, str):
-        raise HTTPException(status_code=404, detail='Invalid ttl data provided.')
+        raise HTTPException(status_code=HTTP_400_BAD_REQUEST, detail='Invalid ttl data provided.')
 
     try:
         store = g_token_stores[token]['collections'][collection]['store']
     except KeyError:
-        raise HTTPException(status_code=401, detail='Invalid token.')
+        raise HTTPException(status_code=HTTP_401_UNAUTHORIZED, detail='Invalid token.')
 
     permissions = g_token_stores[token]['collections'][collection]['permissions']
     if not permissions.incoming_write:
-        raise HTTPException(status_code=403, detail=f'Not authorized to submit to collection "{collection_name}".')
+        raise HTTPException(status_code=HTTP_403_FORBIDDEN, detail=f'Not authorized to submit to collection "{collection_name}".')
 
     if input_format == Format.ttl:
         json_object = convert_ttl_to_json(collection, class_name, data)
@@ -258,7 +264,7 @@ async def read_record_with_pid(
 ):
     # Without a token, there will be no access
     if not api_key:
-        raise HTTPException(status_code=401, detail='Missing token.')
+        raise HTTPException(status_code=HTTP_401_UNAUTHORIZED, detail='Missing token.')
 
     token_store, token_permissions = _get_token_store(collection, api_key)
 
@@ -283,12 +289,12 @@ async def read_records_of_type(
 ):
     # Without a token, there will be no access
     if not api_key:
-        raise HTTPException(status_code=401, detail='Missing token.')
+        raise HTTPException(status_code=HTTP_401_UNAUTHORIZED, detail='Missing token.')
 
     model = g_model_info[collection][0]
     if class_name not in get_classes(model):
         raise HTTPException(
-            status_code=404,
+            status_code=HTTP_404_NOT_FOUND,
             detail=f'No "{class_name}"-class in collection "{collection}".',
         )
 
@@ -328,11 +334,11 @@ def _get_token_store(
         return None, None
     if collection_name not in g_curated_stores:
         raise HTTPException(
-            status_code=404,
+            status_code=HTTP_404_NOT_FOUND,
             detail=f'No such collection: "{collection_name}".'
         )
     if token not in g_token_stores:
-        raise HTTPException(status_code=401, detail='Invalid token.')
+        raise HTTPException(status_code=HTTP_401_UNAUTHORIZED, detail='Invalid token.')
 
     token_store = None
     permissions = g_token_stores[token]['collections'][collection_name]['permissions']

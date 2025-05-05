@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 
 import pytest  # noqa F401
 
-from . import HTTP_200_OK
+from .. import HTTP_200_OK
 from ..utils import cleaned_json
 from dump_things_service.record import RecordDirStore
 

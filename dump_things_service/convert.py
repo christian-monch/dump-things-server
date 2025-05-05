@@ -13,11 +13,11 @@ from linkml.utils.datautils import (
     get_loader,
 )
 from linkml_runtime import SchemaView
-from pydantic import BaseModel
 
 from dump_things_service import (
-    JSON,
     Format,
+    HTTP_404_NOT_FOUND,
+    JSON,
 )
 from dump_things_service.utils import cleaned_json
 
@@ -87,7 +87,7 @@ def convert_format(
         )
     except Exception as e:  # BLE001
         raise HTTPException(
-            status_code=404, detail='Conversion error: ' + str(e)
+            status_code=HTTP_404_NOT_FOUND, detail='Conversion error: ' + str(e)
         ) from e
 
 

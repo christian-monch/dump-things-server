@@ -1,7 +1,7 @@
 import pytest  # noqa F401
 from starlette.status import HTTP_403_FORBIDDEN
 
-from . import (
+from .. import (
     HTTP_200_OK,
     HTTP_401_UNAUTHORIZED,
 )

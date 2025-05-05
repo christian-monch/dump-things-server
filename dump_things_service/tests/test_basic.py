@@ -2,7 +2,7 @@ import json
 
 import pytest  # noqa F401
 
-from . import (
+from .. import (
     HTTP_200_OK,
     HTTP_401_UNAUTHORIZED,
 )

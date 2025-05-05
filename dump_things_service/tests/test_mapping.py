@@ -2,7 +2,7 @@ from collections import defaultdict
 
 import yaml
 
-from . import HTTP_200_OK
+from .. import HTTP_200_OK
 from .test_utils import basic_write_locations
 
 pid = 'abc:this_is_a_persistent_identifier'

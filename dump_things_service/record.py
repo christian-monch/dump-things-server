@@ -13,6 +13,7 @@ from fastapi import HTTPException
 from pydantic import BaseModel
 
 from dump_things_service import (
+    HTTP_400_BAD_REQUEST,
     JSON,
     config_file_name,
 )
@@ -106,7 +107,7 @@ class RecordDirStore:
         try:
             storage_path.relative_to(record_root)
         except ValueError as e:
-            raise HTTPException(status_code=400, detail='Invalid pid.') from e
+            raise HTTPException(status_code=HTTP_400_BAD_REQUEST, detail='Invalid pid.') from e
 
         # Ensure all intermediate directories exist and save the YAML document
         storage_path.parent.mkdir(parents=True, exist_ok=True)

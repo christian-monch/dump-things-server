@@ -4,7 +4,7 @@ from itertools import product
 
 import pytest
 
-from . import HTTP_500_INTERNAL_SERVER_ERROR
+from .. import HTTP_500_INTERNAL_SERVER_ERROR
 
 collection_names = ('collection_1', 'xasdasd', '../../../abc')
 class_names = ('Thing', 'Mosdlkjsdfnmxcfd', '../../../abc')

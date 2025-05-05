@@ -1,6 +1,6 @@
 import pytest  # noqa F401
 
-from . import HTTP_200_OK
+from .. import HTTP_200_OK
 
 json_record = {
     'pid': 'trr379:test_john_json',
