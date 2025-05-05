@@ -72,16 +72,8 @@ def test_store_record(fastapi_client_simple):
             f'/collection_{i}/records/Thing',
             headers={'x-dumpthings-token': token},
         )
-        assert sorted(
-            response.json(),
-            key=lambda x: x['pid'],
-        ) == sorted(
-            [
-                {'pid': pid, 'given_name': given_name},
-                extra_record,
-            ],
-            key=lambda x: x['pid'],
-        )
+        assert extra_record in response.json()
+        assert {'pid': pid, 'given_name': given_name} in response.json()
 
 
 def test_encoding(fastapi_client_simple):

@@ -9,9 +9,11 @@ from dump_things_service.storage import GlobalConfig
 from .create_store import (
     create_store,
     pid,
-    test_record,
+    pid_curated,
     pid_trr,
+    test_record,
     test_record_trr,
+    test_record_curated,
 )
 
 
@@ -79,37 +81,55 @@ tokens:
     collections:
       collection_1:
         mode: READ_COLLECTION
-        incoming_label: in_token_xxo
+        incoming_label: modes
   token_1_xxx:
     user_id: test_user_1_write_collection
     collections:
       collection_1:
         mode: WRITE_COLLECTION
-        incoming_label: in_token_1_xxx
+        incoming_label: modes
   token_1_oxo:
     user_id: test_user_1_read_submissions
     collections:
       collection_1:
         mode: READ_SUBMISSIONS
-        incoming_label: in_token_1_oxo
+        incoming_label: modes
   token_1_oxx:
     user_id: test_user_1_write_submissions
     collections:
       collection_1:
         mode: WRITE_SUBMISSIONS
-        incoming_label: in_token_1_oxx
+        incoming_label: modes
   token_1_xox:
     user_id: test_user_1_submit
     collections:
       collection_1:
         mode: SUBMIT
-        incoming_label: in_token_1_xox
+        incoming_label: modes
   token_1_oox:
     user_id: test_user_1_submit_only
     collections:
       collection_1:
         mode: SUBMIT_ONLY
-        incoming_label: in_token_1_oox
+        incoming_label: modes
+  token_1_oox:
+    user_id: test_user_1_submit_only
+    collections:
+      collection_1:
+        mode: SUBMIT_ONLY
+        incoming_label: modes
+  token_1_xoo:
+    user_id: test_user_1_read_curated
+    collections:
+      collection_1:
+        mode: READ_CURATED
+        incoming_label: modes
+  token_1_ooo:
+    user_id: test_user_1_nothing
+    collections:
+      collection_1:
+        mode: NOTHING
+        incoming_label: modes
   token_2:
     user_id: test_user_2
     collections:
@@ -124,6 +144,16 @@ def dump_stores_simple(tmp_path_factory):
     tmp_path = tmp_path_factory.mktemp('dump_store')
     schema_path = Path(__file__).parent / 'testschema.yaml'
     (tmp_path / config_file_name).write_text(global_config_text)
+
+    default_entries = {
+        f'collection_{i}': [('Person', pid, test_record)]
+        for i in range(1, 6)
+    }
+    default_entries['collection_1'].extend([
+        ('Person', pid_curated, test_record_curated),
+        ('Person', 'abc:mode_test', "pid: abc:mode_test\ngiven_name: mode_curated\n"),
+    ])
+    default_entries['collection_trr379'] = [('Person', pid_trr, test_record_trr)]
     create_store(
         root_dir=tmp_path,
         config=GlobalConfig(**yaml.safe_load(global_config_text)),
@@ -138,13 +168,7 @@ def dump_stores_simple(tmp_path_factory):
                 'digest-md5',
             ),
         },
-        default_entries={
-            **{
-                f'collection_{i}': [('Person', pid, test_record)]
-                for i in range(1, 6)
-            },
-            'collection_trr379': [('Person', pid_trr, test_record_trr)],
-        },
+        default_entries=default_entries,
     )
     return tmp_path
 

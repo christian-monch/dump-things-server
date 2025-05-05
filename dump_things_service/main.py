@@ -182,10 +182,6 @@ def store_record(
         record = TypeAdapter(getattr(model, class_name)).validate_python(json_object)
     else:
         record = data
-        store.store_record(
-            record=record,
-            submitter_id=g_token_stores[token]['user_id'],
-        )
 
     stored_records = store.store_record(
         record=record,
@@ -267,11 +263,17 @@ async def read_record_with_pid(
         raise HTTPException(status_code=HTTP_401_UNAUTHORIZED, detail='Missing token.')
 
     token_store, token_permissions = _get_token_store(collection, api_key)
+    if not token_permissions.curated_read and not token_permissions.incoming_read:
+        raise HTTPException(
+            status_code=HTTP_403_FORBIDDEN,
+            detail=f'No read access to curated or incoming data in collection "{collection}".',
+        )
 
     record = None
     if token_permissions.incoming_read:
         class_name, record = token_store.get_record_by_pid(pid)
-    elif token_permissions.curated_read:
+
+    if not record and token_permissions.curated_read:
         class_name, record = g_curated_stores[collection].get_record_by_pid(pid)
 
     if record and format == Format.ttl:
@@ -299,6 +301,11 @@ async def read_records_of_type(
         )
 
     token_store, token_permissions = _get_token_store(collection, api_key)
+    if not token_permissions.incoming_read and not token_permissions.curated_read:
+        raise HTTPException(
+            status_code=HTTP_403_FORBIDDEN,
+            detail=f'No read access to curated or incoming data in collection "{collection}".',
+        )
 
     records = {}
     if token_permissions.curated_read:

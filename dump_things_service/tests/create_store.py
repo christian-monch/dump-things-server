@@ -35,6 +35,12 @@ test_record_trr = f"""pid: {pid_trr}
 given_name: {given_name_trr}
 """
 
+pid_curated = 'abc:curated'
+given_name_curated = 'curated'
+test_record_curated = f"""pid: {pid_curated}
+given_name: {given_name_curated}
+"""
+
 
 def create_store(
     root_dir: Path,
