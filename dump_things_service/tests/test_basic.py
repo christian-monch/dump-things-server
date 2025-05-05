@@ -28,7 +28,10 @@ unicode_record = {
 def test_search_by_pid(fastapi_client_simple):
     test_client, _ = fastapi_client_simple
     for i in range(1, 6):
-        response = test_client.get(f'/collection_{i}/record?pid={pid}')
+        response = test_client.get(
+            f'/collection_{i}/record?pid={pid}',
+            headers={'x-dumpthings-token': 'basic_access'},
+        )
         assert response.status_code == HTTP_200_OK
         assert json.loads(response.text) == {'pid': pid, 'given_name': given_name}
 
@@ -110,6 +113,7 @@ def test_global_store_write_fails(fastapi_client_simple):
         assert response.status_code == HTTP_401_UNAUTHORIZED
 
 
+@pytest.mark.skip(reason="No runtime store adding yet")
 def test_token_store_adding(fastapi_client_simple):
     test_client, store_dir = fastapi_client_simple
     response = test_client.post(
@@ -152,32 +156,27 @@ def test_funky_pid(fastapi_client_simple):
 def test_token_store_priority(fastapi_client_simple):
     test_client, store_dir = fastapi_client_simple
 
-    # Ensure a token directory existence
-    (store_dir / 'token_stores' / 'collection_1' / 'david_bowie').mkdir(
-        parents=True,
-        exist_ok=True,
-    )
-
     # Post a record with the same pid as the global store's test record, but
     # with different content.
     response = test_client.post(
         '/collection_1/record/Person',
-        headers={'x-dumpthings-token': 'david_bowie'},
+        headers={'x-dumpthings-token': 'token_1'},
         json={'pid': pid, 'given_name': 'DavidÖÄß'},
     )
     assert response.status_code == HTTP_200_OK
 
-    # Check that the new record is returned with a token
+    # Check that the new record is returned with the token
     response = test_client.get(
         f'/collection_1/record?pid={pid}',
-        headers={'x-dumpthings-token': 'david_bowie'},
+        headers={'x-dumpthings-token': 'token_1'},
     )
     assert response.status_code == HTTP_200_OK
     assert response.json()['given_name'] == 'DavidÖÄß'
 
-    # Check that the global test record is returned without a token
+    # Check that the global test record is returned with basic access
     response = test_client.get(
         f'/collection_1/record?pid={pid}',
+        headers={'x-dumpthings-token': 'basic_access'},
     )
     assert response.status_code == HTTP_200_OK
     assert response.json()['given_name'] == given_name

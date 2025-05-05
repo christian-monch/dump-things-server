@@ -4,6 +4,7 @@ from pathlib import Path
 import pytest
 import yaml
 
+from dump_things_service import config_file_name
 from dump_things_service.storage import GlobalConfig
 from .create_store import (
     create_store,
@@ -64,7 +65,6 @@ tokens:
       collection_trr379:
         mode: READ_CURATED
         incoming_label: ''
-
   token_1:
     user_id: test_user_1
     collections:
@@ -123,6 +123,7 @@ tokens:
 def dump_stores_simple(tmp_path_factory):
     tmp_path = tmp_path_factory.mktemp('dump_store')
     schema_path = Path(__file__).parent / 'testschema.yaml'
+    (tmp_path / config_file_name).write_text(global_config_text)
     create_store(
         root_dir=tmp_path,
         config=GlobalConfig(**yaml.safe_load(global_config_text)),

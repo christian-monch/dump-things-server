@@ -1,5 +1,9 @@
 from __future__ import annotations
 
+from json import (
+    dumps as json_dumps,
+    loads as json_loads,
+)
 from typing import TYPE_CHECKING
 
 from fastapi import HTTPException
@@ -9,11 +13,13 @@ from linkml.utils.datautils import (
     get_loader,
 )
 from linkml_runtime import SchemaView
+from pydantic import BaseModel
 
 from dump_things_service import (
     JSON,
     Format,
 )
+from dump_things_service.utils import cleaned_json
 
 if TYPE_CHECKING:
     import types
@@ -24,14 +30,14 @@ def convert_json_to_ttl(
     target_class: str,
     json: JSON,
 ) -> str:
-    from main import (
+    from dump_things_service.main import (
         g_schemas,
         g_conversion_objects,
     )
 
     return convert_format(
         target_class=target_class,
-        data=json,
+        data=json_dumps(json),
         input_format=Format.json,
         output_format=Format.ttl,
         **g_conversion_objects[g_schemas[collection_name]],
@@ -42,18 +48,19 @@ def convert_ttl_to_json(
         collection_name: str,
         target_class: str,
         ttl: str,
-) -> str:
-    from main import (
+) -> JSON:
+    from dump_things_service.main import (
         g_schemas,
         g_conversion_objects,
     )
-    return convert_format(
+    json_string = convert_format(
         target_class=target_class,
         data=ttl,
         input_format=Format.ttl,
         output_format=Format.json,
         **g_conversion_objects[g_schemas[collection_name]],
     )
+    return cleaned_json(json_loads(json_string))
 
 
 def convert_format(
@@ -125,12 +132,3 @@ def get_conversion_objects(schema: str):
         'schema_module': PythonGenerator(schema).compile_module(),
         'schema_view': SchemaView(schema),
     }
-
-#def get_conversion_objects(collections: dict[str, tuple[CollectionDirConfig]]):
-#    return {
-#        collection_name: {
-#            'schema_module': PythonGenerator(dir_config.schema).compile_module(),
-#            'schema_view': SchemaView(dir_config.schema),
-#        }
-#        for collection_name, dir_config in collections.items()
-#    }

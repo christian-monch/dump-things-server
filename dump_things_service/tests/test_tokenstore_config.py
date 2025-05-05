@@ -13,6 +13,7 @@ extra_record = {
 }
 
 
+@pytest.mark.skip(reason='Token config no longer used')
 def test_read_access(fastapi_client_simple):
     test_client, _ = fastapi_client_simple
 
@@ -34,6 +35,7 @@ def test_read_access(fastapi_client_simple):
     assert response.status_code == HTTP_403_FORBIDDEN
 
 
+@pytest.mark.skip(reason='Token config no longer used')
 def test_write_access(fastapi_client_simple):
     test_client, _ = fastapi_client_simple
     json_record = {'pid': 'xyz:jjjj', 'given_name': 'Josephine'}

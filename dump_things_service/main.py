@@ -25,6 +25,7 @@ from starlette.responses import (
     JSONResponse,
     PlainTextResponse,
 )
+from pydantic import TypeAdapter
 
 from dump_things_service import Format
 from dump_things_service.convert import (
@@ -58,7 +59,6 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--host', default='0.0.0.0')  # noqa S104
 parser.add_argument('--port', default=8000, type=int)
 parser.add_argument('--origins', action='append', default=[])
-parser.add_argument('--no-global-store', action='store_true')
 parser.add_argument(
     '--root-path',
     default='',
@@ -172,19 +172,22 @@ def store_record(
         raise HTTPException(status_code=403, detail=f'Not authorized to submit to collection "{collection_name}".')
 
     if input_format == Format.ttl:
-        stored_records = store.store_record(
-            record=convert_ttl_to_json(collection, class_name, data),
+        json_object = convert_ttl_to_json(collection, class_name, data)
+        record = TypeAdapter(getattr(model, class_name)).validate_python(json_object)
+    else:
+        record = data
+        store.store_record(
+            record=record,
             submitter_id=g_token_stores[token]['user_id'],
-        )
-        return PlainTextResponse(
-            convert_json_to_ttl(collection, class_name, stored_records),
-            media_type='text/turtle'
         )
 
     stored_records = store.store_record(
-        record=data,
+        record=record,
         submitter_id=g_token_stores[token]['user_id'],
     )
+
+    if input_format == Format.ttl:
+        return PlainTextResponse(data, media_type='text/turtle')
     return JSONResponse(
         list(map(cleaned_json, map(jsonable_encoder, stored_records)))
     )
@@ -253,10 +256,9 @@ async def read_record_with_pid(
     format: Format = Format.json,  # noqa A002
     api_key: str = Depends(api_key_header_scheme),
 ):
+    # Without a token, there will be no access
     if not api_key:
-        if format == Format.ttl:
-            return PlainTextResponse('', media_type='text/turtle')
-        return list()
+        raise HTTPException(status_code=401, detail='Missing token.')
 
     token_store, token_permissions = _get_token_store(collection, api_key)
 
@@ -281,9 +283,7 @@ async def read_records_of_type(
 ):
     # Without a token, there will be no access
     if not api_key:
-        if format == Format.ttl:
-            return PlainTextResponse('', media_type='text/turtle')
-        return list()
+        raise HTTPException(status_code=401, detail='Missing token.')
 
     model = g_model_info[collection][0]
     if class_name not in get_classes(model):
