@@ -26,6 +26,7 @@ from starlette.responses import (
     JSONResponse,
     PlainTextResponse,
 )
+from pydantic import BaseModel
 
 from dump_things_service import (
     HTTP_400_BAD_REQUEST,
@@ -60,6 +61,10 @@ if TYPE_CHECKING:
     from pydantic import BaseModel
 
 
+class TokenCapabilityRequest(BaseModel):
+    token: str
+
+
 parser = argparse.ArgumentParser()
 parser.add_argument('--host', default='0.0.0.0')  # noqa S104
 parser.add_argument('--port', default=8000, type=int)
@@ -82,6 +87,7 @@ global_config = Storage.get_config(store_path)
 
 g_curated_stores = {}
 g_incoming = {}
+g_zones = {}
 g_model_info = {}
 g_token_stores = {}
 g_schemas = {}
@@ -122,6 +128,9 @@ for token_name, token_info in global_config.tokens.items():
         # A token might be a pure curated read token, i.e., have the mode
         # `READ_COLLECTION`. In this case there will be no incoming store.
         if collection_name in g_incoming:
+            if collection_name not in g_zones:
+                g_zones[collection_name] = {}
+            g_zones[collection_name][token_name] = token_collection_info.incoming_label
             model = g_curated_stores[collection_name].model
             mapping_function = g_curated_stores[collection_name].pid_mapping_function
             # Ensure that the store directory exists
@@ -250,6 +259,28 @@ for collection, (model, classes, model_var_name) in g_model_info.items():
         )
 
 lgr.info('Creation of %d endpoints completed.', next(serial_number))
+
+
+@app.post('/{collection}/token_permissions')
+async def fetch_token_permissions(
+        collection: str,
+        body: TokenCapabilityRequest,
+):
+    token = body.token
+    token_store, token_permissions = _get_token_store(collection, token)
+    return JSONResponse(
+        {
+            'read_curated': token_permissions.curated_read,
+            'read_incoming': token_permissions.incoming_read,
+            'write_incoming': token_permissions.incoming_write,
+            **(
+                {
+                    'incoming_zone': g_zones[collection][token]
+                } if token_permissions.incoming_read or token_permissions.incoming_write
+                else {}
+            )
+        }
+    )
 
 
 @app.get('/{collection}/record')
