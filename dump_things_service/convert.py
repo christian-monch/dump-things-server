@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from json import (
     dumps as json_dumps,
+)
+from json import (
     loads as json_loads,
 )
 from typing import TYPE_CHECKING
@@ -15,9 +17,9 @@ from linkml.utils.datautils import (
 from linkml_runtime import SchemaView
 
 from dump_things_service import (
-    Format,
     HTTP_404_NOT_FOUND,
     JSON,
+    Format,
 )
 from dump_things_service.utils import cleaned_json
 
@@ -31,8 +33,8 @@ def convert_json_to_ttl(
     json: JSON,
 ) -> str:
     from dump_things_service.main import (
-        g_schemas,
         g_conversion_objects,
+        g_schemas,
     )
 
     return convert_format(
@@ -45,14 +47,15 @@ def convert_json_to_ttl(
 
 
 def convert_ttl_to_json(
-        collection_name: str,
-        target_class: str,
-        ttl: str,
+    collection_name: str,
+    target_class: str,
+    ttl: str,
 ) -> JSON:
     from dump_things_service.main import (
-        g_schemas,
         g_conversion_objects,
+        g_schemas,
     )
+
     json_string = convert_format(
         target_class=target_class,
         data=ttl,

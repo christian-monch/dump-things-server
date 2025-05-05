@@ -5,11 +5,11 @@ from typing import TYPE_CHECKING
 import yaml
 
 from dump_things_service.storage import (
+    CollectionConfig,
+    GlobalConfig,
     MappingMethod,
     config_file_name,
     mapping_functions,
-    GlobalConfig,
-    CollectionConfig,
 )
 
 if TYPE_CHECKING:
@@ -54,7 +54,7 @@ def create_store(
         allow_unicode=True,
         sort_keys=False,
     )
-    with open(root_dir / config_file_name, 'wt') as f:
+    with open(root_dir / config_file_name, 'w') as f:
         f.write(config_text)
 
     # Create all collection directories
@@ -77,9 +77,13 @@ def create_collection(
 ):
     # Create a directory for the curated collection
     curated_dir = root_dir / collection_config.curated
-    assert curated_dir.is_absolute()
+    if not curated_dir.is_absolute():
+        msg = f'Curated collection path not absolute: {curated_dir}'
+        raise ValueError(msg)
     if curated_dir.exists():
-        assert curated_dir.is_dir()
+        if not curated_dir.is_dir():
+            msg = f'Curated collection path not a directory: {curated_dir}'
+            raise ValueError(msg)
     else:
         curated_dir.mkdir(parents=True, exist_ok=True)
 

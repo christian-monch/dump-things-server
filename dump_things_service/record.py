@@ -1,16 +1,13 @@
 from __future__ import annotations
 
 from itertools import chain
-from pathlib import Path
 from typing import (
-    Callable,
-    Iterable,
     TYPE_CHECKING,
+    Callable,
 )
 
 import yaml
 from fastapi import HTTPException
-from pydantic import BaseModel
 
 from dump_things_service import (
     HTTP_400_BAD_REQUEST,
@@ -19,7 +16,13 @@ from dump_things_service import (
 )
 
 if TYPE_CHECKING:
-    from typing import Any
+    from collections.abc import Iterable
+    from pathlib import Path
+    from typing import (
+        Any,
+    )
+
+    from pydantic import BaseModel
 
 
 ignored_files = {'.', '..', config_file_name}
@@ -34,7 +37,9 @@ class RecordDirStore:
         model: Any,
         pid_mapping_function: Callable,
     ):
-        assert root.is_absolute()
+        if not root.is_absolute():
+            msg = f'Store root is not absolute: {root}'
+            raise ValueError(msg)
         self.root = root
         self.model = model
         self.pid_mapping_function = pid_mapping_function
@@ -44,7 +49,6 @@ class RecordDirStore:
         record: BaseModel,
         submitter_id: str,
     ) -> list[BaseModel]:
-
         final_records = self.extract_inlined(record, submitter_id)
         for final_record in final_records:
             self.store_single_record(
@@ -101,13 +105,17 @@ class RecordDirStore:
         )
 
         # Apply the mapping function to the record pid to get the final storage path
-        storage_path = record_root / self.pid_mapping_function(pid=record.pid, suffix='yaml')
+        storage_path = record_root / self.pid_mapping_function(
+            pid=record.pid, suffix='yaml'
+        )
 
         # Ensure that the storage path is within the record root
         try:
             storage_path.relative_to(record_root)
         except ValueError as e:
-            raise HTTPException(status_code=HTTP_400_BAD_REQUEST, detail='Invalid pid.') from e
+            raise HTTPException(
+                status_code=HTTP_400_BAD_REQUEST, detail='Invalid pid.'
+            ) from e
 
         # Ensure all intermediate directories exist and save the YAML document
         storage_path.parent.mkdir(parents=True, exist_ok=True)
@@ -120,7 +128,7 @@ class RecordDirStore:
     ) -> None:
         # TODO: proper annotation
         pass
-        #record.annotations.append(('submitter', submitter_id))
+        # record.annotations.append(('submitter', submitter_id))
 
     def get_record_by_pid(
         self,
@@ -138,10 +146,7 @@ class RecordDirStore:
         rel_path = path.absolute().relative_to(self.root)
         return rel_path.parts[0]
 
-    def get_records_of_class(
-        self,
-        class_name: str
-    ) -> Iterable[tuple[str, JSON]]:
+    def get_records_of_class(self, class_name: str) -> Iterable[tuple[str, JSON]]:
         for path in (self.root / class_name).rglob('*'):
             if path.is_file() and path.name not in ignored_files:
                 class_name = self._get_class_from_path(path)

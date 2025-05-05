@@ -1,6 +1,6 @@
 import json
 
-import pytest  # noqa F401
+import pytest  # F401
 
 from .. import (
     HTTP_200_OK,
@@ -82,7 +82,7 @@ def test_encoding(fastapi_client_simple):
     # Store a record with non-ASCII characters in collections via the API. that
     # will trigger the YAML-dumping, which should be checked
     response = test_client.post(
-        f'/collection_1/record/Person',
+        '/collection_1/record/Person',
         headers={'x-dumpthings-token': 'token_1'},
         json=unicode_record,
     )
@@ -105,7 +105,7 @@ def test_global_store_write_fails(fastapi_client_simple):
         assert response.status_code == HTTP_401_UNAUTHORIZED
 
 
-@pytest.mark.skip(reason="No runtime store adding yet")
+@pytest.mark.skip(reason='No runtime store adding yet')
 def test_token_store_adding(fastapi_client_simple):
     test_client, store_dir = fastapi_client_simple
     response = test_client.post(

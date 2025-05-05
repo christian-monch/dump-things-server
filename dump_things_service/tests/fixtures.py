@@ -5,17 +5,16 @@ import pytest
 import yaml
 
 from dump_things_service import config_file_name
-from dump_things_service.storage import GlobalConfig
-from .create_store import (
+from dump_things_service.create_store import (
     create_store,
     pid,
     pid_curated,
     pid_trr,
     test_record,
-    test_record_trr,
     test_record_curated,
+    test_record_trr,
 )
-
+from dump_things_service.storage import GlobalConfig
 
 # String representation of curated- and incoming-path
 curated = 'curated'
@@ -146,13 +145,18 @@ def dump_stores_simple(tmp_path_factory):
     (tmp_path / config_file_name).write_text(global_config_text)
 
     default_entries = {
-        f'collection_{i}': [('Person', pid, test_record)]
-        for i in range(1, 6)
+        f'collection_{i}': [('Person', pid, test_record)] for i in range(1, 6)
     }
-    default_entries['collection_1'].extend([
-        ('Person', pid_curated, test_record_curated),
-        ('Person', 'abc:mode_test', "pid: abc:mode_test\ngiven_name: mode_curated\n"),
-    ])
+    default_entries['collection_1'].extend(
+        [
+            ('Person', pid_curated, test_record_curated),
+            (
+                'Person',
+                'abc:mode_test',
+                'pid: abc:mode_test\ngiven_name: mode_curated\n',
+            ),
+        ]
+    )
     default_entries['collection_trr379'] = [('Person', pid_trr, test_record_trr)]
     create_store(
         root_dir=tmp_path,

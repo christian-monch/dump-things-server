@@ -1,15 +1,14 @@
 from __future__ import annotations
 
-from typing import Iterable
+from typing import TYPE_CHECKING
 
-from starlette.status import HTTP_401_UNAUTHORIZED, HTTP_403_FORBIDDEN
-
-from .. import HTTP_200_OK
-
-from .create_store import (
-    pid_curated,
-    given_name_curated,
+from .. import (
+    HTTP_200_OK,
+    HTTP_403_FORBIDDEN,
 )
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
 
 
 def verify_modes(
@@ -26,7 +25,10 @@ def verify_modes(
         )
         assert response.status_code == expected_status
 
-    for collection, token, expected_status, (curated_count, incoming_count) in read_class_expectations:
+    for collection, token, expected_status, (
+        curated_count,
+        incoming_count,
+    ) in read_class_expectations:
         response = test_client.get(
             f'/{collection}/records/Person',
             headers={'x-dumpthings-token': token},
@@ -70,17 +72,20 @@ def test_token_modes(fastapi_client_simple):
 
     # The modes we check are described below. Flags (o: False, x: True) indicate
     # which read, write permissions are given. They are in the order:
-    # read curated, read staging, write staging.
-    # Tokens for collection `collection_1` with the name in flags exist
     #
-    # xxo  READ_COLLECTION (read staging, read curated)
-    # xxx  WRITE_COLLECTION (read staging, read curated, write staging)
-    # oxo  READ_SUBMISSIONS (read staging)
-    # oxx  WRITE_SUBMISSIONS (read staging, write staging)
-    # xox  SUBMIT (read_curated, write staging)
-    # oox  SUBMIT_ONLY (write staging)
-    # xoo  READ_CURATED (read_curated)
-    # ooo  NOTHING ()
+    #   read curated, read staging, write staging.
+    #
+    # The test store contains `token_1_{flag}' for collection `collection_1`
+    # the following flags:
+    #
+    # flag: xxo  READ_COLLECTION (read staging, read curated)
+    # flag: xxx  WRITE_COLLECTION (read staging, read curated, write staging)
+    # flag: oxo  READ_SUBMISSIONS (read staging)
+    # flag: oxx  WRITE_SUBMISSIONS (read staging, write staging)
+    # flag: xox  SUBMIT (read_curated, write staging)
+    # flag: oox  SUBMIT_ONLY (write staging)
+    # flag: xoo  READ_CURATED (read_curated)
+    # flag: ooo  NOTHING ()
 
     verify_modes(
         test_client=test_client,

@@ -13,7 +13,6 @@ from starlette.status import (
     HTTP_500_INTERNAL_SERVER_ERROR,
 )
 
-
 __all__ = [
     'Format',
     'HTTP_200_OK',

@@ -21,36 +21,35 @@ from fastapi import (
 from fastapi.encoders import jsonable_encoder
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import APIKeyHeader
+from pydantic import TypeAdapter
 from starlette.responses import (
     JSONResponse,
     PlainTextResponse,
 )
-from pydantic import TypeAdapter
 
 from dump_things_service import (
-    Format,
     HTTP_400_BAD_REQUEST,
     HTTP_401_UNAUTHORIZED,
     HTTP_403_FORBIDDEN,
     HTTP_404_NOT_FOUND,
+    Format,
 )
 from dump_things_service.convert import (
     convert_json_to_ttl,
     convert_ttl_to_json,
     get_conversion_objects,
 )
-
 from dump_things_service.model import (
     get_classes,
-    get_subclasses,
     get_model_for_schema,
+    get_subclasses,
 )
 from dump_things_service.record import RecordDirStore
 from dump_things_service.storage import (
     Storage,
+    TokenPermission,
     get_mapping_function,
     get_permissions,
-    TokenPermission,
 )
 from dump_things_service.utils import (
     cleaned_json,
@@ -103,9 +102,7 @@ for collection_name, collection_info in global_config.collections.items():
     globals()[model_var_name] = model
 
     curated_store = RecordDirStore(
-        store_path / collection_info.curated,
-        model,
-        get_mapping_function(config)
+        store_path / collection_info.curated, model, get_mapping_function(config)
     )
     g_curated_stores[collection_name] = curated_store
     if collection_info.incoming:
@@ -118,10 +115,7 @@ for collection_name, collection_info in global_config.collections.items():
 
 # Create a `RecordDirStore` for each token dir and fetch the permissions
 for token_name, token_info in global_config.tokens.items():
-    entry = {
-        'user_id': token_info.user_id,
-        'collections': {}
-    }
+    entry = {'user_id': token_info.user_id, 'collections': {}}
     g_token_stores[token_name] = entry
     for collection_name, token_collection_info in token_info.collections.items():
         entry['collections'][collection_name] = {}
@@ -131,13 +125,13 @@ for token_name, token_info in global_config.tokens.items():
             model = g_curated_stores[collection_name].model
             mapping_function = g_curated_stores[collection_name].pid_mapping_function
             # Ensure that the store directory exists
-            store_dir = store_path / g_incoming[collection_name] / token_collection_info.incoming_label
-            store_dir.mkdir(parents=True, exist_ok=True)
-            token_store = RecordDirStore(
-                store_dir,
-                model,
-                mapping_function
+            store_dir = (
+                store_path
+                / g_incoming[collection_name]
+                / token_collection_info.incoming_label
             )
+            store_dir.mkdir(parents=True, exist_ok=True)
+            token_store = RecordDirStore(store_dir, model, mapping_function)
             entry['collections'][collection_name]['store'] = token_store
         entry['collections'][collection_name]['permissions'] = get_permissions(
             token_collection_info.mode
@@ -163,19 +157,28 @@ def store_record(
     token: str | None,
 ) -> JSONResponse | PlainTextResponse:
     if input_format == Format.json and isinstance(data, str):
-        raise HTTPException(status_code=HTTP_400_BAD_REQUEST, detail='Invalid JSON data provided.')
+        raise HTTPException(
+            status_code=HTTP_400_BAD_REQUEST, detail='Invalid JSON data provided.'
+        )
 
     if input_format == Format.ttl and not isinstance(data, str):
-        raise HTTPException(status_code=HTTP_400_BAD_REQUEST, detail='Invalid ttl data provided.')
+        raise HTTPException(
+            status_code=HTTP_400_BAD_REQUEST, detail='Invalid ttl data provided.'
+        )
 
     try:
         store = g_token_stores[token]['collections'][collection]['store']
-    except KeyError:
-        raise HTTPException(status_code=HTTP_401_UNAUTHORIZED, detail='Invalid token.')
+    except KeyError as e:
+        raise HTTPException(
+            status_code=HTTP_401_UNAUTHORIZED, detail='Invalid token.'
+        ) from e
 
     permissions = g_token_stores[token]['collections'][collection]['permissions']
     if not permissions.incoming_write:
-        raise HTTPException(status_code=HTTP_403_FORBIDDEN, detail=f'Not authorized to submit to collection "{collection_name}".')
+        raise HTTPException(
+            status_code=HTTP_403_FORBIDDEN,
+            detail=f'Not authorized to submit to collection "{collection_name}".',
+        )
 
     if input_format == Format.ttl:
         json_object = convert_ttl_to_json(collection, class_name, data)
@@ -190,9 +193,7 @@ def store_record(
 
     if input_format == Format.ttl:
         return PlainTextResponse(data, media_type='text/turtle')
-    return JSONResponse(
-        list(map(cleaned_json, map(jsonable_encoder, stored_records)))
-    )
+    return JSONResponse(list(map(cleaned_json, map(jsonable_encoder, stored_records))))
 
 
 lgr = logging.getLogger('uvicorn')
@@ -310,7 +311,9 @@ async def read_records_of_type(
     records = {}
     if token_permissions.curated_read:
         for search_class_name in get_subclasses(model, class_name):
-            for _, record in g_curated_stores[collection].get_records_of_class(search_class_name):
+            for _, record in g_curated_stores[collection].get_records_of_class(
+                search_class_name
+            ):
                 records[record['pid']] = record
 
     if token_permissions.incoming_read:
@@ -334,15 +337,14 @@ async def read_records_of_type(
 
 
 def _get_token_store(
-    collection_name: str,
-    token: str | None
+    collection_name: str, token: str | None
 ) -> tuple[RecordDirStore, TokenPermission] | tuple[None, None]:
     if token is None:
         return None, None
     if collection_name not in g_curated_stores:
         raise HTTPException(
             status_code=HTTP_404_NOT_FOUND,
-            detail=f'No such collection: "{collection_name}".'
+            detail=f'No such collection: "{collection_name}".',
         )
     if token not in g_token_stores:
         raise HTTPException(status_code=HTTP_401_UNAUTHORIZED, detail='Invalid token.')

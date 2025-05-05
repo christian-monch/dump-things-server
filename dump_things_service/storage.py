@@ -2,29 +2,15 @@ from __future__ import annotations
 
 import enum
 import hashlib
-import json
 from functools import partial
-from itertools import chain
 from pathlib import Path
 from typing import (
-    Any,
     Callable,
-    Iterable,
     Literal,
 )
 
 import yaml
-from fastapi import HTTPException
-from pydantic import (
-    BaseModel,
-    TypeAdapter,
-)
-
-from dump_things_service import (
-    YAML,
-    Format,
-)
-from dump_things_service.utils import cleaned_json
+from pydantic import BaseModel
 
 config_file_name = '.dumpthings.yaml'
 token_config_file_name = '.token_config.yaml'  # noqa: S105
@@ -67,9 +53,13 @@ class TokenModes(enum.Enum):
 mode_mapping = {
     TokenModes.READ_CURATED: TokenPermission(curated_read=True),
     TokenModes.READ_COLLECTION: TokenPermission(curated_read=True, incoming_read=True),
-    TokenModes.WRITE_COLLECTION: TokenPermission(curated_read=True, incoming_read=True, incoming_write=True),
+    TokenModes.WRITE_COLLECTION: TokenPermission(
+        curated_read=True, incoming_read=True, incoming_write=True
+    ),
     TokenModes.READ_SUBMISSIONS: TokenPermission(incoming_read=True),
-    TokenModes.WRITE_SUBMISSIONS: TokenPermission(incoming_read=True, incoming_write=True),
+    TokenModes.WRITE_SUBMISSIONS: TokenPermission(
+        incoming_read=True, incoming_write=True
+    ),
     TokenModes.SUBMIT: TokenPermission(curated_read=True, incoming_write=True),
     TokenModes.SUBMIT_ONLY: TokenPermission(incoming_write=True),
     TokenModes.NOTHING: TokenPermission(),
@@ -151,7 +141,9 @@ class Storage:
         )
 
     @staticmethod
-    def get_collection_dir_config(path: Path, file_name=config_file_name) -> CollectionDirConfig:
+    def get_collection_dir_config(
+        path: Path, file_name=config_file_name
+    ) -> CollectionDirConfig:
         return CollectionDirConfig(
             **yaml.load((path / file_name).read_text(), Loader=yaml.SafeLoader)
         )
