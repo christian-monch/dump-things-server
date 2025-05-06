@@ -69,6 +69,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--host', default='0.0.0.0')  # noqa S104
 parser.add_argument('--port', default=8000, type=int)
 parser.add_argument('--origins', action='append', default=[])
+parser.add_argument('-c', '--config')
 parser.add_argument(
     '--root-path',
     default='',
@@ -83,7 +84,10 @@ arguments = parser.parse_args()
 
 
 store_path = Path(arguments.store)
-global_config = Storage.get_config(store_path)
+if arguments.config:
+    global_config = Storage.get_config_from_file(Path(arguments.config))
+else:
+    global_config = Storage.get_config(store_path)
 
 g_curated_stores = {}
 g_incoming = {}
