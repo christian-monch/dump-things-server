@@ -136,9 +136,7 @@ def get_permissions(mode: TokenModes) -> TokenPermission:
 class Storage:
     @staticmethod
     def get_config_from_file(path: Path) -> GlobalConfig:
-        return GlobalConfig(
-            **yaml.load(path.read_text(), Loader=yaml.SafeLoader)
-        )
+        return GlobalConfig(**yaml.load(path.read_text(), Loader=yaml.SafeLoader))
 
     @staticmethod
     def get_config(path: Path, file_name=config_file_name) -> GlobalConfig:

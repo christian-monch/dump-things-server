@@ -33,7 +33,7 @@ def test_permission_fetching(fastapi_client_simple):
 
     verify_permission_fetching(
         test_client=test_client,
-        token='this-is-not-a-token',
+        token='this-is-not-a-token',  # noqa S106
         expected_status=(HTTP_401_UNAUTHORIZED, (False, False, False)),
     )
 
@@ -55,9 +55,7 @@ def test_permission_fetching(fastapi_client_simple):
         # NOTHING
         (False, False, False),
     ]:
-        token = 'token_1_' + ''.join(
-            'x' if x else 'o' for x in permissions
-        )
+        token = 'token_1_' + ''.join('x' if x else 'o' for x in permissions)
         verify_permission_fetching(
             test_client=test_client,
             token=token,

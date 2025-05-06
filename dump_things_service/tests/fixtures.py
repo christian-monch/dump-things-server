@@ -5,6 +5,7 @@ import pytest
 import yaml
 
 from dump_things_service import config_file_name
+from dump_things_service.storage import GlobalConfig
 from dump_things_service.tests.create_store import (
     create_store,
     pid,
@@ -14,7 +15,6 @@ from dump_things_service.tests.create_store import (
     test_record_curated,
     test_record_trr,
 )
-from dump_things_service.storage import GlobalConfig
 
 # String representation of curated- and incoming-path
 curated = 'curated'

@@ -6,7 +6,6 @@ import logging
 from itertools import count
 from pathlib import Path
 from typing import (
-    TYPE_CHECKING,
     Annotated,  # noqa F401 -- used by generated code
     Any,
 )
@@ -21,12 +20,11 @@ from fastapi import (
 from fastapi.encoders import jsonable_encoder
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import APIKeyHeader
-from pydantic import TypeAdapter
+from pydantic import BaseModel, TypeAdapter
 from starlette.responses import (
     JSONResponse,
     PlainTextResponse,
 )
-from pydantic import BaseModel
 
 from dump_things_service import (
     HTTP_400_BAD_REQUEST,
@@ -56,9 +54,6 @@ from dump_things_service.utils import (
     cleaned_json,
     combine_ttl,
 )
-
-if TYPE_CHECKING:
-    from pydantic import BaseModel
 
 
 class TokenCapabilityRequest(BaseModel):
@@ -267,8 +262,8 @@ lgr.info('Creation of %d endpoints completed.', next(serial_number))
 
 @app.post('/{collection}/token_permissions')
 async def fetch_token_permissions(
-        collection: str,
-        body: TokenCapabilityRequest,
+    collection: str,
+    body: TokenCapabilityRequest,
 ):
     token = body.token
     token_store, token_permissions = _get_token_store(collection, token)
@@ -278,11 +273,10 @@ async def fetch_token_permissions(
             'read_incoming': token_permissions.incoming_read,
             'write_incoming': token_permissions.incoming_write,
             **(
-                {
-                    'incoming_zone': g_zones[collection][token]
-                } if token_permissions.incoming_read or token_permissions.incoming_write
+                {'incoming_zone': g_zones[collection][token]}
+                if token_permissions.incoming_read or token_permissions.incoming_write
                 else {}
-            )
+            ),
         }
     )
 
