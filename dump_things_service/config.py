@@ -77,6 +77,7 @@ class TokenConfig(BaseModel):
 
 
 class CollectionConfig(BaseModel):
+    default_permissions_mask: TokenPermission
     curated: Path
     incoming: Path | None = None
 
@@ -133,14 +134,14 @@ def get_permissions(mode: TokenModes) -> TokenPermission:
     return mode_mapping[mode]
 
 
-class Storage:
+class Config:
     @staticmethod
     def get_config_from_file(path: Path) -> GlobalConfig:
         return GlobalConfig(**yaml.load(path.read_text(), Loader=yaml.SafeLoader))
 
     @staticmethod
     def get_config(path: Path, file_name=config_file_name) -> GlobalConfig:
-        return Storage.get_config_from_file(path / file_name)
+        return Config.get_config_from_file(path / file_name)
 
     @staticmethod
     def get_collection_dir_config(

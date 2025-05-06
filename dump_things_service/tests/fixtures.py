@@ -5,7 +5,7 @@ import pytest
 import yaml
 
 from dump_things_service import config_file_name
-from dump_things_service.storage import GlobalConfig
+from dump_things_service.config import GlobalConfig
 from dump_things_service.tests.create_store import (
     create_store,
     pid,
@@ -29,18 +29,30 @@ type: collections
 version: 1
 collections:
   collection_1:
+    default_permissions_mask:
+      curate_read: True
     curated: {curated}/collection_1
     incoming: {incoming}/collection_1
   collection_2:
+    default_permissions_mask:
+      curate_read: True
     curated: {curated}/collection_2
     incoming: {incoming}/collection_2
   collection_3:
+    default_permissions_mask:
+      curate_read: True
     curated: {curated}/collection_3
   collection_4:
+    default_permissions_mask:
+      curate_read: True
     curated: {curated}/collection_4
   collection_5:
+    default_permissions_mask:
+      curate_read: True
     curated: {curated}/collection_5
   collection_trr379:
+    default_permissions_mask:
+      curate_read: True
     curated: {curated}/collection_trr379
     incoming: {incoming}/collection_trr379
 

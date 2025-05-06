@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING
 
 import yaml
 
-from dump_things_service.storage import (
+from dump_things_service.config import (
     CollectionConfig,
     GlobalConfig,
     MappingMethod,

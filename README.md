@@ -1,18 +1,53 @@
 
 ### Dump Things Service
 
-This is an implementation of a service that stores data as described in
-[Dump Things Service](https://concepts.datalad.org/dump-things).
+This is an implementation of a service that allows to store and retrieve data that is structured according to given schemata.
 
-It provides a HTTP-base API that receives the data objects.
-Data objects must conform to a given schema. The service supports an arbitrary number of schemas. Objects must be JSON-encoded.
+Data is stored in **collections**.
+Each collection has a name and an associated schema.
+All data records in the collection have to adhere to the given schema.
+
+The general workflow in the service is as follows.
+We distinguish between two areas of a collection, an **incoming** are and a **curated** area.
+Data written to a collection is stored in a collection-specific **incoming** area.
+A curation process, which is outside the scope of the service, moves data from the incoming area of a collection to the **curated** area of the collection.
+
+In order to submit a record to a collection, a token is required.
+The token defines read- and write- permissions for the incoming areas of collections and read-permissions for the curated area of a collection.
+A token can carry permissions for multiple collections.
+In addition the token carries a submitter ID.
+It also defines a token specific **zone** in the incoming area.
+So any read- and write-operations on an incoming area are actually restricted to the token-specific zone in the incoming area.
+Multiple tokens can share the same zone.
+That allows multiple submitters to work together when storing records in the service.
+
+The service provides a HTTP-based API to store and retrieve data objects, and to verify token capabilities.
+
 
 ### Running the service
 
-The basic service configuration is done via command line parameters.
-The following parameters are supported:
+The basic service configuration is done via command line parameters and configuration files.
 
-- `<storage root>` (mandatory): the path of a directory in which the record stores are kept. It must contain two subdirectories: `global_store` and `token_stores`.
+The following command line parameters are supported:
+
+- `<storage root>` (mandatory): the path of a directory that serves as anchor for all relative paths given in the configuration files. Unless `-c/--config` is provided, the service will search the configuration file in `<storage root>/.dumpthings.yaml`.
+
+- `-c/--config <config-file>` provide a path to the configuration file. The configuration file in `<storage root>/.dumpthings.yaml` will be ignored, if it exists at all.
+
+### Configuration file
+
+The service is configured via a configuration file that defines collections, pathes for incoming and curated data for each collection, as well as token properties.
+Token properties include a submitter identification and for each collection an incoming zone specifier, permissions for reading and writing of the incoming zone and permission for reading the curated data of the collection.
+
+A "formal" definition of the configuration file is provided by the class `GlobalConfig` in the file `dumpthings-server/storage.py`.
+
+The following is an example configuration file that illustrates all options:
+
+
+
+
+
+in which the record stores are kept. It must contain two subdirectories: `global_store` and `token_stores`.
  `global_store` should be the root of a dump-thing-service store, as described in [Dump Things Service](https://concepts.datalad.org/dump-things).
  `token_stores` should contain zero or more subdirectories.
  The names of these subdirectories correspond to collection subdirectories in `global_store`.

@@ -44,8 +44,8 @@ from dump_things_service.model import (
     get_subclasses,
 )
 from dump_things_service.record import RecordDirStore
-from dump_things_service.storage import (
-    Storage,
+from dump_things_service.config import (
+    Config,
     TokenPermission,
     get_mapping_function,
     get_permissions,
@@ -80,9 +80,9 @@ arguments = parser.parse_args()
 
 store_path = Path(arguments.store)
 if arguments.config:
-    global_config = Storage.get_config_from_file(Path(arguments.config))
+    global_config = Config.get_config_from_file(Path(arguments.config))
 else:
-    global_config = Storage.get_config(store_path)
+    global_config = Config.get_config(store_path)
 
 g_curated_stores = {}
 g_incoming = {}
@@ -99,7 +99,7 @@ model_var_counter = count()
 # `curated`-dir in each collection.
 for collection_name, collection_info in global_config.collections.items():
     # Get the config from the curated directory
-    config = Storage.get_collection_dir_config(store_path / collection_info.curated)
+    config = Config.get_collection_dir_config(store_path / collection_info.curated)
 
     # Generate the collection model
     model, classes, model_var_name = get_model_for_schema(config.schema)
