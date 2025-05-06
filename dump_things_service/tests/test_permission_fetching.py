@@ -31,29 +31,37 @@ def verify_permission_fetching(
 def test_permission_fetching(fastapi_client_simple):
     test_client, store_dir = fastapi_client_simple
 
+    # Check unknown token permissions
     verify_permission_fetching(
         test_client=test_client,
         token='this-is-not-a-token',  # noqa S106
         expected_status=(HTTP_401_UNAUTHORIZED, (False, False, False)),
     )
 
+    # Check no token permissions
+    verify_permission_fetching(
+        test_client=test_client,
+        token=None,
+        expected_status=(HTTP_200_OK, (True, False, False)),
+    )
+
     for permissions in [
-        # READ_COLLECTION
+        # READ_COLLECTION | default
         (True, True, False),
-        # WRITE_COLLECTION
+        # WRITE_COLLECTION | default
         (True, True, True),
-        # READ_SUBMISSION
-        (False, True, False),
-        # WRITE_SUBMISSIONS
-        (False, True, True),
-        # SUBMIT
+        # READ_SUBMISSION | default
+        (True, True, False),
+        # WRITE_SUBMISSIONS | default
+        (True, True, True),
+        # SUBMIT | default
         (True, False, True),
-        # SUBMIT_ONLY
-        (False, False, True),
-        # READ_CURATED
+        # SUBMIT_ONLY | default
+        (True, False, True),
+        # READ_CURATED | default
         (True, False, False),
-        # NOTHING
-        (False, False, False),
+        # NOTHING | default
+        (True, False, False),
     ]:
         token = 'token_1_' + ''.join('x' if x else 'o' for x in permissions)
         verify_permission_fetching(

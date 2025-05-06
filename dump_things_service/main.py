@@ -57,7 +57,7 @@ from dump_things_service.utils import (
 
 
 class TokenCapabilityRequest(BaseModel):
-    token: str
+    token: str | None
 
 
 parser = argparse.ArgumentParser()
@@ -162,7 +162,7 @@ def store_record(
     class_name: str,
     model: Any,
     input_format: Format,
-    token: str | None,
+    api_key: str | None,
 ) -> JSONResponse | PlainTextResponse:
     if input_format == Format.json and isinstance(data, str):
         raise HTTPException(
@@ -174,19 +174,23 @@ def store_record(
             status_code=HTTP_400_BAD_REQUEST, detail='Invalid ttl data provided.'
         )
 
-    try:
-        store = g_token_stores[token]['collections'][collection]['store']
-    except KeyError as e:
-        raise HTTPException(
-            status_code=HTTP_401_UNAUTHORIZED, detail='Invalid token.'
-        ) from e
-
+    token = _get_default_token_name(collection) if api_key is None else api_key
+    # Get the token permissions and extend them by the default permissions
     permissions = g_token_stores[token]['collections'][collection]['permissions']
-    if not permissions.incoming_write:
+    final_permissions = _join_default_token_permissions(permissions, collection)
+    if not final_permissions.incoming_write:
         raise HTTPException(
             status_code=HTTP_403_FORBIDDEN,
             detail=f'Not authorized to submit to collection "{collection_name}".',
         )
+
+    try:
+        store = g_token_stores[token]['collections'][collection]['store']
+    except KeyError as e:
+        raise HTTPException(
+            status_code=HTTP_403_FORBIDDEN,
+            detail=f'Collection "{collection_name}" does not support writing of records.',
+        ) from e
 
     if input_format == Format.ttl:
         json_object = convert_ttl_to_json(collection, class_name, data)
@@ -205,7 +209,6 @@ def store_record(
 
 
 lgr = logging.getLogger('uvicorn')
-
 
 app = FastAPI()
 api_key_header_scheme = APIKeyHeader(
@@ -265,16 +268,17 @@ async def fetch_token_permissions(
     collection: str,
     body: TokenCapabilityRequest,
 ):
-    token = body.token
+    token = _get_default_token_name(collection) if body.token is None else body.token
     token_store, token_permissions = _get_token_store(collection, token)
+    final_permissions = _join_default_token_permissions(token_permissions, collection)
     return JSONResponse(
         {
-            'read_curated': token_permissions.curated_read,
-            'read_incoming': token_permissions.incoming_read,
-            'write_incoming': token_permissions.incoming_write,
+            'read_curated': final_permissions.curated_read,
+            'read_incoming': final_permissions.incoming_read,
+            'write_incoming': final_permissions.incoming_write,
             **(
                 {'incoming_zone': g_zones[collection][token]}
-                if token_permissions.incoming_read or token_permissions.incoming_write
+                if final_permissions.incoming_read or final_permissions.incoming_write
                 else {}
             ),
         }
@@ -288,22 +292,21 @@ async def read_record_with_pid(
     format: Format = Format.json,  # noqa A002
     api_key: str = Depends(api_key_header_scheme),
 ):
-    # Without a token, there will be no access
-    if not api_key:
-        raise HTTPException(status_code=HTTP_401_UNAUTHORIZED, detail='Missing token.')
+    token = _get_default_token_name(collection) if api_key is None else api_key
 
-    token_store, token_permissions = _get_token_store(collection, api_key)
-    if not token_permissions.curated_read and not token_permissions.incoming_read:
+    token_store, token_permissions = _get_token_store(collection, token)
+    final_permissions = _join_default_token_permissions(token_permissions, collection)
+    if not final_permissions.curated_read and not final_permissions.incoming_read:
         raise HTTPException(
             status_code=HTTP_403_FORBIDDEN,
             detail=f'No read access to curated or incoming data in collection "{collection}".',
         )
 
     record = None
-    if token_permissions.incoming_read:
+    if final_permissions.incoming_read:
         class_name, record = token_store.get_record_by_pid(pid)
 
-    if not record and token_permissions.curated_read:
+    if not record and final_permissions.curated_read:
         class_name, record = g_curated_stores[collection].get_record_by_pid(pid)
 
     if record and format == Format.ttl:
@@ -319,9 +322,7 @@ async def read_records_of_type(
     format: Format = Format.json,  # noqa A002
     api_key: str = Depends(api_key_header_scheme),
 ):
-    # Without a token, there will be no access
-    if not api_key:
-        raise HTTPException(status_code=HTTP_401_UNAUTHORIZED, detail='Missing token.')
+    token = _get_default_token_name(collection) if api_key is None else api_key
 
     model = g_model_info[collection][0]
     if class_name not in get_classes(model):
@@ -330,22 +331,23 @@ async def read_records_of_type(
             detail=f'No "{class_name}"-class in collection "{collection}".',
         )
 
-    token_store, token_permissions = _get_token_store(collection, api_key)
-    if not token_permissions.incoming_read and not token_permissions.curated_read:
+    token_store, token_permissions = _get_token_store(collection, token)
+    final_permissions = _join_default_token_permissions(token_permissions, collection)
+    if not final_permissions.incoming_read and not final_permissions.curated_read:
         raise HTTPException(
             status_code=HTTP_403_FORBIDDEN,
             detail=f'No read access to curated or incoming data in collection "{collection}".',
         )
 
     records = {}
-    if token_permissions.curated_read:
+    if final_permissions.curated_read:
         for search_class_name in get_subclasses(model, class_name):
             for _, record in g_curated_stores[collection].get_records_of_class(
                 search_class_name
             ):
                 records[record['pid']] = record
 
-    if token_permissions.incoming_read:
+    if final_permissions.incoming_read:
         for search_class_name in get_subclasses(model, class_name):
             for _, record in token_store.get_records_of_class(search_class_name):
                 records[record['pid']] = record
@@ -366,10 +368,8 @@ async def read_records_of_type(
 
 
 def _get_token_store(
-    collection_name: str, token: str | None
+    collection_name: str, token: str
 ) -> tuple[RecordDirStore, TokenPermission] | tuple[None, None]:
-    if token is None:
-        return None, None
     if collection_name not in g_curated_stores:
         raise HTTPException(
             status_code=HTTP_404_NOT_FOUND,
@@ -383,6 +383,28 @@ def _get_token_store(
     if permissions.incoming_write or permissions.incoming_read:
         token_store = g_token_stores[token]['collections'][collection_name]['store']
     return token_store, permissions
+
+
+def _get_default_token_name(collection: str) -> str:
+    try:
+        return global_config.collections[collection].default_token
+    except KeyError as e:
+        raise HTTPException(
+            status_code=HTTP_404_NOT_FOUND, detail=f'No such collection: {collection}'
+        ) from e
+
+
+def _join_default_token_permissions(
+    permissions: TokenPermission,
+    collection: str,
+) -> TokenPermission:
+    default_token_name = global_config.collections[collection].default_token
+    default_token_permissions = g_token_stores[default_token_name]['collections'][collection]['permissions']
+    result = TokenPermission()
+    result.curated_read = permissions.curated_read | default_token_permissions.curated_read
+    result.incoming_read = permissions.incoming_read | default_token_permissions.incoming_read
+    result.incoming_write = permissions.incoming_write | default_token_permissions.incoming_write
+    return result
 
 
 # Rebuild the app to include all dynamically created endpoints

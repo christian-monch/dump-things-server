@@ -87,60 +87,62 @@ def test_token_modes(fastapi_client_simple):
     # flag: xoo  READ_CURATED (read_curated)
     # flag: ooo  NOTHING ()
 
+    # Because the default token permits read access to curated, all tokens
+    # will at least have this access.
     verify_modes(
         test_client=test_client,
         write_expactations=[
-            # READ_COLLECTION
+            # READ_COLLECTION | READ_CURATED
             ('collection_1', 'token_1_xxo', HTTP_403_FORBIDDEN),
-            # WRITE_COLLECTION
+            # WRITE_COLLECTION | READ_CURATED
             ('collection_1', 'token_1_xxx', HTTP_200_OK),
-            # READ_SUBMISSION
+            # READ_SUBMISSION | READ_CURATED
             ('collection_1', 'token_1_oxo', HTTP_403_FORBIDDEN),
-            # WRITE_SUBMISSIONS
+            # WRITE_SUBMISSIONS | READ_CURATED
             ('collection_1', 'token_1_oxx', HTTP_200_OK),
-            # SUBMIT
+            # SUBMIT | READ_CURATED
             ('collection_1', 'token_1_xox', HTTP_200_OK),
-            # SUBMIT_ONLY
+            # SUBMIT_ONLY | READ_CURATED
             ('collection_1', 'token_1_oox', HTTP_200_OK),
-            # READ_CURATED
+            # READ_CURATED | READ_CURATED
             ('collection_1', 'token_1_xoo', HTTP_403_FORBIDDEN),
-            # NOTHING
+            # NOTHING | READ_CURATED
             ('collection_1', 'token_1_ooo', HTTP_403_FORBIDDEN),
         ],
         read_class_expectations=[
-            # READ_COLLECTION
+            # READ_COLLECTION | READ_CURATED
             ('collection_1', 'token_1_xxo', HTTP_200_OK, (1, 1)),
-            # WRITE_COLLECTION
+            # WRITE_COLLECTION | READ_CURATED
             ('collection_1', 'token_1_xxx', HTTP_200_OK, (1, 1)),
-            # READ_SUBMISSIONS
-            ('collection_1', 'token_1_oxo', HTTP_200_OK, (0, 1)),
-            # WRITE_SUBMISSIONS
-            ('collection_1', 'token_1_oxx', HTTP_200_OK, (0, 1)),
-            # SUBMIT
+            # READ_SUBMISSIONS | READ_CURATED
+            ('collection_1', 'token_1_oxo', HTTP_200_OK, (1, 1)),
+            # WRITE_SUBMISSIONS | READ_CURATED
+            ('collection_1', 'token_1_oxx', HTTP_200_OK, (1, 1)),
+            # SUBMIT | READ_CURATED
             ('collection_1', 'token_1_xox', HTTP_200_OK, (1, 0)),
-            # SUBMIT_ONLY
-            ('collection_1', 'token_1_oox', HTTP_403_FORBIDDEN, (0, 0)),
-            # READ_CURATED
+            # SUBMIT_ONLY | READ_CURATED
+            ('collection_1', 'token_1_oox', HTTP_200_OK, (1, 0)),
+            # READ_CURATED | READ_CURATED
             ('collection_1', 'token_1_xoo', HTTP_200_OK, (1, 0)),
-            # NOTHING
-            ('collection_1', 'token_1_ooo', HTTP_403_FORBIDDEN, (0, 0)),
+            # NOTHING | READ_CURATED
+            ('collection_1', 'token_1_ooo', HTTP_200_OK, (1, 0)),
         ],
         read_pid_expectations=[
-            # READ_COLLECTION
+            # READ_COLLECTION | READ_CURATED
             ('collection_1', 'token_1_xxo', HTTP_200_OK, 'mode_incoming'),
-            # WRITE_COLLECTION
+            # WRITE_COLLECTION | READ_CURATED
             ('collection_1', 'token_1_xxx', HTTP_200_OK, 'mode_incoming'),
-            # READ_SUBMISSIONS
+            # READ_SUBMISSIONS | READ_CURATED
             ('collection_1', 'token_1_oxo', HTTP_200_OK, 'mode_incoming'),
-            # WRITE_SUBMISSIONS
+            # WRITE_SUBMISSIONS | READ_CURATED
             ('collection_1', 'token_1_oxx', HTTP_200_OK, 'mode_incoming'),
-            # SUBMIT
+            # SUBMIT | READ_CURATED
             ('collection_1', 'token_1_xox', HTTP_200_OK, 'mode_curated'),
-            # SUBMIT_ONLY
-            ('collection_1', 'token_1_oox', HTTP_403_FORBIDDEN, ''),
-            # READ_CURATED
+            # SUBMIT_ONLY | READ_CURATED
+            ('collection_1', 'token_1_oox', HTTP_200_OK, 'mode_curated'),
+            # READ_CURATED | READ_CURATED
             ('collection_1', 'token_1_xoo', HTTP_200_OK, 'mode_curated'),
-            # NOTHING
-            ('collection_1', 'token_1_ooo', HTTP_403_FORBIDDEN, ''),
+            # NOTHING | READ_CURATED
+            ('collection_1', 'token_1_ooo', HTTP_200_OK, 'mode_curated'),
         ],
     )

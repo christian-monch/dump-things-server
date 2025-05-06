@@ -5,6 +5,7 @@ import pytest  # F401
 from .. import (
     HTTP_200_OK,
     HTTP_401_UNAUTHORIZED,
+    HTTP_403_FORBIDDEN,
 )
 from .create_store import (
     given_name,
@@ -31,6 +32,16 @@ def test_search_by_pid(fastapi_client_simple):
         response = test_client.get(
             f'/collection_{i}/record?pid={pid}',
             headers={'x-dumpthings-token': 'basic_access'},
+        )
+        assert response.status_code == HTTP_200_OK
+        assert json.loads(response.text) == {'pid': pid, 'given_name': given_name}
+
+
+def test_search_by_pid_no_token(fastapi_client_simple):
+    test_client, _ = fastapi_client_simple
+    for i in range(1, 6):
+        response = test_client.get(
+            f'/collection_{i}/record?pid={pid}',
         )
         assert response.status_code == HTTP_200_OK
         assert json.loads(response.text) == {'pid': pid, 'given_name': given_name}
@@ -99,10 +110,12 @@ def test_encoding(fastapi_client_simple):
 def test_global_store_write_fails(fastapi_client_simple):
     test_client, _ = fastapi_client_simple
     for i in range(1, 6):
+        # Since we provide no token, the default token will be used. This will
+        # only allow reading from curated, not posting.
         response = test_client.post(
             f'/collection_{i}/record/Person', json={'pid': extra_record['pid']}
         )
-        assert response.status_code == HTTP_401_UNAUTHORIZED
+        assert response.status_code == HTTP_403_FORBIDDEN
 
 
 @pytest.mark.skip(reason='No runtime store adding yet')

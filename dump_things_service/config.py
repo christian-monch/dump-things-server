@@ -77,7 +77,7 @@ class TokenConfig(BaseModel):
 
 
 class CollectionConfig(BaseModel):
-    default_permissions_mask: TokenPermission
+    default_token: str
     curated: Path
     incoming: Path | None = None
 
