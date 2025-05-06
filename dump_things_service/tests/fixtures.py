@@ -5,7 +5,7 @@ import pytest
 import yaml
 
 from dump_things_service import config_file_name
-from dump_things_service.create_store import (
+from dump_things_service.tests.create_store import (
     create_store,
     pid,
     pid_curated,
