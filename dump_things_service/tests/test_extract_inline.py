@@ -7,13 +7,10 @@ from typing import TYPE_CHECKING
 
 import pytest  # noqa F401
 
-from dump_things_service.storage import (
-    Storage,
-    TokenStorage,
-)
+from dump_things_service.record import RecordDirStore
 
+from .. import HTTP_200_OK
 from ..utils import cleaned_json
-from . import HTTP_200_OK
 
 if TYPE_CHECKING:
     from pydantic import BaseModel
@@ -103,12 +100,12 @@ tree = (
 def test_inline_extraction_locally(dump_stores_simple):
     root = dump_stores_simple
 
-    store = TokenStorage(
-        root=root / 'token_stores' / 'collection_1' / 'token_1',
-        collection='collection_1',
-        canonical_store=Storage(root / 'global_store'),
+    store = RecordDirStore(
+        root=root / 'collection_1' / 'token_1',
+        model=MockedModule(),
+        pid_mapping_function=None,
     )
-    records = store.extract_inlined(inlined_object, MockedModule())
+    records = store.extract_inlined(inlined_object, 'hans')
     _check_result_objects(records, tree)
 
 
@@ -133,12 +130,12 @@ def _check_result_objects(
 def test_dont_extract_empty_things_locally(dump_stores_simple):
     root = dump_stores_simple
 
-    store = TokenStorage(
-        root=root / 'token_stores' / 'collection_1' / 'token_1',
-        collection='collection_1',
-        canonical_store=Storage(root / 'global_store'),
+    store = RecordDirStore(
+        root=root / 'collection_1' / 'token_1',
+        model=MockedModule(),
+        pid_mapping_function=None,
     )
-    records = store.extract_inlined(empty_inlined_object, MockedModule())
+    records = store.extract_inlined(empty_inlined_object, 'dieter')
     assert len(records) == 1
     assert records[0] == empty_inlined_object
 

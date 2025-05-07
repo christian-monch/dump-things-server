@@ -1,84 +1,177 @@
 
 ### Dump Things Service
 
-This is an implementation of a service that stores data as described in
-[Dump Things Service](https://concepts.datalad.org/dump-things).
+This is an implementation of a service that allows to store and retrieve data that is structured according to given schemata.
 
-It provides a HTTP-base API that receives the data objects.
-Data objects must conform to a given schema. The service supports an arbitrary number of schemas. Objects must be JSON-encoded.
+Data is stored in **collections**.
+Each collection has a name and an associated schema.
+All data records in the collection have to adhere to the given schema.
+
+The general workflow in the service is as follows.
+We distinguish between two areas of a collection, an **incoming** are and a **curated** area.
+Data written to a collection is stored in a collection-specific **incoming** area.
+A curation process, which is outside the scope of the service, moves data from the incoming area of a collection to the **curated** area of the collection.
+
+In order to submit a record to a collection, a token is required.
+The token defines read- and write- permissions for the incoming areas of collections and read-permissions for the curated area of a collection.
+A token can carry permissions for multiple collections.
+In addition the token carries a submitter ID.
+It also defines a token specific **zone** in the incoming area.
+So any read- and write-operations on an incoming area are actually restricted to the token-specific zone in the incoming area.
+Multiple tokens can share the same zone.
+That allows multiple submitters to work together when storing records in the service.
+
+The service provides a HTTP-based API to store and retrieve data objects, and to verify token capabilities.
+
 
 ### Running the service
 
-The basic service configuration is done via command line parameters.
-The following parameters are supported:
+The basic service configuration is done via command line parameters and configuration files.
 
-- `<storage root>` (mandatory): the path of a directory in which the record stores are kept. It must contain two subdirectories: `global_store` and `token_stores`.
- `global_store` should be the root of a dump-thing-service store, as described in [Dump Things Service](https://concepts.datalad.org/dump-things).
- `token_stores` should contain zero or more subdirectories.
- The names of these subdirectories correspond to collection subdirectories in `global_store`.
- Each of these collection level subdirectories should contain zero or more token subdirectories.
- The name of the token subdirectories act as token values.
- Each of these tokens will enable access (depending on the token configuration) to the respective collection.
- If records are deposited, their content will be stored in the respective token directory.
- Configuration values, for example, mapping function settings, are read from the global store.
- The following shows an example for a store that is at location `data-storage/store`,
- has two record collections, `collection_1` and `collection_2`  (both record collections contains the same object of type `Person`, but they have a different file-system layout because they use different mapping functions), and a single token store for
- collection `collection_1` with a single token named `token_1`:
+The following command line parameters are supported:
 
+- `<storage root>` (mandatory): the path of a directory that serves as anchor for all relative paths given in the configuration files. Unless `-c/--config` is provided, the service will search the configuration file in `<storage root>/.dumpthings.yaml`.
+
+- `-c/--config <config-file>` provide a path to the configuration file. The configuration file in `<storage root>/.dumpthings.yaml` will be ignored, if it exists at all.
+
+### Configuration file
+
+The service is configured via a configuration file that defines collections, pathes for incoming and curated data for each collection, as well as token properties.
+Token properties include a submitter identification and for each collection an incoming zone specifier, permissions for reading and writing of the incoming zone and permission for reading the curated data of the collection.
+
+A "formal" definition of the configuration file is provided by the class `GlobalConfig` in the file `dumpthings-server/storage.py`.
+
+Configurations are read in YAML format. The following is an example configuration file that illustrates all options:
+
+```yaml
+type: collections     # has to be "collections"
+version: 1            # has to be 1
+
+# All collections are listed in "collections"
+collections:
+
+  # The following entry defines the collection "personal_records"
+  personal_records:
+    # The token, as defined below, that is used if no token is provided by a client.
+    # All tokens that are provided by the client will be OR-ed with the default token.
+    # That means all permissions in the default token will be added to the client provided
+    # token. In this way the default token will always be less or equally powerful as the
+    # client provided token.
+    default_token: no_access
+
+    # The path to the curated data of the collection. This path should contain the
+    # ".dumpthings.yaml"-configuration for  collections that is described
+    # here: <https://concepts.datalad.org/dump-things/>.
+    # A relative path is interpreted relative to the storage root, which is provided on
+    # service start. An absolute path is interpreted as an absolute path.
+    curated: curated/personal_records
+
+    # The path to the incoming data of the collection.
+    # Different collections should have different curated- and incoming-paths
+    incoming: /tmp/personal_records/incoming
+
+  # The following entry defines the collection "rooms_and_buildings"
+  rooms_and_buildings:
+    default_token: basic_access
+    curated: curated/rooms_and_buildings
+    incoming: incoming/rooms_and_buildings
+
+  # The following entry defines the collection "fixed_data", which does not
+  # support data uploading, because there is no token that allows uploads to 
+  # "fixed_data".
+  fixed_data:
+    default_token: basic_access
+    # If not upload is supported, the "incoming"-entry is not necessary.
+    curated: curated/fixed_data_curated
+
+# All tokens are listed in "tokens"
+tokens:
+  
+  # The following entry defines the token "basic_access". This token allows read-only
+  # access to the two collections: "rooms_and_buildings" and "fixed_data".
+  basic_access:
+
+    # The value of "user-id" will be added as an annotation to each record that is
+    # uploaded with this token.
+    user_id: anonymous
+
+    # The collections for which the token holds rights are defined in "collections"
+    collections:
+
+      # The rights that "basic_access" carries for the collection "rooms_and_buildings"
+      # are defined here.
+      rooms_and_buildings:
+        # Access modes are defined here:
+        # <https://github.com/christian-monch/dump-things-server/issues/67#issuecomment-2834900042>
+        mode: READ_CURATED
+
+        # A token and collection-specific label, that defines "zones" in which incoming
+        # records are stored. Multiple tokens can share the same zone, for example if
+        # many clients with individual tokens work together to build a collection.
+        # (Since this token does not allow right access, "incoming_label" is ignored and
+        # left empty here (TODO: it should not be required in this case)).
+        incoming_label: ''
+
+      # The rights that "basic_access" carries for the collection "fixed_data"
+      # are defined here.
+      fixed_data:
+        mode: READ_CURATED
+        incoming_label: ''
+
+  # The following entry defines the token "no_access". This token does not allow
+  # any access and is used as a default token for the collection "personal_records".
+  no_access:
+    user_id: nobody
+
+    collections:
+      personal_records:
+        mode: NOTHING
+        incoming_label: ''
+
+  # The following entry defines the token "admin". It gives full access rights to
+  # the collection "personal_records".
+  admin:
+    user_id: Admin
+    collections:
+      personal_records:
+        mode: WRITE_COLLECTION
+        incoming_label: 'admin_posted_records'
+
+  # The following entry defines the token "contributer_bob". It gives full access
+  # to "rooms_and_buildings" for a user with the id "Bob".
+  contributor_bob:
+    user_id: Bob
+    collections:
+      rooms_and_buildings:
+        mode: WRITE_COLLECTION
+        incoming_label: new_rooms_and_buildings
+        
+  # The following entry defines the token "contributer_alice". It gives full access
+  # to "rooms_and_buildings" for a user with the id "Alice". Bob and Alice share the
+  # same incoming-zone, i.e. "new_rooms_and_buildings". That means they can read
+  # incoming records that the other one posted.
+  contributor_alice:
+    user_id: Alice
+    collections:
+      rooms_and_buildings:
+      mode: WRITE_COLLECTION
+      incoming_label: new_rooms_and_buildings
 ```
-/data-storage/store
-├── global_store
-│   ├── .dumpthings.yaml
-│   ├── collection_1
-│   │   ├── .dumpthings.yaml
-│   │   └── Person
-│   │       └── f2cdfa3142add5791dc6fe45209206fd.yaml
-│   └── collection_2
-│       ├── .dumpthings.yaml
-│       └── Person
-│           └── f2c
-│               └── dfa3142add5791dc6fe45209206fd.yaml
-└── token_stores
-    └── collection_1
-        └── token_1
-            └── .token_config.yaml
-```
-
-#### Configuring token stores
-
-To write records to the service, a token must be provided.
-This token must match a subdirectory-name in `token_stores`, in the example above `token_1` would be a valid token.
-Token stores can be configured to allow or disallow reading of records and to allow or disallow writing of records.
-This is done via the configuration file `.token_config.yaml` in the token store.
-The token configuration supports two keys: `read_access` and `write_access`.
-The values of the keys should be boolean values, i.e. `true` or `false`.
-If no configuration file is present, the default values are `true` for both keys.
-
-
-###### Example: configure a site to allow only token-based read and write access to token store data and global data.
-
-With token store configurations the service can be configured in such a way that any API operation requires a recognized token, without a token no records are reported or accepted.
-This includes records that are stored in the global store.
-To implement this scenario, the service must be started with the `--no-global-store` flag.
-The flag will ensure that the service only looks for records in the token stores.
-If records from the global store should be accessible in addition via a specific token, the corresponding token store must contain links to the respective collection or classes in the global store.
-The `.token_config.yaml` files of the individual token stores determine whether the tokens can be used to read or write records.
-
-A word of caution: if the token store is configured to allow write access and contains links into the global store, a write operation would modify the global store, i.e. the curated data.
-
-
 
 #### Command line parameters:
 
 The service supports the following command line parameters:
 
-- `--host` (optional): the IP address of the host the service should run on
+- `<storage root>`: this is a mandatory parameter that defines the directory that serves as root for relative `curated`- and `incoming`-paths. Unless the `-c/--config` option is given, the configuration is loaded from `<storage root>/.dumpthings.yaml`.
+
+- `--host`: (optional): the IP address of the host the service should run on
 
 
 - `--port`: the port number the service should listen on
 
 
-- `--no-global-store`: if set, the service will only search for records in the token-store associated with a token. If no token is provided, no records will be found.
+- `-c/--config`: if set, the service will read the configuration from the given path. Otherwise it will try to read the configuration from `<storage root>/.dumpthings.yaml`.
+
 
 The service can be started via `hatch` like this:
 
@@ -110,6 +203,7 @@ The service provides the following endpoints:
  On success the endpoint will return a list of all stored records.
  This might be more than one record if the posted object contains inlined records.
   
+
 - `GET /<collection>/records/<class>`: retrieve all objects of type `<class>` or any of its subclasses that are stored in a token storage space or the global storage space of the service.
  If the service was started with the `--no-global-store` flag, records in the global storage space will be ignored. 
  If a token is provided, all matching objects from the token storage space are returned.
@@ -126,6 +220,9 @@ The service provides the following endpoints:
   Only objects with a type defined by the schema associated with `<collection>` are considered.
   The endpoint supports the query parameter `format`, which determines the format of the query result.
   It can be set to `json` (the default) or to `ttl`,
+
+
+- `POST /<collection>/token_permissions`: post an object of type `TokenCapabilityRequest` (JSON-encoded) to receive the permission flags and the zone-label of the specified token, or of the default token. 
 
 
 - `GET /docs`: provides information about the API of the service, i.e. about all endpoints.

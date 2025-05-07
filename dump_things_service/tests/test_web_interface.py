@@ -4,7 +4,7 @@ from itertools import product
 
 import pytest
 
-from . import HTTP_500_INTERNAL_SERVER_ERROR
+from .. import HTTP_500_INTERNAL_SERVER_ERROR
 
 collection_names = ('collection_1', 'xasdasd', '../../../abc')
 class_names = ('Thing', 'Mosdlkjsdfnmxcfd', '../../../abc')
@@ -60,7 +60,7 @@ def test_web_interface_get_class_errors(
 
 
 @pytest.mark.parametrize(
-    "collection_name,pid,query,format_name",  # noqa PT006
+    'collection_name,pid,query,format_name',  # noqa PT006
     tuple(product(*(collection_names, pids, queries, format_names))),
 )
 def test_web_interface_get_pid_errors(

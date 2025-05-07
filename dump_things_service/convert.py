@@ -1,5 +1,11 @@
 from __future__ import annotations
 
+from json import (
+    dumps as json_dumps,
+)
+from json import (
+    loads as json_loads,
+)
 from typing import TYPE_CHECKING
 
 from fastapi import HTTPException
@@ -11,14 +17,53 @@ from linkml.utils.datautils import (
 from linkml_runtime import SchemaView
 
 from dump_things_service import (
+    HTTP_400_BAD_REQUEST,
     JSON,
     Format,
 )
+from dump_things_service.utils import cleaned_json
 
 if TYPE_CHECKING:
     import types
 
-    from dump_things_service.storage import CollectionConfig
+
+def convert_json_to_ttl(
+    collection_name: str,
+    target_class: str,
+    json: JSON,
+) -> str:
+    from dump_things_service.main import (
+        g_conversion_objects,
+        g_schemas,
+    )
+
+    return convert_format(
+        target_class=target_class,
+        data=json_dumps(json),
+        input_format=Format.json,
+        output_format=Format.ttl,
+        **g_conversion_objects[g_schemas[collection_name]],
+    )
+
+
+def convert_ttl_to_json(
+    collection_name: str,
+    target_class: str,
+    ttl: str,
+) -> JSON:
+    from dump_things_service.main import (
+        g_conversion_objects,
+        g_schemas,
+    )
+
+    json_string = convert_format(
+        target_class=target_class,
+        data=ttl,
+        input_format=Format.ttl,
+        output_format=Format.json,
+        **g_conversion_objects[g_schemas[collection_name]],
+    )
+    return cleaned_json(json_loads(json_string))
 
 
 def convert_format(
@@ -45,7 +90,7 @@ def convert_format(
         )
     except Exception as e:  # BLE001
         raise HTTPException(
-            status_code=404, detail='Conversion error: ' + str(e)
+            status_code=HTTP_400_BAD_REQUEST, detail='Conversion error: ' + str(e)
         ) from e
 
 
@@ -85,11 +130,8 @@ def _convert_format(
     )
 
 
-def get_conversion_objects(collections: dict[str, CollectionConfig]):
+def get_conversion_objects(schema: str):
     return {
-        collection: {
-            'schema_module': PythonGenerator(config.schema).compile_module(),
-            'schema_view': SchemaView(config.schema),
-        }
-        for collection, config in collections.items()
+        'schema_module': PythonGenerator(schema).compile_module(),
+        'schema_view': SchemaView(schema),
     }
