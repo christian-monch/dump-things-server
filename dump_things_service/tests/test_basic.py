@@ -7,6 +7,7 @@ from .. import (
     HTTP_401_UNAUTHORIZED,
     HTTP_403_FORBIDDEN,
 )
+from ..utils import cleaned_json
 from .create_store import (
     given_name,
     pid,
@@ -44,7 +45,7 @@ def test_search_by_pid_no_token(fastapi_client_simple):
             f'/collection_{i}/record?pid={pid}',
         )
         assert response.status_code == HTTP_200_OK
-        assert json.loads(response.text) == {'pid': pid, 'given_name': given_name}
+        assert response.json() == {'pid': pid, 'given_name': given_name}
 
 
 def test_store_record(fastapi_client_simple):
@@ -67,7 +68,10 @@ def test_store_record(fastapi_client_simple):
             headers={'x-dumpthings-token': token},
         )
         assert response.status_code == HTTP_200_OK
-        assert response.json() == extra_record
+        assert cleaned_json(
+            response.json(),
+            remove_keys=('annotations',)
+        ) == extra_record
 
     # Check that other collections do not report the new record
     for i in range(3, 6):
@@ -83,8 +87,9 @@ def test_store_record(fastapi_client_simple):
             f'/collection_{i}/records/Thing',
             headers={'x-dumpthings-token': token},
         )
-        assert extra_record in response.json()
-        assert {'pid': pid, 'given_name': given_name} in response.json()
+        cleaned_response = cleaned_json(response.json(), remove_keys=('annotations',))
+        assert extra_record in cleaned_response
+        assert {'pid': pid, 'given_name': given_name} in cleaned_response
 
 
 def test_encoding(fastapi_client_simple):
@@ -99,7 +104,7 @@ def test_encoding(fastapi_client_simple):
     )
     assert response.status_code == HTTP_200_OK
 
-    # Check that no '\\x'-encoding is present on disk
+    # Check that no '\\x'-encoding is present in files
     for item in store_path.glob('**/*.yaml'):
         encoded_content = item.read_bytes()
         assert b'\\x' not in encoded_content

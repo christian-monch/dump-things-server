@@ -5,6 +5,7 @@ prefixes:
   xyz: http://example.org/person-schema/xyz/
   trr379: http://example.org/person-schema/trr379/
   linkml: https://w3id.org/linkml/
+  obo: http://purl.obolibrary.org/obo/
 imports:
   - linkml:types
 default_range: string
@@ -20,16 +21,40 @@ slots:
   acted_on_behalf_of:
     multivalued: true
 
+  annotations:
+    range: Annotation
+    inlined: true
+    multivalued: true
+
+  annotation_tag:
+    description: A tag identifying an annotation.
+    range: Thing
+
+  annotation_value:
+    description: The actual annotation.
+    range: string
+
+
 classes:
   Any:
     class_uri: "linkml:Any"
 
   Thing:
-    slots: relations
+    slots:
+      - relations
+      - annotations
     attributes:
       pid:
         identifier: true
         required: true
+
+  Annotation:
+    slots:
+      - annotation_tag
+      - annotation_value
+    slot_usage:
+      annotation_tag:
+        key: true
 
   Agent:
     is_a: Thing

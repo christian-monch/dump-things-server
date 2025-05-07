@@ -27,6 +27,8 @@ if TYPE_CHECKING:
 
 ignored_files = {'.', '..', config_file_name}
 
+submitter_iri = 'obo:NCIT_C54269'
+
 
 class RecordDirStore:
     """Store records in a directory structure"""
@@ -121,14 +123,14 @@ class RecordDirStore:
         storage_path.parent.mkdir(parents=True, exist_ok=True)
         storage_path.write_text(data, encoding='utf-8')
 
-    @staticmethod
     def annotate(
+        self,
         record: BaseModel,
         submitter_id: str,
     ) -> None:
-        # TODO: proper annotation
-        pass
-        # record.annotations.append(('submitter', submitter_id))
+        if not record.annotations:
+            record.annotations = {}
+        record.annotations[submitter_iri] = submitter_id
 
     def get_record_by_pid(
         self,

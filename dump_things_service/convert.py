@@ -17,7 +17,7 @@ from linkml.utils.datautils import (
 from linkml_runtime import SchemaView
 
 from dump_things_service import (
-    HTTP_404_NOT_FOUND,
+    HTTP_400_BAD_REQUEST,
     JSON,
     Format,
 )
@@ -90,7 +90,7 @@ def convert_format(
         )
     except Exception as e:  # BLE001
         raise HTTPException(
-            status_code=HTTP_404_NOT_FOUND, detail='Conversion error: ' + str(e)
+            status_code=HTTP_400_BAD_REQUEST, detail='Conversion error: ' + str(e)
         ) from e
 
 

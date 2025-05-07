@@ -1,6 +1,7 @@
 import pytest  # noqa F401
 
 from .. import HTTP_200_OK
+from ..utils import cleaned_json
 
 json_record = {
     'pid': 'trr379:test_john_json',
@@ -10,13 +11,16 @@ json_record = {
 
 new_ttl_pid = 'trr379:another_john_json'
 
-
-ttl_record = """
-@prefix dlsocial: <https://concepts.datalad.org/s/social/unreleased/> .
+ttl_record = """@prefix dlsocial: <https://concepts.datalad.org/s/social/unreleased/> .
+@prefix dlthings: <https://concepts.datalad.org/s/things/v1/> .
+@prefix obo: <http://purl.obolibrary.org/obo/> .
 @prefix trr379: <https://trr379.de/> .
 
 trr379:test_john_ttl a dlsocial:Person ;
-    dlsocial:given_name "Johnöüß" .
+    dlsocial:given_name "Johnöüß" ;
+    dlthings:annotations [ a dlthings:Annotation ;
+            dlthings:annotation_tag obo:NCIT_C54269 ;
+            dlthings:annotation_value "test_user_1" ] .
 """
 
 new_json_pid = 'trr379:another_john_ttl'
@@ -57,7 +61,7 @@ def test_json_ttl_json_trr379(fastapi_client_simple):
         headers={'x-dumpthings-token': 'token_1'},
     )
     assert response.status_code == HTTP_200_OK
-    json_object = response.json()
+    json_object = cleaned_json(response.json(), remove_keys=('annotations',))
     assert json_object != json_record
     json_object['pid'] = json_record['pid']
     assert json_object == json_record

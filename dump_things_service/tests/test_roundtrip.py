@@ -1,15 +1,19 @@
 import pytest  # noqa F401
 
 from .. import HTTP_200_OK
-
+from ..utils import cleaned_json
 
 json_record = {'pid': 'xyz:bbbb', 'given_name': 'John'}
 new_ttl_pid = 'xyz:cccc'
 
 ttl_record = """@prefix abc: <http://example.org/person-schema/abc/> .
+@prefix obo: <http://purl.obolibrary.org/obo/> .
 @prefix xyz: <http://example.org/person-schema/xyz/> .
 
 xyz:HenryAdams a abc:Person ;
+    abc:annotations [ a abc:Annotation ;
+            abc:annotation_tag obo:NCIT_C54269 ;
+            abc:annotation_value "test_user_1" ] ;
     abc:given_name "Henryöäß" .
 """
 new_json_pid = 'xyz:HenryBaites'
@@ -50,7 +54,7 @@ def test_json_ttl_json(fastapi_client_simple):
         headers={'x-dumpthings-token': 'token_1'},
     )
     assert response.status_code == HTTP_200_OK
-    json_object = response.json()
+    json_object = cleaned_json(response.json(), remove_keys=('annotations',))
     assert json_object != json_record
     json_object['pid'] = json_record['pid']
     assert json_object == json_record
