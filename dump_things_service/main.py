@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 import argparse
-import json
 import logging
+from functools import partial
 from itertools import count
 from pathlib import Path
 from typing import (
@@ -206,7 +206,14 @@ def store_record(
 
     if input_format == Format.ttl:
         return PlainTextResponse(data, media_type='text/turtle')
-    return JSONResponse(list(map(cleaned_json, map(jsonable_encoder, stored_records))))
+    return JSONResponse(
+        list(
+            map(
+                partial(cleaned_json, remove_keys=('@type', 'schema_type')),
+                map(jsonable_encoder, stored_records),
+            )
+        )
+    )
 
 
 lgr = logging.getLogger('uvicorn')
