@@ -33,6 +33,12 @@ from dump_things_service import (
     HTTP_404_NOT_FOUND,
     Format,
 )
+from dump_things_service.config import (
+    Config,
+    TokenPermission,
+    get_mapping_function,
+    get_permissions,
+)
 from dump_things_service.convert import (
     convert_json_to_ttl,
     convert_ttl_to_json,
@@ -44,12 +50,6 @@ from dump_things_service.model import (
     get_subclasses,
 )
 from dump_things_service.record import RecordDirStore
-from dump_things_service.config import (
-    Config,
-    TokenPermission,
-    get_mapping_function,
-    get_permissions,
-)
 from dump_things_service.utils import (
     cleaned_json,
     combine_ttl,
