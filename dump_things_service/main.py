@@ -365,7 +365,7 @@ async def read_records_of_type(
         if ttls:
             return PlainTextResponse(combine_ttl(ttls), media_type='text/turtle')
         return PlainTextResponse('', media_type='text/turtle')
-    return list(records.values())
+    return list(map(lambda r: r[1], records.values()))
 
 
 def _get_token_store(
