@@ -156,13 +156,22 @@ async def {name}(
 """
 
 
+api_key_header_scheme = APIKeyHeader(
+    name='X-DumpThings-Token',
+    # authentication is generally optional
+    auto_error=False,
+    scheme_name='submission',
+    description='Presenting a valid token enables record submission, and retrieval of records submitted with this token prior curation.',
+)
+
+
 def store_record(
     collection: str,
     data: BaseModel | str,
     class_name: str,
     model: Any,
     input_format: Format,
-    api_key: str | None,
+    api_key: str | None = Depends(api_key_header_scheme),
 ) -> JSONResponse | PlainTextResponse:
     if input_format == Format.json and isinstance(data, str):
         raise HTTPException(
@@ -203,13 +212,6 @@ def store_record(
 lgr = logging.getLogger('uvicorn')
 
 app = FastAPI()
-api_key_header_scheme = APIKeyHeader(
-    name='X-DumpThings-Token',
-    # authentication is generally optional
-    auto_error=False,
-    scheme_name='submission',
-    description='Presenting a valid token enables record submission, and retrieval of records submitted with this token prior curation.',
-)
 
 # Add CORS origins
 app.add_middleware(
