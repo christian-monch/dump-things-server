@@ -310,6 +310,7 @@ async def read_record_with_pid(
     if not record and final_permissions.curated_read:
         class_name, record = g_curated_stores[collection].get_record_by_pid(pid)
 
+    record = cleaned_json(record, remove_keys=('@type', 'schema_type'))
     if record and format == Format.ttl:
         ttl_record = convert_json_to_ttl(collection, class_name, record)
         return PlainTextResponse(ttl_record, media_type='text/turtle')
@@ -358,14 +359,17 @@ async def read_records_of_type(
             convert_json_to_ttl(
                 collection,
                 target_class=record_class_name,
-                json=record,
+                json=cleaned_json(record, remove_keys=('@type', 'schema_type')),
             )
             for record_class_name, record in records.values()
         ]
         if ttls:
             return PlainTextResponse(combine_ttl(ttls), media_type='text/turtle')
         return PlainTextResponse('', media_type='text/turtle')
-    return list(map(lambda r: r[1], records.values()))
+    return [
+        cleaned_json(record, remove_keys=('@type', 'schema_type'))
+        for _, record in records.values()
+    ]
 
 
 def _get_token_store(
