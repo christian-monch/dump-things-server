@@ -336,24 +336,24 @@ async def read_records_of_type(
     records = {}
     if final_permissions.curated_read:
         for search_class_name in get_subclasses(model, class_name):
-            for _, record in g_curated_stores[collection].get_records_of_class(
+            for record_class_name, record in g_curated_stores[collection].get_records_of_class(
                 search_class_name
             ):
-                records[record['pid']] = record
+                records[record['pid']] = record_class_name, record
 
     if final_permissions.incoming_read:
         for search_class_name in get_subclasses(model, class_name):
-            for _, record in token_store.get_records_of_class(search_class_name):
-                records[record['pid']] = record
+            for record_class_name, record in token_store.get_records_of_class(search_class_name):
+                records[record['pid']] = record_class_name, record
 
     if format == Format.ttl:
         ttls = [
             convert_json_to_ttl(
                 collection,
-                target_class=class_name,
+                target_class=record_class_name,
                 json=record,
             )
-            for record in records.values()
+            for record_class_name, record in records.values()
         ]
         if ttls:
             return PlainTextResponse(combine_ttl(ttls), media_type='text/turtle')
