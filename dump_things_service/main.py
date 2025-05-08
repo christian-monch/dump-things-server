@@ -351,7 +351,7 @@ async def read_records_of_type(
             convert_json_to_ttl(
                 collection,
                 target_class=class_name,
-                json=json.dumps(record),
+                json=record,
             )
             for record in records.values()
         ]
