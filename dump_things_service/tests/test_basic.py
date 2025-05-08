@@ -190,3 +190,22 @@ def test_token_store_priority(fastapi_client_simple):
     )
     assert response.status_code == HTTP_200_OK
     assert response.json()['given_name'] == given_name
+
+
+def test_unknown_token(fastapi_client_simple):
+    test_client, _ = fastapi_client_simple
+
+    # Check that fetching with an unknown token is handled gracefully
+    response = test_client.get(
+        '/collection_1/record?pid=abc:unknown-token',
+        headers={'x-dumpthings-token': 'unknown_token'},
+    )
+    assert response.status_code == HTTP_401_UNAUTHORIZED
+
+    # Check that posting with an unknown token is handled gracefully
+    response = test_client.post(
+        '/collection_1/record/Person',
+        json={'pid': 'abc:unknown-token'},
+        headers={'x-dumpthings-token': 'unknown_token'},
+    )
+    assert response.status_code == HTTP_401_UNAUTHORIZED

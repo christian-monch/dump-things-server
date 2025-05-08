@@ -176,21 +176,13 @@ def store_record(
 
     token = _get_default_token_name(collection) if api_key is None else api_key
     # Get the token permissions and extend them by the default permissions
-    permissions = g_token_stores[token]['collections'][collection]['permissions']
-    final_permissions = _join_default_token_permissions(permissions, collection)
+    store, token_permissions = _get_token_store(collection, token)
+    final_permissions = _join_default_token_permissions(token_permissions, collection)
     if not final_permissions.incoming_write:
         raise HTTPException(
             status_code=HTTP_403_FORBIDDEN,
             detail=f'Not authorized to submit to collection "{collection_name}".',
         )
-
-    try:
-        store = g_token_stores[token]['collections'][collection]['store']
-    except KeyError as e:
-        raise HTTPException(
-            status_code=HTTP_403_FORBIDDEN,
-            detail=f'Collection "{collection_name}" does not support writing of records.',
-        ) from e
 
     if input_format == Format.ttl:
         json_object = convert_ttl_to_json(collection, class_name, data)
