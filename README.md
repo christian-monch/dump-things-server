@@ -30,16 +30,25 @@ The basic service configuration is done via command line parameters and configur
 
 The following command line parameters are supported:
 
-- `<storage root>` (mandatory): the path of a directory that serves as anchor for all relative paths given in the configuration files. Unless `-c/--config` is provided, the service will search the configuration file in `<storage root>/.dumpthings.yaml`.
+- `<storage root>`: (mandatory) the path of a directory that serves as anchor for all relative paths given in the configuration files. Unless `-c/--config` is provided, the service will search the configuration file in `<storage root>/.dumpthings.yaml`.
 
-- `-c/--config <config-file>` provide a path to the configuration file. The configuration file in `<storage root>/.dumpthings.yaml` will be ignored, if it exists at all.
+- `--host <IP-address>`: The IP-address on which the service should accept connections (default: `0.0.0.0`).
+
+- `--port <port>`: The port on which the service should accept connections (default: `8000`).
+
+- `-c/--config <config-file>`: provide a path to the configuration file. The configuration file in `<storage root>/.dumpthings.yaml` will be ignored, if it exists at all.
+
+- `--origins <origin>`: add a CORS origin hosts (repeat to add multiple CORS origin URLs).`
+
+- `--root-path <path>`: Set the ASGI 'root_path' for applications submounted below a given URL path.
+
 
 ### Configuration file
 
 The service is configured via a configuration file that defines collections, pathes for incoming and curated data for each collection, as well as token properties.
 Token properties include a submitter identification and for each collection an incoming zone specifier, permissions for reading and writing of the incoming zone and permission for reading the curated data of the collection.
 
-A "formal" definition of the configuration file is provided by the class `GlobalConfig` in the file `dumpthings-server/storage.py`.
+A "formal" definition of the configuration file is provided by the class `GlobalConfig` in the file `dumpthings-server/config.py`.
 
 Configurations are read in YAML format. The following is an example configuration file that illustrates all options:
 
