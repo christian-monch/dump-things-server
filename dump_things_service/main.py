@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 import argparse
-import json
 import logging
+from functools import partial
 from itertools import count
 from pathlib import Path
 from typing import (
@@ -33,6 +33,12 @@ from dump_things_service import (
     HTTP_404_NOT_FOUND,
     Format,
 )
+from dump_things_service.config import (
+    Config,
+    TokenPermission,
+    get_mapping_function,
+    get_permissions,
+)
 from dump_things_service.convert import (
     convert_json_to_ttl,
     convert_ttl_to_json,
@@ -44,12 +50,6 @@ from dump_things_service.model import (
     get_subclasses,
 )
 from dump_things_service.record import RecordDirStore
-from dump_things_service.config import (
-    Config,
-    TokenPermission,
-    get_mapping_function,
-    get_permissions,
-)
 from dump_things_service.utils import (
     cleaned_json,
     combine_ttl,
@@ -156,13 +156,22 @@ async def {name}(
 """
 
 
+api_key_header_scheme = APIKeyHeader(
+    name='X-DumpThings-Token',
+    # authentication is generally optional
+    auto_error=False,
+    scheme_name='submission',
+    description='Presenting a valid token enables record submission, and retrieval of records submitted with this token prior curation.',
+)
+
+
 def store_record(
     collection: str,
     data: BaseModel | str,
     class_name: str,
     model: Any,
     input_format: Format,
-    api_key: str | None,
+    api_key: str | None = Depends(api_key_header_scheme),
 ) -> JSONResponse | PlainTextResponse:
     if input_format == Format.json and isinstance(data, str):
         raise HTTPException(
@@ -197,19 +206,19 @@ def store_record(
 
     if input_format == Format.ttl:
         return PlainTextResponse(data, media_type='text/turtle')
-    return JSONResponse(list(map(cleaned_json, map(jsonable_encoder, stored_records))))
+    return JSONResponse(
+        list(
+            map(
+                partial(cleaned_json, remove_keys=('@type', 'schema_type')),
+                map(jsonable_encoder, stored_records),
+            )
+        )
+    )
 
 
 lgr = logging.getLogger('uvicorn')
 
 app = FastAPI()
-api_key_header_scheme = APIKeyHeader(
-    name='X-DumpThings-Token',
-    # authentication is generally optional
-    auto_error=False,
-    scheme_name='submission',
-    description='Presenting a valid token enables record submission, and retrieval of records submitted with this token prior curation.',
-)
 
 # Add CORS origins
 app.add_middleware(
@@ -334,29 +343,29 @@ async def read_records_of_type(
     records = {}
     if final_permissions.curated_read:
         for search_class_name in get_subclasses(model, class_name):
-            for _, record in g_curated_stores[collection].get_records_of_class(
+            for record_class_name, record in g_curated_stores[collection].get_records_of_class(
                 search_class_name
             ):
-                records[record['pid']] = record
+                records[record['pid']] = record_class_name, record
 
     if final_permissions.incoming_read:
         for search_class_name in get_subclasses(model, class_name):
-            for _, record in token_store.get_records_of_class(search_class_name):
-                records[record['pid']] = record
+            for record_class_name, record in token_store.get_records_of_class(search_class_name):
+                records[record['pid']] = record_class_name, record
 
     if format == Format.ttl:
         ttls = [
             convert_json_to_ttl(
                 collection,
-                target_class=class_name,
-                json=json.dumps(record),
+                target_class=record_class_name,
+                json=record,
             )
-            for record in records.values()
+            for record_class_name, record in records.values()
         ]
         if ttls:
             return PlainTextResponse(combine_ttl(ttls), media_type='text/turtle')
         return PlainTextResponse('', media_type='text/turtle')
-    return list(records.values())
+    return list(map(lambda r: r[1], records.values()))
 
 
 def _get_token_store(

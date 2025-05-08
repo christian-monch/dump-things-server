@@ -5,13 +5,31 @@ from ..utils import cleaned_json
 
 json_record = {
     'pid': 'trr379:test_john_json',
-    'schema_type': 'dlsocial:Person',
     'given_name': 'Johnöüß',
 }
 
 new_ttl_pid = 'trr379:another_john_json'
 
 ttl_record = """@prefix dlsocial: <https://concepts.datalad.org/s/social/unreleased/> .
+@prefix dlthings: <https://concepts.datalad.org/s/things/v1/> .
+@prefix trr379: <https://trr379.de/> .
+
+trr379:test_john_ttl a dlsocial:Person ;
+    dlsocial:given_name "Johnöüß" ;
+    dlthings:annotations [ a dlthings:Annotation ;
+            dlthings:annotation_tag <http://purl.obolibrary.org/obo/NCIT_C54269> ;
+            dlthings:annotation_value "test_user_1" ] .
+"""
+
+ttl_input_record = """@prefix dlsocial: <https://concepts.datalad.org/s/social/unreleased/> .
+@prefix dlthings: <https://concepts.datalad.org/s/things/v1/> .
+@prefix trr379: <https://trr379.de/> .
+
+trr379:test_john_ttl a dlsocial:Person ;
+    dlsocial:given_name "Johnöüß" .
+"""
+
+ttl_output_record = """@prefix dlsocial: <https://concepts.datalad.org/s/social/unreleased/> .
 @prefix dlthings: <https://concepts.datalad.org/s/things/v1/> .
 @prefix obo: <http://purl.obolibrary.org/obo/> .
 @prefix trr379: <https://trr379.de/> .
@@ -77,7 +95,7 @@ def test_ttl_json_ttl_trr379(fastapi_client_simple):
             'x-dumpthings-token': 'token_1',
             'content-type': 'text/turtle',
         },
-        data=ttl_record,
+        data=ttl_input_record,
     )
     assert response.status_code == HTTP_200_OK
 
@@ -107,5 +125,5 @@ def test_ttl_json_ttl_trr379(fastapi_client_simple):
     assert response.status_code == HTTP_200_OK
     assert (
         response.text.strip()
-        == ttl_record.replace('trr379:test_john_ttl', new_json_pid).strip()
+        == ttl_output_record.replace('trr379:test_john_ttl', new_json_pid).strip()
     )

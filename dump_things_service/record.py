@@ -14,6 +14,7 @@ from dump_things_service import (
     JSON,
     config_file_name,
 )
+from dump_things_service.utils import cleaned_json
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
@@ -27,7 +28,7 @@ if TYPE_CHECKING:
 
 ignored_files = {'.', '..', config_file_name}
 
-submitter_iri = 'obo:NCIT_C54269'
+submitter_iri = 'http://purl.obolibrary.org/obo/NCIT_C54269'
 
 
 class RecordDirStore:
@@ -101,7 +102,12 @@ class RecordDirStore:
 
         # Convert the record object into a YAML object
         data = yaml.dump(
-            data=record.model_dump(exclude_none=True, mode='json'),
+            # Remove the `schema_type` entry from the record. It does not belong
+            # to the declared classes.
+            data=cleaned_json(
+                record.model_dump(exclude_none=True, mode='json'),
+                remove_keys=('schema_type',),
+            ),
             sort_keys=False,
             allow_unicode=True,
         )
