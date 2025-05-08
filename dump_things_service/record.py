@@ -27,7 +27,7 @@ if TYPE_CHECKING:
 
 ignored_files = {'.', '..', config_file_name}
 
-submitter_iri = 'obo:NCIT_C54269'
+submitter_iri = 'http://purl.obolibrary.org/obo/NCIT_C54269'
 
 
 class RecordDirStore:
