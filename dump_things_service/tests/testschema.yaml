@@ -5,7 +5,6 @@ prefixes:
   xyz: http://example.org/person-schema/xyz/
   trr379: http://example.org/person-schema/trr379/
   linkml: https://w3id.org/linkml/
-  obo: http://purl.obolibrary.org/obo/
 imports:
   - linkml:types
 default_range: string
