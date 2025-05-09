@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from datetime import datetime
 from json import (
     dumps as json_dumps,
@@ -20,7 +21,6 @@ from rdflib.term import (
     URIRef,
     bind,
 )
-from rdflib.xsd_datetime import parse_datetime
 
 from dump_things_service import (
     HTTP_400_BAD_REQUEST,
@@ -33,10 +33,20 @@ if TYPE_CHECKING:
     import types
 
 
+datetime_regex = re.compile(r'^([-+]\d+)|(\d{4})|(\d{4}-[01]\d)|(\d{4}-[01]\d-[0-3]\d)|(\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d:[0-5]\d\.\d+([+-][0-2]\d:[0-5]\d|Z))|(\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d:[0-5]\d([+-][0-2]\d:[0-5]\d|Z))|(\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d([+-][0-2]\d:[0-5]\d|Z))$')
+
+def validate_datetime(value: str) -> str:
+    match = datetime_regex.match(value)
+    if not match:
+        msg = 'Invalid datetime format: {value}'
+        raise ValueError(msg)
+    return value
+
+
 # Enable rdflib to parse date time literals
 bind(
     datatype=URIRef('https://www.w3.org/TR/NOTE-datetime'),
-    constructor=parse_datetime,
+    constructor=validate_datetime,
     pythontype=datetime,
 )
 
