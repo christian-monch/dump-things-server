@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import datetime
 from json import (
     dumps as json_dumps,
 )
@@ -15,6 +16,11 @@ from linkml.utils.datautils import (
     get_loader,
 )
 from linkml_runtime import SchemaView
+from rdflib.term import (
+    URIRef,
+    bind,
+)
+from rdflib.xsd_datetime import parse_datetime
 
 from dump_things_service import (
     HTTP_400_BAD_REQUEST,
@@ -25,6 +31,14 @@ from dump_things_service.utils import cleaned_json
 
 if TYPE_CHECKING:
     import types
+
+
+# Enable rdflib to parse date time literals
+bind(
+    datatype=URIRef('https://www.w3.org/TR/NOTE-datetime'),
+    constructor=parse_datetime,
+    pythontype=datetime,
+)
 
 
 def convert_json_to_ttl(
