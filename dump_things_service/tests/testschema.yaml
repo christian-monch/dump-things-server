@@ -2,9 +2,10 @@ id: http://example.org/person-schema
 name: person_schema
 prefixes:
   abc: http://example.org/person-schema/abc/
-  xyz: http://example.org/person-schema/xyz/
-  trr379: http://example.org/person-schema/trr379/
   linkml: https://w3id.org/linkml/
+  oxo: http://purl.obolibrary.org/obo/
+  trr379: http://example.org/person-schema/trr379/
+  xyz: http://example.org/person-schema/xyz/
 imports:
   - linkml:types
 default_range: string

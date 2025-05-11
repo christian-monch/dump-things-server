@@ -28,7 +28,9 @@ if TYPE_CHECKING:
 
 ignored_files = {'.', '..', config_file_name}
 
-submitter_iri = 'http://purl.obolibrary.org/obo/NCIT_C54269'
+
+submitter_class = 'NCIT_C54269'
+submitter_class_base = f'http://purl.obolibrary.org/obo/'
 
 
 class RecordDirStore:
@@ -51,12 +53,14 @@ class RecordDirStore:
         self,
         record: BaseModel,
         submitter_id: str,
+        model: Any,
     ) -> list[BaseModel]:
         final_records = self.extract_inlined(record, submitter_id)
         for final_record in final_records:
             self.store_single_record(
                 record=final_record,
                 submitter_id=submitter_id,
+                model=model,
             )
         return final_records
 
@@ -91,6 +95,7 @@ class RecordDirStore:
         self,
         record: BaseModel,
         submitter_id: str,
+        model: Any,
     ):
         # Generate the class directory
         class_name = record.__class__.__name__
@@ -98,7 +103,7 @@ class RecordDirStore:
         record_root.mkdir(exist_ok=True)
 
         # Remember the submitter id
-        self.annotate(record, submitter_id)
+        self.annotate(record, submitter_id, model)
 
         # Convert the record object into a YAML object
         data = yaml.dump(
@@ -134,10 +139,26 @@ class RecordDirStore:
         self,
         record: BaseModel,
         submitter_id: str,
+        model: Any,
     ) -> None:
+        """Add submitter IRI to the record annotations, use CURI if possible"""
+        submitter_iri = self.get_compact_iri(
+            submitter_class_base,
+            submitter_class,
+            model,
+        )
         if not record.annotations:
             record.annotations = {}
         record.annotations[submitter_iri] = submitter_id
+
+    @staticmethod
+    def get_compact_iri(iri: str, class_name: str, model: Any):
+        prefixes = model.linkml_meta.root.get('prefixes')
+        if prefixes:
+            for prefix_info in prefixes.values():
+                if prefix_info['prefix_reference'] == iri:
+                    return f'{prefix_info["prefix_prefix"]}:{class_name}'
+        return f'{iri}{class_name}'
 
     def get_record_by_pid(
         self,
