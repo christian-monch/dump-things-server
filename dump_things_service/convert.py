@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import re
 from datetime import datetime
+from itertools import count
 from json import (
     dumps as json_dumps,
 )
@@ -17,16 +18,19 @@ from linkml.utils.datautils import (
     get_loader,
 )
 from linkml_runtime import SchemaView
+from linkml_runtime.linkml_model.meta import Prefix
 from rdflib.term import (
     URIRef,
     bind,
 )
+
 
 from dump_things_service import (
     HTTP_400_BAD_REQUEST,
     JSON,
     Format,
 )
+from dump_things_service.model import serial_number
 from dump_things_service.utils import cleaned_json
 
 if TYPE_CHECKING:
@@ -148,10 +152,23 @@ def _convert_format(
         **input_args,
     )
 
+    added_prefix = None
+    if output_format == Format.ttl:
+        # Use compact URI for <http://purl.obolibrary.org/obo/NCIT_C54269>
+        added_prefix = add_prefix_for(
+            schema_view=schema_view,
+            uri='http://purl.obolibrary.org/obo/',
+        )
+
     dumper = get_dumper(output_format.value)
-    return dumper.dumps(
+    result = dumper.dumps(
         data_obj, **({'schemaview': schema_view} if output_format == Format.ttl else {})
     )
+
+    if output_format == Format.ttl and added_prefix:
+        del schema_view.schema.prefixes[added_prefix]
+
+    return result
 
 
 def get_conversion_objects(schema: str):
@@ -159,3 +176,22 @@ def get_conversion_objects(schema: str):
         'schema_module': PythonGenerator(schema).compile_module(),
         'schema_view': SchemaView(schema),
     }
+
+
+def add_prefix_for(schema_view: SchemaView, uri: str) -> str | None:
+    """Add a prefix for `uri` to the schema view, if it does not yet exist."""
+
+    for prefix_info in schema_view.schema.prefixes.values():
+        if prefix_info.prefix_reference == uri:
+            return None
+
+    serial_number = count()
+    prefix = 'obo'
+    while prefix in schema_view.schema.prefixes:
+        prefix = f'obo{next(serial_number)}'
+
+    schema_view.schema.prefixes[prefix] = Prefix(
+        prefix_prefix=prefix,
+        prefix_reference=uri,
+    )
+    return prefix
