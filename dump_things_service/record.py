@@ -110,6 +110,7 @@ class RecordDirStore:
             ),
             sort_keys=False,
             allow_unicode=True,
+            default_flow_style=False,
         )
 
         # Apply the mapping function to the record pid to get the final storage path
