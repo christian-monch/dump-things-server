@@ -25,8 +25,9 @@ classifiers = [
     "Programming Language :: Python :: Implementation :: PyPy",
 ]
 dependencies = [
-    "fastapi[standard]",
     "aiohttp",
+    "fastapi[standard]",
+    "click==8.1.8",
     "fsspec",
     "linkml",
     "pydantic==2.8.0",

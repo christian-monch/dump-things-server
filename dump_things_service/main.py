@@ -202,6 +202,7 @@ def store_record(
     stored_records = store.store_record(
         record=record,
         submitter_id=g_token_stores[token]['user_id'],
+        model=model,
     )
 
     if input_format == Format.ttl:
