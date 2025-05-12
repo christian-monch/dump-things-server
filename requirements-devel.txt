@@ -10,3 +10,7 @@ PyYAML
 rdflib
 requests
 uvicorn
+
+httpx
+pytest
+pytest-cov
