@@ -30,7 +30,7 @@ ignored_files = {'.', '..', config_file_name}
 
 
 submitter_class = 'NCIT_C54269'
-submitter_class_base = f'http://purl.obolibrary.org/obo/'
+submitter_class_base = 'http://purl.obolibrary.org/obo/'
 
 
 class RecordDirStore:
