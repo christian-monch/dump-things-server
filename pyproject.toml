@@ -49,7 +49,7 @@ path = "dump_things_service/__about__.py"
 
 [tool.hatch.envs.default]
 post-install-commands = [
-  "{root}/tools/patch_linkml",
+    "{root}/tools/call_patch_linkml",
 ]
 
 [tool.hatch.envs.types]
