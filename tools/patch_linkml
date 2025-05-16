@@ -1,8 +1,0 @@
-#!/bin/bash
-#
-# This script applies patches to the active linkml installation.
-# It is to be executed in the root of the repository.
-#
-
-# Honor type-designator slots when loading graphs
-patch -d $(python -c 'import os; import linkml_runtime.loaders as m; print(os.path.dirname(m.__file__))') < datalad-concepts/patches/rdflib_loader_typedesignator.diff
