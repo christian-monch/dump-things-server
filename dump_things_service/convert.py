@@ -3,9 +3,6 @@ from __future__ import annotations
 import re
 from datetime import datetime
 from json import (
-    dumps as json_dumps,
-)
-from json import (
     loads as json_loads,
 )
 from typing import TYPE_CHECKING
@@ -21,6 +18,7 @@ from rdflib.term import (
     URIRef,
     bind,
 )
+from pydantic import BaseModel
 
 from dump_things_service import (
     HTTP_400_BAD_REQUEST,
@@ -56,14 +54,30 @@ def convert_json_to_ttl(
     target_class: str,
     json: JSON,
 ) -> str:
+    from dump_things_service.main import g_model_info
+
+    # Because we do not store type information in the records that we store,
+    # we use pydantic's ability to infer the type from the data.
+    pydantic_object = getattr(g_model_info[collection_name][0], target_class)(**json)
+
+    return convert_pydantic_to_ttl(
+        collection_name=collection_name,
+        pydantic_object=pydantic_object,
+    )
+
+
+def convert_pydantic_to_ttl(
+    collection_name: str,
+    pydantic_object: BaseModel,
+):
     from dump_things_service.main import (
         g_conversion_objects,
         g_schemas,
     )
 
     return convert_format(
-        target_class=target_class,
-        data=json_dumps(json),
+        target_class=pydantic_object.__class__.__name__,
+        data=pydantic_object.model_dump(mode='json', exclude_none=True),
         input_format=Format.json,
         output_format=Format.ttl,
         **g_conversion_objects[g_schemas[collection_name]],

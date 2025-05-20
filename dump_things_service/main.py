@@ -206,7 +206,22 @@ def store_record(
     )
 
     if input_format == Format.ttl:
-        return PlainTextResponse(data, media_type='text/turtle')
+        return PlainTextResponse(
+            combine_ttl(
+                [
+                    convert_json_to_ttl(
+                        collection,
+                        record.__class__.__name__,
+                        cleaned_json(
+                            record.model_dump(mode='json', exclude_none=True),
+                            remove_keys=('@type', 'schema_type'),
+                        )
+                    )
+                    for record in stored_records
+                ]
+            ),
+            media_type='text/turtle',
+        )
     return JSONResponse(
         list(
             map(

@@ -97,6 +97,60 @@ tree = (
 )
 
 
+ttl_with_inline_a = """
+@prefix dlsocial: <https://concepts.datalad.org/s/social/unreleased/> .
+@prefix dlthings: <https://concepts.datalad.org/s/things/v1/> .
+@prefix trr379: <https://trr379.de/> .
+
+trr379:test_ttl_inline_1 a dlsocial:Person ;
+    dlsocial:given_name "Grandfather" ;
+    dlthings:relation trr379:test_ttl_inline_1_1,
+        trr379:test_ttl_inline_1_2 .
+"""
+
+ttl_with_inline_b = """
+@prefix dlprov: <https://concepts.datalad.org/s/prov/unreleased/> .
+@prefix trr379: <https://trr379.de/> .
+
+trr379:test_ttl_inline_1_1_1 a dlprov:Agent ;
+    dlprov:acted_on_behalf_of trr379:test_ttl_inline_1_1 .
+"""
+
+ttl_with_inline_c = """
+@prefix dltemporal: <https://concepts.datalad.org/s/temporal/unreleased/> .
+@prefix trr379: <https://trr379.de/> .
+@prefix w3ctr: <https://www.w3.org/TR/> .
+
+trr379:test_ttl_inline_1_2 a dltemporal:InstantaneousEvent ;
+    dltemporal:at_time "2028-12-31"^^w3ctr:NOTE-datetime .
+"""
+
+ttl_with_inline_d = """
+@prefix dlsocial: <https://concepts.datalad.org/s/social/unreleased/> .
+@prefix dlthings: <https://concepts.datalad.org/s/things/v1/> .
+@prefix trr379: <https://trr379.de/> .
+
+trr379:test_ttl_inline_1_1 a dlsocial:Person ;
+    dlsocial:given_name "Father" ;
+    dlthings:relation trr379:test_ttl_inline_1_1_1 .
+
+"""
+
+ttls_with_inline = (
+    ('Person', ttl_with_inline_a),
+    ('Agent', ttl_with_inline_b),
+    ('InstantaneousEvent', ttl_with_inline_c),
+    ('Person', ttl_with_inline_d),
+)
+
+ttl_tree = (
+    ('trr379:test_ttl_inline_1', ('trr379:test_ttl_inline_1_1', 'trr379:test_ttl_inline_1_2')),
+    ('trr379:test_ttl_inline_1_1', ('trr379:test_ttl_inline_1_1_1',)),
+    ('trr379:test_ttl_inline_1_2', ()),
+    ('trr379:test_ttl_inline_1_1_1', ()),
+)
+
+
 def test_inline_extraction_locally(dump_stores_simple):
     root = dump_stores_simple
 
@@ -172,6 +226,46 @@ def test_inline_extraction_on_service(fastapi_client_simple):
         ('Person', ('trr379:test_extract_1', 'trr379:test_extract_1_1')),
         ('Agent', ('trr379:test_extract_1_1_1',)),
         ('InstantaneousEvent', ('trr379:test_extract_1_2',)),
+    ):
+        records = test_client.get(
+            f'/collection_trr379/records/{class_name}',
+            headers={'x-dumpthings-token': 'token_1'},
+        ).json()
+        for pid in pids:
+            assert any(record['pid'] == pid for record in records)
+
+
+def test_inline_ttl_processing(fastapi_client_simple):
+    test_client, _ = fastapi_client_simple
+
+    # Deposit TTL records
+    for class_name, ttl_record in ttls_with_inline:
+        response = test_client.post(
+            f'/collection_trr379/record/{class_name}?format=ttl',
+            headers={'x-dumpthings-token': 'token_1'},
+            json=ttl_record,
+        )
+        assert response.status_code == HTTP_200_OK
+
+    # Verify that the records are actually stored individually and can be
+    # retrieved by their pid.
+    records = []
+    for record_pid in (entry[0] for entry in ttl_tree):
+        response = test_client.get(
+            f'/collection_trr379/record?pid={record_pid}',
+            headers={'x-dumpthings-token': 'token_1'},
+        )
+        assert response.status_code == HTTP_200_OK
+        records.append(response.json())
+
+    # Check linkage between records
+    _check_result_json(records, ttl_tree)
+
+    # Check that individual record classes were recognized
+    for class_name, pids in (
+        ('Person', ('trr379:test_ttl_inline_1', 'trr379:test_ttl_inline_1_1')),
+        ('Agent', ('trr379:test_ttl_inline_1_1_1',)),
+        ('InstantaneousEvent', ('trr379:test_ttl_inline_1_2',)),
     ):
         records = test_client.get(
             f'/collection_trr379/records/{class_name}',

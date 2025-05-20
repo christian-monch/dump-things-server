@@ -54,15 +54,14 @@ class RecordDirStore:
         record: BaseModel,
         submitter_id: str,
         model: Any,
-    ) -> list[BaseModel]:
+    ) -> Iterable[BaseModel]:
         final_records = self.extract_inlined(record, submitter_id)
         for final_record in final_records:
-            self.store_single_record(
+            yield self.store_single_record(
                 record=final_record,
                 submitter_id=submitter_id,
                 model=model,
             )
-        return final_records
 
     def extract_inlined(
         self,
@@ -134,6 +133,7 @@ class RecordDirStore:
         # Ensure all intermediate directories exist and save the YAML document
         storage_path.parent.mkdir(parents=True, exist_ok=True)
         storage_path.write_text(data, encoding='utf-8')
+        return record
 
     def annotate(
         self,
