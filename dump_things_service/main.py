@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import logging
+import sys
 from functools import partial
 from itertools import count
 from pathlib import Path
@@ -20,7 +21,11 @@ from fastapi import (
 from fastapi.encoders import jsonable_encoder
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import APIKeyHeader
-from pydantic import BaseModel, TypeAdapter, ValidationError
+from pydantic import (
+    BaseModel,
+    TypeAdapter,
+    ValidationError,
+)
 from starlette.responses import (
     JSONResponse,
     PlainTextResponse,
@@ -32,6 +37,7 @@ from dump_things_service import (
     HTTP_403_FORBIDDEN,
     HTTP_404_NOT_FOUND,
     Format,
+    config_file_name,
 )
 from dump_things_service.config import (
     Config,
@@ -81,16 +87,7 @@ lgr = logging.getLogger('uvicorn')
 
 store_path = Path(arguments.store)
 
-try:
-    if arguments.config:
-        config_path = Path(arguments.config)
-        global_config = Config.get_config_from_file(config_path)
-    else:
-        config_path = store_path /
-        global_config = Config.get_config(config_path)
-except ValidationError as e:
-    lgr.error('Invalid configuration file at: %s', e)
-
+g_error = None
 g_curated_stores = {}
 g_incoming = {}
 g_zones = {}
@@ -98,6 +95,20 @@ g_model_info = {}
 g_token_stores = {}
 g_schemas = {}
 g_conversion_objects = {}
+
+
+config_path = Path(arguments.config) if arguments.config else store_path / config_file_name
+try:
+    global_config = Config.get_config_from_file(config_path)
+except ValidationError as e:
+    lgr.error(
+        'ERROR: invalid configuration file at: `%s`:\n%s',
+        config_path,
+        str(e),
+    )
+    g_error = 'Invalid configuration file. See server error-log for details.'
+    sys.exit(1)
+
 
 model_var_counter = count()
 
@@ -170,6 +181,11 @@ api_key_header_scheme = APIKeyHeader(
     scheme_name='submission',
     description='Presenting a valid token enables record submission, and retrieval of records submitted with this token prior curation.',
 )
+
+
+def handle_global_error():
+    if g_error:
+        raise HTTPException(status_code=HTTP_400_BAD_REQUEST, detail=g_error)
 
 
 def store_record(
