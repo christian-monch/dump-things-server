@@ -18,7 +18,6 @@ from rdflib.term import (
     URIRef,
     bind,
 )
-from pydantic import BaseModel
 
 from dump_things_service import (
     HTTP_400_BAD_REQUEST,
@@ -29,6 +28,8 @@ from dump_things_service.utils import cleaned_json
 
 if TYPE_CHECKING:
     import types
+
+    from pydantic import BaseModel
 
 
 datetime_regex = re.compile(r'^([-+]\d+)|(\d{4})|(\d{4}-[01]\d)|(\d{4}-[01]\d-[0-3]\d)|(\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d:[0-5]\d\.\d+([+-][0-2]\d:[0-5]\d|Z))|(\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d:[0-5]\d([+-][0-2]\d:[0-5]\d|Z))|(\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d([+-][0-2]\d:[0-5]\d|Z))$')
