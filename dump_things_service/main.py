@@ -151,7 +151,7 @@ async def {name}(
         api_key: str = Depends(api_key_header_scheme),
         format: Format = Format.json,
 ) -> JSONResponse | PlainTextResponse:
-    lgr.info('{name}(%s, %s, %s, %s, %s)', repr(data), repr('{class_name}'), repr({model_var_name}), repr(format), repr(api_key))
+    lgr.info('{name}(%s, %s, %s, %s, %s)', repr(data), repr('{class_name}'), repr({model_var_name}), repr(format))
     return store_record('{collection}', data, '{class_name}', {model_var_name}, format, api_key)
 """
 
