@@ -146,7 +146,7 @@ tokens:
         mode: WRITE_COLLECTION
         incoming_label: 'admin_posted_records'
 
-  # The following entry defines the token "contributer_bob". It gives full access
+  # The following entry defines the token "contributor_bob". It gives full access
   # to "rooms_and_buildings" for a user with the id "Bob".
   contributor_bob:
     user_id: Bob
@@ -155,7 +155,7 @@ tokens:
         mode: WRITE_COLLECTION
         incoming_label: new_rooms_and_buildings
         
-  # The following entry defines the token "contributer_alice". It gives full access
+  # The following entry defines the token "contributor_alice". It gives full access
   # to "rooms_and_buildings" for a user with the id "Alice". Bob and Alice share the
   # same incoming-zone, i.e. "new_rooms_and_buildings". That means they can read
   # incoming records that the other one posted.
