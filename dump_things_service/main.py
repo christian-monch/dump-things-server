@@ -20,7 +20,7 @@ from fastapi import (
 from fastapi.encoders import jsonable_encoder
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import APIKeyHeader
-from pydantic import BaseModel, TypeAdapter
+from pydantic import BaseModel, TypeAdapter, ValidationError
 from starlette.responses import (
     JSONResponse,
     PlainTextResponse,
@@ -77,12 +77,19 @@ parser.add_argument(
 
 arguments = parser.parse_args()
 
+lgr = logging.getLogger('uvicorn')
 
 store_path = Path(arguments.store)
-if arguments.config:
-    global_config = Config.get_config_from_file(Path(arguments.config))
-else:
-    global_config = Config.get_config(store_path)
+
+try:
+    if arguments.config:
+        config_path = Path(arguments.config)
+        global_config = Config.get_config_from_file(config_path)
+    else:
+        config_path = store_path /
+        global_config = Config.get_config(config_path)
+except ValidationError as e:
+    lgr.error('Invalid configuration file at: %s', e)
 
 g_curated_stores = {}
 g_incoming = {}
@@ -231,8 +238,6 @@ def store_record(
         )
     )
 
-
-lgr = logging.getLogger('uvicorn')
 
 app = FastAPI()
 
