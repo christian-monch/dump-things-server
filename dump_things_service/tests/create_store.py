@@ -64,7 +64,7 @@ def create_store(
             collection_config=collection_config,
             schema_url=per_collection_info[collection_name][0],
             mapping_function=per_collection_info[collection_name][1],
-            default_entries=default_entries[collection_name],
+            default_entries=(default_entries or {}).get(collection_name),
         )
 
 

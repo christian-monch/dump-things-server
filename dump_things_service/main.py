@@ -33,15 +33,16 @@ from starlette.responses import (
 
 from dump_things_service import (
     HTTP_400_BAD_REQUEST,
-    HTTP_401_UNAUTHORIZED,
     HTTP_403_FORBIDDEN,
     HTTP_404_NOT_FOUND,
     Format,
     config_file_name,
 )
 from dump_things_service.config import (
-    InstanceConfig,
-    TokenPermission,
+    get_default_token_name,
+    get_token_store,
+    get_zone,
+    join_default_token_permissions,
     process_config,
 )
 from dump_things_service.convert import (
@@ -146,10 +147,10 @@ def store_record(
             status_code=HTTP_400_BAD_REQUEST, detail='Invalid ttl data provided.'
         )
 
-    token = _get_default_token_name(g_instance_config, collection) if api_key is None else api_key
+    token = get_default_token_name(g_instance_config, collection) if api_key is None else api_key
     # Get the token permissions and extend them by the default permissions
-    store, token_permissions = _get_token_store(g_instance_config, collection, token)
-    final_permissions = _join_default_token_permissions(g_instance_config, token_permissions, collection)
+    store, token_permissions = get_token_store(g_instance_config, collection, token)
+    final_permissions = join_default_token_permissions(g_instance_config, token_permissions, collection)
     if not final_permissions.incoming_write:
         raise HTTPException(
             status_code=HTTP_403_FORBIDDEN,
@@ -252,16 +253,16 @@ async def fetch_token_permissions(
     collection: str,
     body: TokenCapabilityRequest,
 ):
-    token = _get_default_token_name(g_instance_config, collection) if body.token is None else body.token
-    token_store, token_permissions = _get_token_store(g_instance_config, collection, token)
-    final_permissions = _join_default_token_permissions(g_instance_config, token_permissions, collection)
+    token = get_default_token_name(g_instance_config, collection) if body.token is None else body.token
+    token_store, token_permissions = get_token_store(g_instance_config, collection, token)
+    final_permissions = join_default_token_permissions(g_instance_config, token_permissions, collection)
     return JSONResponse(
         {
             'read_curated': final_permissions.curated_read,
             'read_incoming': final_permissions.incoming_read,
             'write_incoming': final_permissions.incoming_write,
             **(
-                {'incoming_zone': _get_zone(g_instance_config, collection, token)}
+                {'incoming_zone': get_zone(g_instance_config, collection, token)}
                 if final_permissions.incoming_read or final_permissions.incoming_write
                 else {}
             ),
@@ -276,10 +277,10 @@ async def read_record_with_pid(
     format: Format = Format.json,  # noqa A002
     api_key: str = Depends(api_key_header_scheme),
 ):
-    token = _get_default_token_name(g_instance_config, collection) if api_key is None else api_key
+    token = get_default_token_name(g_instance_config, collection) if api_key is None else api_key
 
-    token_store, token_permissions = _get_token_store(g_instance_config, collection, token)
-    final_permissions = _join_default_token_permissions(g_instance_config, token_permissions, collection)
+    token_store, token_permissions = get_token_store(g_instance_config, collection, token)
+    final_permissions = join_default_token_permissions(g_instance_config, token_permissions, collection)
     if not final_permissions.curated_read and not final_permissions.incoming_read:
         raise HTTPException(
             status_code=HTTP_403_FORBIDDEN,
@@ -312,7 +313,7 @@ async def read_records_of_type(
     format: Format = Format.json,  # noqa A002
     api_key: str = Depends(api_key_header_scheme),
 ):
-    token = _get_default_token_name(g_instance_config, collection) if api_key is None else api_key
+    token = get_default_token_name(g_instance_config, collection) if api_key is None else api_key
 
     model = g_instance_config.model_info[collection][0]
     if class_name not in get_classes(model):
@@ -321,8 +322,8 @@ async def read_records_of_type(
             detail=f'No "{class_name}"-class in collection "{collection}".',
         )
 
-    token_store, token_permissions = _get_token_store(g_instance_config, collection, token)
-    final_permissions = _join_default_token_permissions(g_instance_config, token_permissions, collection)
+    token_store, token_permissions = get_token_store(g_instance_config, collection, token)
+    final_permissions = join_default_token_permissions(g_instance_config, token_permissions, collection)
     if not final_permissions.incoming_read and not final_permissions.curated_read:
         raise HTTPException(
             status_code=HTTP_403_FORBIDDEN,
@@ -361,67 +362,6 @@ async def read_records_of_type(
     ]
 
 
-def _get_token_store(
-    instance_config: InstanceConfig,
-    collection_name: str, token: str
-) -> tuple[RecordDirStore, TokenPermission] | tuple[None, None]:
-    if collection_name not in instance_config.curated_stores:
-        raise HTTPException(
-            status_code=HTTP_404_NOT_FOUND,
-            detail=f'No such collection: "{collection_name}".',
-        )
-    if token not in instance_config.token_stores:
-        raise HTTPException(status_code=HTTP_401_UNAUTHORIZED, detail='Invalid token.')
-
-    token_store = None
-    token_collection_info = instance_config.token_stores[token]['collections'][collection_name]
-    permissions = token_collection_info['permissions']
-    if permissions.incoming_write or permissions.incoming_read:
-        token_store = token_collection_info.get('store')
-        if not token_store:
-            raise HTTPException(
-                status_code=HTTP_400_BAD_REQUEST,
-                detail=f'Configuration does not define an incoming store for token "{token}" in collection "{collection_name}".',
-            )
-    return token_store, permissions
-
-
-def _get_default_token_name(
-    instance_config: InstanceConfig,
-    collection: str
-) -> str:
-    if collection not in instance_config.collections:
-        raise HTTPException(
-            status_code=HTTP_404_NOT_FOUND, detail=f'No such collection: {collection}'
-        )
-    return instance_config.collections[collection].default_token
-
-
-def _join_default_token_permissions(
-    instance_config: InstanceConfig,
-    permissions: TokenPermission,
-    collection: str,
-) -> TokenPermission:
-    default_token_name = instance_config.collections[collection].default_token
-    default_token_permissions = instance_config.token_stores[default_token_name]['collections'][collection]['permissions']
-    result = TokenPermission()
-    result.curated_read = permissions.curated_read | default_token_permissions.curated_read
-    result.incoming_read = permissions.incoming_read | default_token_permissions.incoming_read
-    result.incoming_write = permissions.incoming_write | default_token_permissions.incoming_write
-    return result
-
-
-def _get_zone(
-    instance_config: InstanceConfig,
-    collection: str,
-    token: str,
-) -> str | None:
-    """Get the zone for the given collection and token."""
-    if collection not in instance_config.zones:
-        return None
-    if token not in instance_config.zones[collection]:
-        return None
-    return instance_config.zones[collection][token]
 
 
 # Rebuild the app to include all dynamically created endpoints
