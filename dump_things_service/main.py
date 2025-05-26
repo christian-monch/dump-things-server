@@ -49,6 +49,7 @@ from dump_things_service.convert import (
     convert_json_to_ttl,
     convert_ttl_to_json,
 )
+from dump_things_service.dynamic_endpoints import create_endpoints
 from dump_things_service.model import (
     get_classes,
     get_subclasses,
@@ -102,17 +103,6 @@ except ValidationError as e:
     )
     g_error = 'Invalid configuration file. See server error-log for details.'
     sys.exit(1)
-
-
-_endpoint_template = """
-async def {name}(
-        data: {model_var_name}.{class_name} | Annotated[str, Body(media_type='text/plain')],
-        api_key: str = Depends(api_key_header_scheme),
-        format: Format = Format.json,
-) -> JSONResponse | PlainTextResponse:
-    lgr.info('{name}(%s, %s, %s, %s, %s)', repr(data), repr('{class_name}'), repr({model_var_name}), repr(format))
-    return store_record('{collection}', data, '{class_name}', {model_var_name}, format, api_key)
-"""
 
 
 api_key_header_scheme = APIKeyHeader(
@@ -212,40 +202,6 @@ app.add_middleware(
     allow_methods=['*'],
     allow_headers=['*'],
 )
-
-
-# Create endpoints for all classes in all collections
-lgr.info('Creating dynamic endpoints...')
-serial_number = count()
-
-
-for collection, (model, classes, model_var_name) in g_instance_config.model_info.items():
-    globals()[model_var_name] = model
-    for class_name in classes:
-        # Create an endpoint to dump data of type `class_name` in version
-        # `version` of schema `application`.
-        endpoint_name = f'_endpoint_{next(serial_number)}'
-
-        endpoint_source = _endpoint_template.format(
-            name=endpoint_name,
-            model_var_name=model_var_name,
-            class_name=class_name,
-            collection=collection,
-            info=f"'store {collection}/{class_name} objects'",
-        )
-        exec(endpoint_source)  # noqa S102
-        endpoint = locals()[endpoint_name]
-
-        # Create an API route for the endpoint
-        app.add_api_route(
-            path=f'/{collection}/record/{class_name}',
-            endpoint=locals()[endpoint_name],
-            methods=['POST'],
-            name=f'handle "{class_name}" of schema "{model.linkml_meta["id"]}" objects',
-            response_model=None,
-        )
-
-lgr.info('Creation of %d endpoints completed.', next(serial_number))
 
 
 @app.post('/{collection}/token_permissions')
@@ -362,11 +318,12 @@ async def read_records_of_type(
     ]
 
 
-
-
-# Rebuild the app to include all dynamically created endpoints
+# Create dynamic endpoints and rebuild the app to include all dynamically
+# created endpoints.
+create_endpoints(app, g_instance_config, globals())
 app.openapi_schema = None
 app.setup()
+
 
 if __name__ == '__main__':
     uvicorn.run(
