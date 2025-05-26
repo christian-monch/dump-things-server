@@ -11,7 +11,6 @@ from dump_things_service import HTTP_200_OK
 from dump_things_service.record import RecordDirStore
 from dump_things_service.utils import cleaned_json
 
-
 if TYPE_CHECKING:
     from pydantic import BaseModel
 

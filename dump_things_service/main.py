@@ -4,7 +4,6 @@ import argparse
 import logging
 import sys
 from functools import partial
-from itertools import count
 from pathlib import Path
 from typing import (
     Annotated,  # noqa F401 -- used by generated code
@@ -54,7 +53,6 @@ from dump_things_service.model import (
     get_classes,
     get_subclasses,
 )
-from dump_things_service.record import RecordDirStore
 from dump_things_service.utils import (
     cleaned_json,
     combine_ttl,

@@ -7,11 +7,12 @@ from pydantic import ValidationError
 from yaml.scanner import ScannerError
 
 from dump_things_service.config import (
+    ConfigError,
+    GlobalConfig,
     get_token_store,
     get_zone,
     process_config,
-    ConfigError,
-    GlobalConfig, process_config_object,
+    process_config_object,
 )
 from dump_things_service.tests.create_store import create_store
 
@@ -63,7 +64,7 @@ tokens:
 
     global_dict = {}
     instance_config = process_config_object(tmp_path, config_object, global_dict)
-    with pytest.raises(HTTPException) as e:
+    with pytest.raises(HTTPException):
         get_token_store(instance_config, 'collection_1', 'basic_access')
-    with pytest.raises(HTTPException) as e:
+    with pytest.raises(HTTPException):
         get_zone(instance_config, 'collection_1', 'basic_access')

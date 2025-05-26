@@ -172,9 +172,11 @@ class Config:
         try:
             return GlobalConfig(**yaml.load(path.read_text(), Loader=yaml.SafeLoader))
         except ScannerError as e:
-            raise ConfigError(f'YAML-error while reading config file {path}: {e}') from e
+            msg = f'YAML-error while reading config file {path}: {e}'
+            raise ConfigError(msg) from e
         except ValidationError as e:
-            raise ConfigError(f'Pydantic-error reading config file {path}: {e}') from e
+            msg = f'Pydantic-error reading config file {path}: {e}'
+            raise ConfigError(msg) from e
 
     @staticmethod
     def get_config(path: Path, file_name=config_file_name) -> GlobalConfig:
@@ -191,9 +193,11 @@ class Config:
                 **yaml.load(config_path.read_text(), Loader=yaml.SafeLoader)
             )
         except ScannerError as e:
-            raise ConfigError(f'YAML-error while reading config file {config_path}: {e}') from e
+            msg = f'YAML-error while reading config file {config_path}: {e}'
+            raise ConfigError(msg) from e
         except ValidationError as e:
-            raise ConfigError(f'Pydantic-error reading config file {config_path}: {e}') from e
+            msg = f'Pydantic-error reading config file {config_path}: {e}'
+            raise ConfigError(msg) from e
 
 
 def process_config(

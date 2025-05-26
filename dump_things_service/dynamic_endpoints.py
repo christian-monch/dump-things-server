@@ -1,5 +1,4 @@
 import logging
-
 from itertools import count
 
 from fastapi import FastAPI
