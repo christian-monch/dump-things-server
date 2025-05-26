@@ -16,6 +16,7 @@ from fastapi import (
     Depends,
     FastAPI,
     HTTPException,
+    Request,
 )
 from fastapi.encoders import jsonable_encoder
 from fastapi.middleware.cors import CORSMiddleware
@@ -23,7 +24,6 @@ from fastapi.security import APIKeyHeader
 from pydantic import (
     BaseModel,
     TypeAdapter,
-    ValidationError,
 )
 from starlette.responses import (
     JSONResponse,
@@ -38,6 +38,7 @@ from dump_things_service import (
     config_file_name,
 )
 from dump_things_service.config import (
+    ConfigError,
     get_default_token_name,
     get_token_store,
     get_zone,
@@ -74,6 +75,11 @@ parser.add_argument(
     help="Set the ASGI 'root_path' for applications submounted below a given URL path.",
 )
 parser.add_argument(
+    '--error-mode',
+    action='store_true',
+    help="Don't exit with non-zero status on error, instead return the error on every request.",
+)
+parser.add_argument(
     'store',
     help='The root of the data stores, it should contain a global_store and token_stores.',
 )
@@ -93,13 +99,44 @@ try:
         config_file=config_path,
         globals_dict=globals(),
     )
-except ValidationError as e:
+except ConfigError as e:
     lgr.error(
-        'ERROR: invalid configuration file at: `%s`:\n%s',
+        'ERROR: invalid configuration file at: `%s`:\n---> %s',
         config_path,
         str(e),
     )
-    g_error = 'Invalid configuration file. See server error-log for details.'
+    g_error = 'Server runs in error mode due to an invalid configuration. See server error-log for details.'
+
+
+app = FastAPI()
+
+
+def handle_global_error():
+    if g_error:
+        raise HTTPException(status_code=HTTP_400_BAD_REQUEST, detail=g_error)
+
+
+# If a global error exists, it does not make sense to activate the defined
+# endpoints because we don't have a working configuration. Instead, we signal
+# the error to any request that is made to the server.
+if g_error:
+    if __name__ == '__main__' and arguments.error_mode:
+        lgr.warning('Server runs in error mode, all endpoints will return error information.')
+
+        @app.post('/{full_path:path}')
+        def post_global_error(request: Request, full_path: str):
+            handle_global_error()
+
+        @app.get('/{full_path:path}')
+        def get_global_error(request: Request, full_path: str):
+            handle_global_error()
+
+        uvicorn.run(
+            app,
+            host=arguments.host,
+            port=arguments.port,
+            root_path=arguments.root_path,
+        )
     sys.exit(1)
 
 
@@ -110,11 +147,6 @@ api_key_header_scheme = APIKeyHeader(
     scheme_name='submission',
     description='Presenting a valid token enables record submission, and retrieval of records submitted with this token prior curation.',
 )
-
-
-def handle_global_error():
-    if g_error:
-        raise HTTPException(status_code=HTTP_400_BAD_REQUEST, detail=g_error)
 
 
 def store_record(
@@ -189,8 +221,6 @@ def store_record(
         )
     )
 
-
-app = FastAPI()
 
 # Add CORS origins
 app.add_middleware(

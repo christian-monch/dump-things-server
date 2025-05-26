@@ -174,6 +174,9 @@ class Config:
         except ScannerError as e:
             msg = f'YAML-error while reading config file {path}: {e}'
             raise ConfigError(msg) from e
+        except TypeError:
+            msg = f'Error in yaml file {path}: content is not a mapping'
+            raise ConfigError(msg)
         except ValidationError as e:
             msg = f'Pydantic-error reading config file {path}: {e}'
             raise ConfigError(msg) from e
