@@ -18,7 +18,6 @@ from rdflib.term import (
     URIRef,
     bind,
 )
-from pydantic import BaseModel
 
 from dump_things_service import (
     HTTP_400_BAD_REQUEST,
@@ -29,6 +28,10 @@ from dump_things_service.utils import cleaned_json
 
 if TYPE_CHECKING:
     import types
+
+    from pydantic import BaseModel
+
+    from dump_things_service.config import InstanceConfig
 
 
 datetime_regex = re.compile(r'^([-+]\d+)|(\d{4})|(\d{4}-[01]\d)|(\d{4}-[01]\d-[0-3]\d)|(\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d:[0-5]\d\.\d+([+-][0-2]\d:[0-5]\d|Z))|(\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d:[0-5]\d([+-][0-2]\d:[0-5]\d|Z))|(\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d([+-][0-2]\d:[0-5]\d|Z))$')
@@ -50,56 +53,52 @@ bind(
 
 
 def convert_json_to_ttl(
+    instance_config: InstanceConfig,
     collection_name: str,
     target_class: str,
     json: JSON,
 ) -> str:
-    from dump_things_service.main import g_model_info
 
     # Because we do not store type information in the records that we store,
     # we use pydantic's ability to infer the type from the data.
-    pydantic_object = getattr(g_model_info[collection_name][0], target_class)(**json)
+    pydantic_object = getattr(
+        instance_config.model_info[collection_name][0],
+        target_class
+    )(**json)
 
     return convert_pydantic_to_ttl(
+        instance_config=instance_config,
         collection_name=collection_name,
         pydantic_object=pydantic_object,
     )
 
 
 def convert_pydantic_to_ttl(
+    instance_config: InstanceConfig,
     collection_name: str,
     pydantic_object: BaseModel,
 ):
-    from dump_things_service.main import (
-        g_conversion_objects,
-        g_schemas,
-    )
-
     return convert_format(
         target_class=pydantic_object.__class__.__name__,
         data=pydantic_object.model_dump(mode='json', exclude_none=True),
         input_format=Format.json,
         output_format=Format.ttl,
-        **g_conversion_objects[g_schemas[collection_name]],
+        **instance_config.conversion_objects[instance_config.schemas[collection_name]],
     )
 
 
 def convert_ttl_to_json(
+    instance_config: InstanceConfig,
     collection_name: str,
     target_class: str,
     ttl: str,
 ) -> JSON:
-    from dump_things_service.main import (
-        g_conversion_objects,
-        g_schemas,
-    )
-
     json_string = convert_format(
         target_class=target_class,
         data=ttl,
         input_format=Format.ttl,
         output_format=Format.json,
-        **g_conversion_objects[g_schemas[collection_name]],
+        **instance_config.conversion_objects[instance_config.schemas[collection_name]],
     )
     return cleaned_json(json_loads(json_string))
 

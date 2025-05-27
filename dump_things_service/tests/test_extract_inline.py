@@ -7,10 +7,9 @@ from typing import TYPE_CHECKING
 
 import pytest  # noqa F401
 
+from dump_things_service import HTTP_200_OK
 from dump_things_service.record import RecordDirStore
-
-from .. import HTTP_200_OK
-from ..utils import cleaned_json
+from dump_things_service.utils import cleaned_json
 
 if TYPE_CHECKING:
     from pydantic import BaseModel

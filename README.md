@@ -181,6 +181,7 @@ The service supports the following command line parameters:
 
 - `-c/--config`: if set, the service will read the configuration from the given path. Otherwise it will try to read the configuration from `<storage root>/.dumpthings.yaml`.
 
+- `--error-mode`: if set, the service will run even if an error prevents it from starting properly. It will report the error on every request. This can be useful if the service is deployed automatically and a no other monitoring method is available.
 
 The service can be started via `hatch` like this:
 

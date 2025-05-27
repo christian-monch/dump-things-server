@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import argparse
 import logging
+import sys
 from functools import partial
-from itertools import count
 from pathlib import Path
 from typing import (
     Annotated,  # noqa F401 -- used by generated code
@@ -16,11 +16,15 @@ from fastapi import (
     Depends,
     FastAPI,
     HTTPException,
+    Request,
 )
 from fastapi.encoders import jsonable_encoder
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import APIKeyHeader
-from pydantic import BaseModel, TypeAdapter
+from pydantic import (
+    BaseModel,
+    TypeAdapter,
+)
 from starlette.responses import (
     JSONResponse,
     PlainTextResponse,
@@ -28,28 +32,28 @@ from starlette.responses import (
 
 from dump_things_service import (
     HTTP_400_BAD_REQUEST,
-    HTTP_401_UNAUTHORIZED,
     HTTP_403_FORBIDDEN,
     HTTP_404_NOT_FOUND,
     Format,
+    config_file_name,
 )
 from dump_things_service.config import (
-    Config,
-    TokenPermission,
-    get_mapping_function,
-    get_permissions,
+    ConfigError,
+    get_default_token_name,
+    get_token_store,
+    get_zone,
+    join_default_token_permissions,
+    process_config,
 )
 from dump_things_service.convert import (
     convert_json_to_ttl,
     convert_ttl_to_json,
-    get_conversion_objects,
 )
+from dump_things_service.dynamic_endpoints import create_endpoints
 from dump_things_service.model import (
     get_classes,
-    get_model_for_schema,
     get_subclasses,
 )
-from dump_things_service.record import RecordDirStore
 from dump_things_service.utils import (
     cleaned_json,
     combine_ttl,
@@ -71,89 +75,69 @@ parser.add_argument(
     help="Set the ASGI 'root_path' for applications submounted below a given URL path.",
 )
 parser.add_argument(
+    '--error-mode',
+    action='store_true',
+    help="Don't exit with non-zero status on error, instead return the error on every request.",
+)
+parser.add_argument(
     'store',
     help='The root of the data stores, it should contain a global_store and token_stores.',
 )
 
 arguments = parser.parse_args()
 
+lgr = logging.getLogger('uvicorn')
 
 store_path = Path(arguments.store)
-if arguments.config:
-    global_config = Config.get_config_from_file(Path(arguments.config))
-else:
-    global_config = Config.get_config(store_path)
 
-g_curated_stores = {}
-g_incoming = {}
-g_zones = {}
-g_model_info = {}
-g_token_stores = {}
-g_schemas = {}
-g_conversion_objects = {}
+g_error = None
 
-model_var_counter = count()
-
-
-# Create a model for each collection and a `RecordDirStore` for the
-# `curated`-dir in each collection.
-for collection_name, collection_info in global_config.collections.items():
-    # Get the config from the curated directory
-    config = Config.get_collection_dir_config(store_path / collection_info.curated)
-
-    # Generate the collection model
-    model, classes, model_var_name = get_model_for_schema(config.schema)
-    g_model_info[collection_name] = model, classes, model_var_name
-    globals()[model_var_name] = model
-
-    curated_store = RecordDirStore(
-        store_path / collection_info.curated, model, get_mapping_function(config)
+config_path = Path(arguments.config) if arguments.config else store_path / config_file_name
+try:
+    g_instance_config = process_config(
+        store_path=store_path,
+        config_file=config_path,
+        globals_dict=globals(),
     )
-    g_curated_stores[collection_name] = curated_store
-    if collection_info.incoming:
-        g_incoming[collection_name] = collection_info.incoming
+except ConfigError as e:
+    lgr.error(
+        'ERROR: invalid configuration file at: `%s`:\n---> %s',
+        config_path,
+        str(e),
+    )
+    g_error = 'Server runs in error mode due to an invalid configuration. See server error-log for details.'
 
-    g_schemas[collection_name] = config.schema
-    if config.schema not in g_conversion_objects:
-        g_conversion_objects[config.schema] = get_conversion_objects(config.schema)
+
+app = FastAPI()
 
 
-# Create a `RecordDirStore` for each token dir and fetch the permissions
-for token_name, token_info in global_config.tokens.items():
-    entry = {'user_id': token_info.user_id, 'collections': {}}
-    g_token_stores[token_name] = entry
-    for collection_name, token_collection_info in token_info.collections.items():
-        entry['collections'][collection_name] = {}
-        # A token might be a pure curated read token, i.e., have the mode
-        # `READ_COLLECTION`. In this case there will be no incoming store.
-        if collection_name in g_incoming:
-            if collection_name not in g_zones:
-                g_zones[collection_name] = {}
-            g_zones[collection_name][token_name] = token_collection_info.incoming_label
-            model = g_curated_stores[collection_name].model
-            mapping_function = g_curated_stores[collection_name].pid_mapping_function
-            # Ensure that the store directory exists
-            store_dir = (
-                store_path
-                / g_incoming[collection_name]
-                / token_collection_info.incoming_label
-            )
-            store_dir.mkdir(parents=True, exist_ok=True)
-            token_store = RecordDirStore(store_dir, model, mapping_function)
-            entry['collections'][collection_name]['store'] = token_store
-        entry['collections'][collection_name]['permissions'] = get_permissions(
-            token_collection_info.mode
+def handle_global_error():
+    if g_error:
+        raise HTTPException(status_code=HTTP_400_BAD_REQUEST, detail=g_error)
+
+
+# If a global error exists, it does not make sense to activate the defined
+# endpoints because we don't have a working configuration. Instead, we signal
+# the error to any request that is made to the server.
+if g_error:
+    if __name__ == '__main__' and arguments.error_mode:
+        lgr.warning('Server runs in error mode, all endpoints will return error information.')
+
+        @app.post('/{full_path:path}')
+        def post_global_error(request: Request, full_path: str):
+            handle_global_error()
+
+        @app.get('/{full_path:path}')
+        def get_global_error(request: Request, full_path: str):
+            handle_global_error()
+
+        uvicorn.run(
+            app,
+            host=arguments.host,
+            port=arguments.port,
+            root_path=arguments.root_path,
         )
-
-_endpoint_template = """
-async def {name}(
-        data: {model_var_name}.{class_name} | Annotated[str, Body(media_type='text/plain')],
-        api_key: str = Depends(api_key_header_scheme),
-        format: Format = Format.json,
-) -> JSONResponse | PlainTextResponse:
-    lgr.info('{name}(%s, %s, %s, %s, %s)', repr(data), repr('{class_name}'), repr({model_var_name}), repr(format))
-    return store_record('{collection}', data, '{class_name}', {model_var_name}, format, api_key)
-"""
+    sys.exit(1)
 
 
 api_key_header_scheme = APIKeyHeader(
@@ -183,25 +167,30 @@ def store_record(
             status_code=HTTP_400_BAD_REQUEST, detail='Invalid ttl data provided.'
         )
 
-    token = _get_default_token_name(collection) if api_key is None else api_key
+    token = get_default_token_name(g_instance_config, collection) if api_key is None else api_key
     # Get the token permissions and extend them by the default permissions
-    store, token_permissions = _get_token_store(collection, token)
-    final_permissions = _join_default_token_permissions(token_permissions, collection)
+    store, token_permissions = get_token_store(g_instance_config, collection, token)
+    final_permissions = join_default_token_permissions(g_instance_config, token_permissions, collection)
     if not final_permissions.incoming_write:
         raise HTTPException(
             status_code=HTTP_403_FORBIDDEN,
-            detail=f'Not authorized to submit to collection "{collection_name}".',
+            detail=f'Not authorized to submit to collection "{collection}".',
         )
 
     if input_format == Format.ttl:
-        json_object = convert_ttl_to_json(collection, class_name, data)
+        json_object = convert_ttl_to_json(
+            g_instance_config,
+            collection,
+            class_name,
+            data,
+        )
         record = TypeAdapter(getattr(model, class_name)).validate_python(json_object)
     else:
         record = data
 
     stored_records = store.store_record(
         record=record,
-        submitter_id=g_token_stores[token]['user_id'],
+        submitter_id=g_instance_config.token_stores[token]['user_id'],
         model=model,
     )
 
@@ -210,6 +199,7 @@ def store_record(
             combine_ttl(
                 [
                     convert_json_to_ttl(
+                        g_instance_config,
                         collection,
                         record.__class__.__name__,
                         cleaned_json(
@@ -232,10 +222,6 @@ def store_record(
     )
 
 
-lgr = logging.getLogger('uvicorn')
-
-app = FastAPI()
-
 # Add CORS origins
 app.add_middleware(
     CORSMiddleware,
@@ -246,55 +232,21 @@ app.add_middleware(
 )
 
 
-# Create endpoints for all classes in all collections
-lgr.info('Creating dynamic endpoints...')
-serial_number = count()
-
-
-for collection, (model, classes, model_var_name) in g_model_info.items():
-    globals()[model_var_name] = model
-    for class_name in classes:
-        # Create an endpoint to dump data of type `class_name` in version
-        # `version` of schema `application`.
-        endpoint_name = f'_endpoint_{next(serial_number)}'
-
-        endpoint_source = _endpoint_template.format(
-            name=endpoint_name,
-            model_var_name=model_var_name,
-            class_name=class_name,
-            collection=collection,
-            info=f"'store {collection}/{class_name} objects'",
-        )
-        exec(endpoint_source)  # noqa S102
-        endpoint = locals()[endpoint_name]
-
-        # Create an API route for the endpoint
-        app.add_api_route(
-            path=f'/{collection}/record/{class_name}',
-            endpoint=locals()[endpoint_name],
-            methods=['POST'],
-            name=f'handle "{class_name}" of schema "{model.linkml_meta["id"]}" objects',
-            response_model=None,
-        )
-
-lgr.info('Creation of %d endpoints completed.', next(serial_number))
-
-
 @app.post('/{collection}/token_permissions')
 async def fetch_token_permissions(
     collection: str,
     body: TokenCapabilityRequest,
 ):
-    token = _get_default_token_name(collection) if body.token is None else body.token
-    token_store, token_permissions = _get_token_store(collection, token)
-    final_permissions = _join_default_token_permissions(token_permissions, collection)
+    token = get_default_token_name(g_instance_config, collection) if body.token is None else body.token
+    token_store, token_permissions = get_token_store(g_instance_config, collection, token)
+    final_permissions = join_default_token_permissions(g_instance_config, token_permissions, collection)
     return JSONResponse(
         {
             'read_curated': final_permissions.curated_read,
             'read_incoming': final_permissions.incoming_read,
             'write_incoming': final_permissions.incoming_write,
             **(
-                {'incoming_zone': g_zones[collection][token]}
+                {'incoming_zone': get_zone(g_instance_config, collection, token)}
                 if final_permissions.incoming_read or final_permissions.incoming_write
                 else {}
             ),
@@ -309,10 +261,10 @@ async def read_record_with_pid(
     format: Format = Format.json,  # noqa A002
     api_key: str = Depends(api_key_header_scheme),
 ):
-    token = _get_default_token_name(collection) if api_key is None else api_key
+    token = get_default_token_name(g_instance_config, collection) if api_key is None else api_key
 
-    token_store, token_permissions = _get_token_store(collection, token)
-    final_permissions = _join_default_token_permissions(token_permissions, collection)
+    token_store, token_permissions = get_token_store(g_instance_config, collection, token)
+    final_permissions = join_default_token_permissions(g_instance_config, token_permissions, collection)
     if not final_permissions.curated_read and not final_permissions.incoming_read:
         raise HTTPException(
             status_code=HTTP_403_FORBIDDEN,
@@ -324,11 +276,16 @@ async def read_record_with_pid(
         class_name, record = token_store.get_record_by_pid(pid)
 
     if not record and final_permissions.curated_read:
-        class_name, record = g_curated_stores[collection].get_record_by_pid(pid)
+        class_name, record = g_instance_config.curated_stores[collection].get_record_by_pid(pid)
 
     record = cleaned_json(record, remove_keys=('@type', 'schema_type'))
     if record and format == Format.ttl:
-        ttl_record = convert_json_to_ttl(collection, class_name, record)
+        ttl_record = convert_json_to_ttl(
+            g_instance_config,
+            collection,
+            class_name,
+            record,
+        )
         return PlainTextResponse(ttl_record, media_type='text/turtle')
     return record
 
@@ -340,17 +297,17 @@ async def read_records_of_type(
     format: Format = Format.json,  # noqa A002
     api_key: str = Depends(api_key_header_scheme),
 ):
-    token = _get_default_token_name(collection) if api_key is None else api_key
+    token = get_default_token_name(g_instance_config, collection) if api_key is None else api_key
 
-    model = g_model_info[collection][0]
+    model = g_instance_config.model_info[collection][0]
     if class_name not in get_classes(model):
         raise HTTPException(
             status_code=HTTP_404_NOT_FOUND,
             detail=f'No "{class_name}"-class in collection "{collection}".',
         )
 
-    token_store, token_permissions = _get_token_store(collection, token)
-    final_permissions = _join_default_token_permissions(token_permissions, collection)
+    token_store, token_permissions = get_token_store(g_instance_config, collection, token)
+    final_permissions = join_default_token_permissions(g_instance_config, token_permissions, collection)
     if not final_permissions.incoming_read and not final_permissions.curated_read:
         raise HTTPException(
             status_code=HTTP_403_FORBIDDEN,
@@ -360,7 +317,7 @@ async def read_records_of_type(
     records = {}
     if final_permissions.curated_read:
         for search_class_name in get_subclasses(model, class_name):
-            for record_class_name, record in g_curated_stores[collection].get_records_of_class(
+            for record_class_name, record in g_instance_config.curated_stores[collection].get_records_of_class(
                 search_class_name
             ):
                 records[record['pid']] = record_class_name, record
@@ -373,6 +330,7 @@ async def read_records_of_type(
     if format == Format.ttl:
         ttls = [
             convert_json_to_ttl(
+                g_instance_config,
                 collection,
                 target_class=record_class_name,
                 json=cleaned_json(record, remove_keys=('@type', 'schema_type')),
@@ -388,47 +346,9 @@ async def read_records_of_type(
     ]
 
 
-def _get_token_store(
-    collection_name: str, token: str
-) -> tuple[RecordDirStore, TokenPermission] | tuple[None, None]:
-    if collection_name not in g_curated_stores:
-        raise HTTPException(
-            status_code=HTTP_404_NOT_FOUND,
-            detail=f'No such collection: "{collection_name}".',
-        )
-    if token not in g_token_stores:
-        raise HTTPException(status_code=HTTP_401_UNAUTHORIZED, detail='Invalid token.')
-
-    token_store = None
-    permissions = g_token_stores[token]['collections'][collection_name]['permissions']
-    if permissions.incoming_write or permissions.incoming_read:
-        token_store = g_token_stores[token]['collections'][collection_name]['store']
-    return token_store, permissions
-
-
-def _get_default_token_name(collection: str) -> str:
-    try:
-        return global_config.collections[collection].default_token
-    except KeyError as e:
-        raise HTTPException(
-            status_code=HTTP_404_NOT_FOUND, detail=f'No such collection: {collection}'
-        ) from e
-
-
-def _join_default_token_permissions(
-    permissions: TokenPermission,
-    collection: str,
-) -> TokenPermission:
-    default_token_name = global_config.collections[collection].default_token
-    default_token_permissions = g_token_stores[default_token_name]['collections'][collection]['permissions']
-    result = TokenPermission()
-    result.curated_read = permissions.curated_read | default_token_permissions.curated_read
-    result.incoming_read = permissions.incoming_read | default_token_permissions.incoming_read
-    result.incoming_write = permissions.incoming_write | default_token_permissions.incoming_write
-    return result
-
-
-# Rebuild the app to include all dynamically created endpoints
+# Create dynamic endpoints and rebuild the app to include all dynamically
+# created endpoints.
+create_endpoints(app, g_instance_config, globals())
 app.openapi_schema = None
 app.setup()
 
