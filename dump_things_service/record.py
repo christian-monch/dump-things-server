@@ -14,6 +14,7 @@ from dump_things_service import (
     JSON,
     config_file_name,
 )
+from dump_things_service.resolve_curie import resolve_curie
 from dump_things_service.utils import cleaned_json
 
 if TYPE_CHECKING:
@@ -167,7 +168,11 @@ class RecordDirStore:
         for path in self.root.rglob('*'):
             if path.is_file() and path.name not in ignored_files:
                 record = yaml.load(path.read_text(), Loader=yaml.SafeLoader)
-                if record['pid'] == pid:
+                iri = resolve_curie(
+                    self.model,
+                    record['pid'],
+                )
+                if iri == pid:
                     class_name = self._get_class_from_path(path)
                     return class_name, record
         return None, None

@@ -78,12 +78,14 @@ def convert_pydantic_to_ttl(
     collection_name: str,
     pydantic_object: BaseModel,
 ):
+    from dump_things_service.config import get_conversion_objects_for_collection
+
     return convert_format(
         target_class=pydantic_object.__class__.__name__,
         data=pydantic_object.model_dump(mode='json', exclude_none=True),
         input_format=Format.json,
         output_format=Format.ttl,
-        **instance_config.conversion_objects[instance_config.schemas[collection_name]],
+        **get_conversion_objects_for_collection(instance_config, collection_name),
     )
 
 
@@ -93,12 +95,14 @@ def convert_ttl_to_json(
     target_class: str,
     ttl: str,
 ) -> JSON:
+    from dump_things_service.config import get_conversion_objects_for_collection
+
     json_string = convert_format(
         target_class=target_class,
         data=ttl,
         input_format=Format.ttl,
         output_format=Format.json,
-        **instance_config.conversion_objects[instance_config.schemas[collection_name]],
+        **get_conversion_objects_for_collection(instance_config, collection_name),
     )
     return cleaned_json(json_loads(json_string))
 
