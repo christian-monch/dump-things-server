@@ -29,7 +29,7 @@ def test_web_interface_post_errors(
     result = test_client.post(
         f'/{collection_name}/record/{class_name}?{query}={format_name}',
         headers={'x-dumpthings-token': 'token_1'},
-        json={'pid': 'xyz:bbbb'},
+        json={'pid': 'xyz:web_interface_test_pid0x123123'},
     )
     assert result.status_code < HTTP_500_INTERNAL_SERVER_ERROR
 

@@ -279,10 +279,10 @@ async def read_record_with_pid(
     )
     record = None
     if final_permissions.incoming_read:
-        class_name, record = token_store.get_record_by_pid(iri)
+        class_name, record = token_store.get_record_by_iri(iri)
 
     if not record and final_permissions.curated_read:
-        class_name, record = g_instance_config.curated_stores[collection].get_record_by_pid(iri)
+        class_name, record = g_instance_config.curated_stores[collection].get_record_by_iri(iri)
 
     record = cleaned_json(record, remove_keys=('@type', 'schema_type'))
     if record and format == Format.ttl:

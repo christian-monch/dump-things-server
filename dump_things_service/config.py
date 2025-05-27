@@ -100,6 +100,7 @@ class GlobalConfig(BaseModel):
 
 @dataclasses.dataclass
 class InstanceConfig:
+    store_path: Path
     collections: dict = dataclasses.field(default_factory=dict)
     curated_stores: dict = dataclasses.field(default_factory=dict)
     incoming: dict = dataclasses.field(default_factory=dict)
@@ -227,7 +228,7 @@ def process_config_object(
     config_object: GlobalConfig,
     globals_dict: dict[str, Any],
 ):
-    instance_config = InstanceConfig()
+    instance_config = InstanceConfig(store_path=store_path)
     instance_config.collections = config_object.collections
 
     # Create a model for each collection, store it in `globals_dict`, and create
@@ -370,3 +371,13 @@ def get_model_info_for_collection(
             status_code=HTTP_400_BAD_REQUEST, detail=f'No such collection: {collection_name}'
         )
     return instance_config.model_info[collection_name]
+
+
+def get_collection_path(
+    instance_config: InstanceConfig,
+    collection_name: str,
+) -> CollectionConfig:
+    if collection_name not in instance_config.collections:
+        raise HTTPException(
+            status_code=HTTP_400_BAD_REQUEST, detail=f'No such collection: {collection_name}'
+        )
