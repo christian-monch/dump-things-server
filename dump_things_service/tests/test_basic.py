@@ -209,3 +209,17 @@ def test_unknown_token(fastapi_client_simple):
         headers={'x-dumpthings-token': 'unknown_token'},
     )
     assert response.status_code == HTTP_401_UNAUTHORIZED
+
+
+def test_curie_expansion(fastapi_client_simple):
+    test_client, _ = fastapi_client_simple
+
+    # Check that the pid is expanded correctly
+    response = test_client.get(
+        '/collection_1/record?pid=http%3A%2F%2Fexample.org%2Fperson-schema%2Fabc%2Fmode_test',
+    )
+    assert response.status_code == HTTP_200_OK
+    assert response.json() == {
+        'pid': 'abc:mode_test',
+        'given_name': 'mode_curated',
+    }

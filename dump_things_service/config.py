@@ -6,6 +6,7 @@ import hashlib
 from functools import partial
 from pathlib import Path
 from typing import (
+    TYPE_CHECKING,
     Any,
     Callable,
     Literal,
@@ -27,6 +28,10 @@ from dump_things_service import (
 from dump_things_service.convert import get_conversion_objects
 from dump_things_service.model import get_model_for_schema
 from dump_things_service.record import RecordDirStore
+
+if TYPE_CHECKING:
+    import types
+
 
 config_file_name = '.dumpthings.yaml'
 token_config_file_name = '.token_config.yaml'  # noqa: S105
@@ -176,7 +181,7 @@ class Config:
             raise ConfigError(msg) from e
         except TypeError:
             msg = f'Error in yaml file {path}: content is not a mapping'
-            raise ConfigError(msg)
+            raise ConfigError(msg) from None
         except ValidationError as e:
             msg = f'Pydantic-error reading config file {path}: {e}'
             raise ConfigError(msg) from e
@@ -342,3 +347,26 @@ def get_zone(
             status_code=HTTP_404_NOT_FOUND, detail=f'No incoming zone defined for collection: {collection}'
         )
     return instance_config.zones[collection][token]
+
+
+def get_conversion_objects_for_collection(
+    instance_config: InstanceConfig,
+    collection_name: str,
+) -> dict:
+    """Get the conversion objects for the given collection."""
+    if collection_name not in instance_config.schemas:
+        raise HTTPException(
+            status_code=HTTP_400_BAD_REQUEST, detail=f'No such collection: {collection_name}'
+        )
+    return instance_config.conversion_objects[instance_config.schemas[collection_name]]
+
+
+def get_model_info_for_collection(
+    instance_config: InstanceConfig,
+    collection_name: str,
+) -> tuple[types.ModuleType, dict[str, Any], str]:
+    if collection_name not in instance_config.model_info:
+        raise HTTPException(
+            status_code=HTTP_400_BAD_REQUEST, detail=f'No such collection: {collection_name}'
+        )
+    return instance_config.model_info[collection_name]

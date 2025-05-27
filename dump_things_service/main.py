@@ -40,6 +40,7 @@ from dump_things_service import (
 from dump_things_service.config import (
     ConfigError,
     get_default_token_name,
+    get_model_info_for_collection,
     get_token_store,
     get_zone,
     join_default_token_permissions,
@@ -54,6 +55,7 @@ from dump_things_service.model import (
     get_classes,
     get_subclasses,
 )
+from dump_things_service.resolve_curie import resolve_curie
 from dump_things_service.utils import (
     cleaned_json,
     combine_ttl,
@@ -124,11 +126,11 @@ if g_error:
         lgr.warning('Server runs in error mode, all endpoints will return error information.')
 
         @app.post('/{full_path:path}')
-        def post_global_error(request: Request, full_path: str):
+        def post_global_error(request: Request, full_path: str):  # noqa: ARG001
             handle_global_error()
 
         @app.get('/{full_path:path}')
-        def get_global_error(request: Request, full_path: str):
+        def get_global_error(request: Request, full_path: str):  # noqa: ARG001
             handle_global_error()
 
         uvicorn.run(
@@ -271,12 +273,16 @@ async def read_record_with_pid(
             detail=f'No read access to curated or incoming data in collection "{collection}".',
         )
 
+    iri = resolve_curie(
+        get_model_info_for_collection(g_instance_config, collection)[0],
+        pid,
+    )
     record = None
     if final_permissions.incoming_read:
-        class_name, record = token_store.get_record_by_pid(pid)
+        class_name, record = token_store.get_record_by_pid(iri)
 
     if not record and final_permissions.curated_read:
-        class_name, record = g_instance_config.curated_stores[collection].get_record_by_pid(pid)
+        class_name, record = g_instance_config.curated_stores[collection].get_record_by_pid(iri)
 
     record = cleaned_json(record, remove_keys=('@type', 'schema_type'))
     if record and format == Format.ttl:
