@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import logging
-from collections import defaultdict
 from itertools import chain
 from typing import (
     TYPE_CHECKING,
@@ -16,7 +15,6 @@ from dump_things_service import (
     JSON,
     config_file_name,
 )
-from dump_things_service.config import InstanceConfig
 from dump_things_service.resolve_curie import resolve_curie
 from dump_things_service.utils import cleaned_json
 
@@ -28,6 +26,8 @@ if TYPE_CHECKING:
     )
 
     from pydantic import BaseModel
+
+    from dump_things_service.config import InstanceConfig
 
 
 ignored_files = {'.', '..', config_file_name}
@@ -113,12 +113,11 @@ class RecordDirStore:
                 if path.name == existing_path.name:
                     # The `Thing` record is just a placeholder, we can ignore it
                     return
-                else:
-                    msg = f'IRI {iri} existing {existing_class} instance at {existing_path} cannot be replace by {new_class} instance. PIDs differ!'
-                    raise HTTPException(
-                        HTTP_400_BAD_REQUEST,
-                        detail=msg,
-                    )
+                msg = f'IRI {iri} existing {existing_class} instance at {existing_path} cannot be replace by {new_class} instance. PIDs differ!'
+                raise HTTPException(
+                    HTTP_400_BAD_REQUEST,
+                    detail=msg,
+                )
 
             # Case 4:
             msg = f'Duplicated IRI ({iri}): existing {existing_class} instance at {existing_path} has the same IRI as new {new_class} instance.'
@@ -296,6 +295,8 @@ def get_record_dir_store(
         )
         instance_config.stores[root] = existing_store
 
-    assert existing_store.model == model
-    assert existing_store.pid_mapping_function == pid_mapping_function
+    if existing_store.model != model or existing_store.pid_mapping_function != pid_mapping_function:
+        msg = f'Store at {root} already exists with different model or PID mapping function.'
+        raise ValueError(msg)
+
     return existing_store
