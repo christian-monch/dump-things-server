@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from itertools import chain
 from typing import (
     TYPE_CHECKING,
@@ -26,9 +27,12 @@ if TYPE_CHECKING:
 
     from pydantic import BaseModel
 
+    from dump_things_service.config import InstanceConfig
+
 
 ignored_files = {'.', '..', config_file_name}
 
+lgr = logging.getLogger('uvicorn')
 
 submitter_class = 'NCIT_C54269'
 submitter_class_base = 'http://purl.obolibrary.org/obo/'
@@ -49,6 +53,89 @@ class RecordDirStore:
         self.root = root
         self.model = model
         self.pid_mapping_function = pid_mapping_function
+        self.index = {}
+        self._build_index()
+
+    def _build_index(self):
+        lgr.info('Building IRI index for records in %s', self.root)
+        for path in self.root.rglob('*'):
+            if path.is_file() and path.name not in ignored_files:
+                record = yaml.load(path.read_text(), Loader=yaml.SafeLoader)
+                iri = resolve_curie(self.model, record['pid'])
+                self._add_iri_to_index(iri, path)
+        lgr.info('Index built with %d IRIs', len(self.index))
+
+    def _add_iri_to_index(self, iri: str, path: Path):
+
+        # If the IRI is already in the index, the reasons may be:
+        #
+        # 1. The existing record is updated. In this case the path should
+        #    be the same as the one already in the index (which means the classes
+        #    are the same and the PIDs are the same). No need to replace the path
+        #    since they are identical anyway.
+        # 2. The existing record is a `Thing` record, and the new record is not a
+        #    `Thing` record (visible by its `path`). The `Thing` record should
+        #    just be a placeholder. The final path component should be identical
+        #    (which means that both records have the same PID). In this case we
+        #    replace the existing record with the new one. If the PIDs are different,
+        #    we cannot be sure that the `Thing` record is just a placeholder, and
+        #    we raise an exception.
+        # 3. The existing record is not a `Thing` record, and the new record is a
+        #    `Thing` record. If both have identical PIDs (final path component),
+        #    we ignore the new record, since it is just a placeholder. If the PIDs
+        #    differ, we raise an exception, since it indicates that two unrelated
+        #    records have the same IRI, which is an error condition.
+        # 4. The existing record is a different class (not `Thing`) and probably
+        #    a different PID. That indicates that two different records have the
+        #    same IRI. This is an error condition, and we raise an exception
+        existing_path = self.index.get(iri)
+        if existing_path:
+            # Case 1: existing record is updated
+            if path == existing_path:
+                return
+
+            existing_class = self._get_class_name(existing_path)
+            new_class = self._get_class_name(path)
+
+            # Case 2: `Thing` record is replaced with a non-`Thing` record.
+            if existing_class == 'Thing' and new_class != 'Thing':
+                if path.name == existing_path.name:
+                    self.index[iri] = path
+                    return
+                msg = f'IRI {iri} existing {existing_class} instance at {existing_path} might not be a placeholder for {new_class} at {path}, PIDs differ!'
+                raise HTTPException(
+                    HTTP_400_BAD_REQUEST,
+                    detail=msg,
+                )
+
+            # Case 3: a placeholder `Thing` should be added.
+            if existing_class != 'Thing' and new_class == 'Thing':
+                if path.name == existing_path.name:
+                    # The `Thing` record is just a placeholder, we can ignore it
+                    return
+                msg = f'IRI {iri} existing {existing_class} instance at {existing_path} cannot be replace by {new_class} instance. PIDs differ!'
+                raise HTTPException(
+                    HTTP_400_BAD_REQUEST,
+                    detail=msg,
+                )
+
+            # Case 4:
+            msg = f'Duplicated IRI ({iri}): existing {existing_class} instance at {existing_path} has the same IRI as new {new_class} instance.'
+            raise HTTPException(
+                HTTP_400_BAD_REQUEST,
+                detail=msg,
+            )
+
+        self.index[iri] = path
+
+    def _get_class_name(self, path: Path) -> str:
+        """Get the class name from the path."""
+        rel_path = path.absolute().relative_to(self.root)
+        return rel_path.parts[0]
+
+    def rebuild_index(self):
+        self.index = {}
+        self._build_index()
 
     def store_record(
         self,
@@ -58,11 +145,12 @@ class RecordDirStore:
     ) -> Iterable[BaseModel]:
         final_records = self.extract_inlined(record, submitter_id)
         for final_record in final_records:
-            yield self.store_single_record(
-                record=final_record,
-                submitter_id=submitter_id,
-                model=model,
-            )
+            if final_record is not None:
+                yield self.store_single_record(
+                    record=final_record,
+                    submitter_id=submitter_id,
+                    model=model,
+                )
 
     def extract_inlined(
         self,
@@ -96,7 +184,7 @@ class RecordDirStore:
         record: BaseModel,
         submitter_id: str,
         model: Any,
-    ):
+    ) -> BaseModel | None:
         # Generate the class directory
         class_name = record.__class__.__name__
         record_root = self.root / class_name
@@ -134,6 +222,11 @@ class RecordDirStore:
         # Ensure all intermediate directories exist and save the YAML document
         storage_path.parent.mkdir(parents=True, exist_ok=True)
         storage_path.write_text(data, encoding='utf-8')
+
+        # Add the resolved PID to the index
+        iri = resolve_curie(self.model, record.pid)
+        self._add_iri_to_index(iri, storage_path)
+
         return record
 
     def annotate(
@@ -161,31 +254,49 @@ class RecordDirStore:
                     return f'{prefix_info["prefix_prefix"]}:{class_name}'
         return f'{iri}{class_name}'
 
-    def get_record_by_pid(
+    def get_record_by_iri(
         self,
-        pid: str,
+        iri: str,
     ) -> tuple[str, JSON] | tuple[None, None]:
-        for path in self.root.rglob('*'):
-            if path.is_file() and path.name not in ignored_files:
-                record = yaml.load(path.read_text(), Loader=yaml.SafeLoader)
-                iri = resolve_curie(
-                    self.model,
-                    record['pid'],
-                )
-                if iri == pid:
-                    class_name = self._get_class_from_path(path)
-                    return class_name, record
-        return None, None
+        path = self.index.get(iri)
+        if path is None:
+            return None, None
+        record = yaml.load(path.read_text(), Loader=yaml.SafeLoader)
+        class_name = self._get_class_from_path(path)
+        return class_name, record
 
     def _get_class_from_path(self, path: Path) -> str:
         rel_path = path.absolute().relative_to(self.root)
         return rel_path.parts[0]
 
     def get_records_of_class(self, class_name: str) -> Iterable[tuple[str, JSON]]:
-        for path in (self.root / class_name).rglob('*'):
-            if path.is_file() and path.name not in ignored_files:
-                class_name = self._get_class_from_path(path)
+        for path in self.index.values():
+            path_class_name = self._get_class_from_path(path)
+            if class_name == path_class_name:
                 yield (
                     class_name,
                     yaml.load(path.read_text(), Loader=yaml.SafeLoader),
                 )
+
+
+def get_record_dir_store(
+        instance_config: InstanceConfig,
+        root: Path,
+        model: Any,
+        pid_mapping_function: Callable,
+) -> RecordDirStore:
+    """Get a record directory store for the given root directory."""
+    existing_store = instance_config.stores.get(root)
+    if not existing_store:
+        existing_store = RecordDirStore(
+            root=root,
+            model=model,
+            pid_mapping_function=pid_mapping_function,
+        )
+        instance_config.stores[root] = existing_store
+
+    if existing_store.model != model or existing_store.pid_mapping_function != pid_mapping_function:
+        msg = f'Store at {root} already exists with different model or PID mapping function.'
+        raise ValueError(msg)
+
+    return existing_store

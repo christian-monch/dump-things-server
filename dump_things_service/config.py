@@ -27,10 +27,11 @@ from dump_things_service import (
 )
 from dump_things_service.convert import get_conversion_objects
 from dump_things_service.model import get_model_for_schema
-from dump_things_service.record import RecordDirStore
 
 if TYPE_CHECKING:
     import types
+
+    from dump_things_service.record import RecordDirStore
 
 
 config_file_name = '.dumpthings.yaml'
@@ -100,7 +101,9 @@ class GlobalConfig(BaseModel):
 
 @dataclasses.dataclass
 class InstanceConfig:
+    store_path: Path
     collections: dict = dataclasses.field(default_factory=dict)
+    stores: dict = dataclasses.field(default_factory=dict)
     curated_stores: dict = dataclasses.field(default_factory=dict)
     incoming: dict = dataclasses.field(default_factory=dict)
     zones: dict = dataclasses.field(default_factory=dict)
@@ -227,7 +230,9 @@ def process_config_object(
     config_object: GlobalConfig,
     globals_dict: dict[str, Any],
 ):
-    instance_config = InstanceConfig()
+    from dump_things_service.record import get_record_dir_store
+
+    instance_config = InstanceConfig(store_path=store_path)
     instance_config.collections = config_object.collections
 
     # Create a model for each collection, store it in `globals_dict`, and create
@@ -242,8 +247,11 @@ def process_config_object(
         instance_config.model_info[collection_name] = model, classes, model_var_name
         globals_dict[model_var_name] = model
 
-        curated_store = RecordDirStore(
-            store_path / collection_info.curated, model, get_mapping_function(collection_config)
+        curated_store = get_record_dir_store(
+            instance_config,
+            store_path / collection_info.curated,
+            model,
+            get_mapping_function(collection_config)
         )
         instance_config.curated_stores[collection_name] = curated_store
         if collection_info.incoming:
@@ -274,7 +282,12 @@ def process_config_object(
                         / token_collection_info.incoming_label
                 )
                 store_dir.mkdir(parents=True, exist_ok=True)
-                token_store = RecordDirStore(store_dir, model, mapping_function)
+                token_store = get_record_dir_store(
+                    instance_config,
+                    store_dir,
+                    model,
+                    mapping_function,
+                )
                 entry['collections'][collection_name]['store'] = token_store
             entry['collections'][collection_name]['permissions'] = get_permissions(
                 token_collection_info.mode
