@@ -262,16 +262,12 @@ class RecordDirStore:
         if path is None:
             return None, None
         record = yaml.load(path.read_text(), Loader=yaml.SafeLoader)
-        class_name = self._get_class_from_path(path)
+        class_name = self._get_class_name(path)
         return class_name, record
-
-    def _get_class_from_path(self, path: Path) -> str:
-        rel_path = path.absolute().relative_to(self.root)
-        return rel_path.parts[0]
 
     def get_records_of_class(self, class_name: str) -> Iterable[tuple[str, JSON]]:
         for path in self.index.values():
-            path_class_name = self._get_class_from_path(path)
+            path_class_name = self._get_class_name(path)
             if class_name == path_class_name:
                 yield (
                     class_name,
