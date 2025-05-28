@@ -16,6 +16,7 @@ from dump_things_service import (
     JSON,
     config_file_name,
 )
+from dump_things_service.config import InstanceConfig
 from dump_things_service.resolve_curie import resolve_curie
 from dump_things_service.utils import cleaned_json
 
@@ -132,6 +133,10 @@ class RecordDirStore:
         """Get the class name from the path."""
         rel_path = path.absolute().relative_to(self.root)
         return rel_path.parts[0]
+
+    def rebuild_index(self):
+        self.index = {}
+        self._build_index()
 
     def store_record(
         self,
@@ -273,3 +278,24 @@ class RecordDirStore:
                     class_name,
                     yaml.load(path.read_text(), Loader=yaml.SafeLoader),
                 )
+
+
+def get_record_dir_store(
+        instance_config: InstanceConfig,
+        root: Path,
+        model: Any,
+        pid_mapping_function: Callable,
+) -> RecordDirStore:
+    """Get a record directory store for the given root directory."""
+    existing_store = instance_config.stores.get(root)
+    if not existing_store:
+        existing_store = RecordDirStore(
+            root=root,
+            model=model,
+            pid_mapping_function=pid_mapping_function,
+        )
+        instance_config.stores[root] = existing_store
+
+    assert existing_store.model == model
+    assert existing_store.pid_mapping_function == pid_mapping_function
+    return existing_store
