@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import logging
 from itertools import chain
+from pathlib import Path
+from threading import Lock
 from typing import (
     TYPE_CHECKING,
     Callable,
@@ -31,6 +33,7 @@ if TYPE_CHECKING:
 
 
 ignored_files = {'.', '..', config_file_name}
+index_file_name = '.index.yaml'
 
 lgr = logging.getLogger('uvicorn')
 
@@ -54,18 +57,26 @@ class RecordDirStore:
         self.model = model
         self.pid_mapping_function = pid_mapping_function
         self.index = {}
-        self._build_index()
+        self.index_lock = Lock()
+        if not self.load_index():
+            self._build_index()
+            self.save_index()
 
     def _build_index(self):
-        lgr.info('Building IRI index for records in %s', self.root)
-        for path in self.root.rglob('*'):
-            if path.is_file() and path.name not in ignored_files:
-                record = yaml.load(path.read_text(), Loader=yaml.SafeLoader)
-                iri = resolve_curie(self.model, record['pid'])
-                self._add_iri_to_index(iri, path)
-        lgr.info('Index built with %d IRIs', len(self.index))
+        with self.index_lock:
+            lgr.info('Building IRI index for records in %s', self.root)
+            for path in self.root.rglob('*'):
+                if path.is_file() and path.name not in ignored_files:
+                    record = yaml.load(path.read_text(), Loader=yaml.SafeLoader)
+                    iri = resolve_curie(self.model, record['pid'])
+                    self._add_iri_to_index_locked(iri, path)
+            lgr.info('Index built with %d IRIs', len(self.index))
 
     def _add_iri_to_index(self, iri: str, path: Path):
+        with self.index_lock:
+            return self._add_iri_to_index_locked(iri, path)
+
+    def _add_iri_to_index_locked(self, iri: str, path: Path):
 
         # If the IRI is already in the index, the reasons may be:
         #
@@ -128,14 +139,43 @@ class RecordDirStore:
 
         self.index[iri] = path
 
+    def rebuild_index(self):
+        self.index = {}
+        self._build_index()
+        self.save_index()
+
+    def load_index(self) -> bool:
+        index_file = self.root / index_file_name
+        if index_file.exists():
+            with self.index_lock:
+                lgr.info('Loading IRI index from %s', self.root / index_file_name)
+                with open(index_file, 'rt') as f:
+                    self.index = {
+                        iri: Path(path)
+                        for iri, path in yaml.safe_load(f).items()
+                    }
+                lgr.info('Index loaded with %d IRIs', len(self.index))
+            return True
+        return False
+
+    def save_index(self) -> None:
+        index_file = self.root / index_file_name
+        with self.index_lock:
+            lgr.info('Saving IRI index to %s', index_file)
+            with open(index_file, 'wt') as f:
+                yaml.dump(
+                    {iri: str(path) for iri, path in self.index.items()},
+                    f,
+                    allow_unicode=True,
+                    default_flow_style=False,
+                    sort_keys=False,
+                )
+            lgr.info('Index saved with %d IRIs', len(self.index))
+
     def _get_class_name(self, path: Path) -> str:
         """Get the class name from the path."""
         rel_path = path.absolute().relative_to(self.root)
         return rel_path.parts[0]
-
-    def rebuild_index(self):
-        self.index = {}
-        self._build_index()
 
     def store_record(
         self,
@@ -151,6 +191,7 @@ class RecordDirStore:
                     submitter_id=submitter_id,
                     model=model,
                 )
+        self.save_index()
 
     def extract_inlined(
         self,
@@ -202,8 +243,8 @@ class RecordDirStore:
                 remove_keys=('schema_type',),
             ),
             sort_keys=False,
-            allow_unicode=True,
             default_flow_style=False,
+            allow_unicode=True,
         )
 
         # Apply the mapping function to the record pid to get the final storage path
@@ -280,6 +321,7 @@ def get_record_dir_store(
         root: Path,
         model: Any,
         pid_mapping_function: Callable,
+        rebuild_index: bool = False,
 ) -> RecordDirStore:
     """Get a record directory store for the given root directory."""
     existing_store = instance_config.stores.get(root)
@@ -295,4 +337,6 @@ def get_record_dir_store(
         msg = f'Store at {root} already exists with different model or PID mapping function.'
         raise ValueError(msg)
 
+    if rebuild_index:
+        existing_store.rebuild_index()
     return existing_store

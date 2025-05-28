@@ -82,6 +82,11 @@ parser.add_argument(
     help="Don't exit with non-zero status on error, instead return the error on every request.",
 )
 parser.add_argument(
+    '--rebuild-index',
+    action='store_true',
+    help="Ignore existing index files and rebuild all indices on startup.",
+)
+parser.add_argument(
     'store',
     help='The root of the data stores, it should contain a global_store and token_stores.',
 )
@@ -100,6 +105,7 @@ try:
         store_path=store_path,
         config_file=config_path,
         globals_dict=globals(),
+        rebuild_index=arguments.rebuild_index,
     )
 except ConfigError as e:
     lgr.error(
