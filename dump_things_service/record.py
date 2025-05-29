@@ -66,6 +66,10 @@ class RecordDirStore:
         else:
             self.writer = (root / index_file_name).open(mode='at+')
 
+    def __del__(self):
+        """Ensure the index is flushed and closed on deletion."""
+        self.close_index()
+
     def _build_index(self):
         with self.index_lock:
             lgr.info('Building IRI index for records in %s', self.root)
@@ -76,11 +80,21 @@ class RecordDirStore:
                     self._add_iri_to_index_locked(iri, path)
             lgr.info('Index built with %d IRIs', len(self.index))
 
-    def _add_iri_to_index(self, iri: str, path: Path):
+    def _add_iri_to_index(self, iri: str, path: Path) -> bool:
+        """Add an IRI to the index, or update it if it already exists.
+
+        Returns: `True` if the index changed, i.e., if the IRI was added or updated,
+        and `False` if no changes were made.
+        """
         with self.index_lock:
             return self._add_iri_to_index_locked(iri, path)
 
-    def _add_iri_to_index_locked(self, iri: str, path: Path):
+    def _add_iri_to_index_locked(self, iri: str, path: Path) -> bool:
+        """Add an IRI to the locked index, or update it if it already exists.
+
+        Returns: `True` if the index changed, i.e., if the IRI was added or updated,
+        and `False` if no changes were made.
+        """
 
         # If the IRI is already in the index, the reasons may be:
         #
@@ -107,16 +121,16 @@ class RecordDirStore:
         if existing_path:
             # Case 1: existing record is updated
             if path == existing_path:
-                return
+                return False
 
-            existing_class = self._get_class_name(existing_path)
+            existing_class = self._get_class_name(Path(existing_path))
             new_class = self._get_class_name(path)
 
             # Case 2: `Thing` record is replaced with a non-`Thing` record.
             if existing_class == 'Thing' and new_class != 'Thing':
                 if path.name == existing_path.name:
                     self.index[iri] = path
-                    return
+                    return True
                 msg = f'IRI {iri} existing {existing_class} instance at {existing_path} might not be a placeholder for {new_class} at {path}, PIDs differ!'
                 raise HTTPException(
                     HTTP_400_BAD_REQUEST,
@@ -127,7 +141,7 @@ class RecordDirStore:
             if existing_class != 'Thing' and new_class == 'Thing':
                 if path.name == existing_path.name:
                     # The `Thing` record is just a placeholder, we can ignore it
-                    return
+                    return False
                 msg = f'IRI {iri} existing {existing_class} instance at {existing_path} cannot be replace by {new_class} instance. PIDs differ!'
                 raise HTTPException(
                     HTTP_400_BAD_REQUEST,
@@ -142,6 +156,7 @@ class RecordDirStore:
             )
 
         self.index[iri] = path
+        return True
 
     def rebuild_index(self):
         self.index = {}
@@ -197,6 +212,16 @@ class RecordDirStore:
         duration = time() - start_time
         print('XXXXXXX Index append duration:', duration, 'seconds')
 
+    def close_index(self) -> None:
+        with self.index_lock:
+            self._flush_index_locked()
+
+    def _close_index_locked(self) -> None:
+        if self.writer:
+            self.writer.flush()
+            self.writer.close()
+            self.writer = None
+
     def flush_index(self) -> None:
         with self.index_lock:
             self._flush_index_locked()
@@ -204,8 +229,6 @@ class RecordDirStore:
     def _flush_index_locked(self) -> None:
         if self.writer:
             self.writer.flush()
-            self.writer.close()
-            self.writer = None
 
     def _get_class_name(self, path: Path) -> str:
         """Get the class name from the path."""
@@ -300,9 +323,9 @@ class RecordDirStore:
 
         # Add the resolved PID to the index
         iri = resolve_curie(self.model, record.pid)
-        self._add_iri_to_index(iri, storage_path)
-        # Add the resolved PID to the saved index
-        self.add_to_saved_index(iri, storage_path)
+        if self._add_iri_to_index(iri, storage_path):
+            # If the index changed, persist the changes
+            self.add_to_saved_index(iri, storage_path)
 
         return record
 
