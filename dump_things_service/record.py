@@ -32,8 +32,8 @@ if TYPE_CHECKING:
     from dump_things_service.config import InstanceConfig
 
 
-ignored_files = {'.', '..', config_file_name}
 index_file_name = '.index.yaml'
+ignored_files = {'.', '..', config_file_name, index_file_name}
 
 lgr = logging.getLogger('uvicorn')
 
@@ -54,13 +54,17 @@ class RecordDirStore:
             msg = f'Store root is not absolute: {root}'
             raise ValueError(msg)
         self.root = root
+        root.mkdir(parents=True, exist_ok=True)
         self.model = model
         self.pid_mapping_function = pid_mapping_function
         self.index = {}
         self.index_lock = Lock()
         if not self.load_index():
             self._build_index()
+            self.writer = (root / index_file_name).open(mode='wt+')
             self.save_index()
+        else:
+            self.writer = (root / index_file_name).open(mode='at+')
 
     def _build_index(self):
         with self.index_lock:
@@ -145,32 +149,63 @@ class RecordDirStore:
         self.save_index()
 
     def load_index(self) -> bool:
-        index_file = self.root / index_file_name
-        if index_file.exists():
-            with self.index_lock:
-                lgr.info('Loading IRI index from %s', self.root / index_file_name)
-                with open(index_file, 'rt') as f:
-                    self.index = {
-                        iri: Path(path)
-                        for iri, path in yaml.safe_load(f).items()
-                    }
-                lgr.info('Index loaded with %d IRIs', len(self.index))
-            return True
+        with self.index_lock:
+            index_file = self.root / index_file_name
+            if index_file.exists():
+                return self._load_index_locked(index_file)
         return False
 
+    def _load_index_locked(self, index_file: Path) -> bool:
+        lgr.info('Loading IRI index from %s', self.root / index_file_name)
+        index = {}
+        with open(index_file, 'rt') as f:
+            while True:
+                line = f.readline().strip()
+                if line == '':
+                    break
+                if line.startswith('+ '):
+                    iri, path = line[2:].split(': ', 1)
+                    index[iri] = path
+                elif line.startswith('- '):
+                    iri = line[2:]
+                    if iri in index:
+                        del index[iri]
+                else:
+                    lgr.error(f'Invalid line in index file: {line}')
+                    return False
+        self.index = index
+        lgr.info('Index loaded with %d IRIs', len(self.index))
+        return True
+
     def save_index(self) -> None:
-        index_file = self.root / index_file_name
+        from time import time
         with self.index_lock:
-            lgr.info('Saving IRI index to %s', index_file)
-            with open(index_file, 'wt') as f:
-                yaml.dump(
-                    {iri: str(path) for iri, path in self.index.items()},
-                    f,
-                    allow_unicode=True,
-                    default_flow_style=False,
-                    sort_keys=False,
-                )
+            start_time = time()
+            self.writer.seek(0, 0)  # Reset the file pointer to the beginning
+            for iri, path in self.index.items():
+                self.writer.write(f'+ {iri}: {path}\n')
+            duration = time() - start_time
+            print('XXXXXXX Index save duration:', duration, 'seconds')
             lgr.info('Index saved with %d IRIs', len(self.index))
+
+    def add_to_saved_index(self, iri: str, path: Path) -> None:
+        from time import time
+        start_time = time()
+        with self.index_lock:
+            lgr.info(f'Appending IRI %s to index', iri)
+            self.writer.write(f'+ {iri}: {path}\n')
+        duration = time() - start_time
+        print('XXXXXXX Index append duration:', duration, 'seconds')
+
+    def flush_index(self) -> None:
+        with self.index_lock:
+            self._flush_index_locked()
+
+    def _flush_index_locked(self) -> None:
+        if self.writer:
+            self.writer.flush()
+            self.writer.close()
+            self.writer = None
 
     def _get_class_name(self, path: Path) -> str:
         """Get the class name from the path."""
@@ -191,7 +226,6 @@ class RecordDirStore:
                     submitter_id=submitter_id,
                     model=model,
                 )
-        self.save_index()
 
     def extract_inlined(
         self,
@@ -267,6 +301,8 @@ class RecordDirStore:
         # Add the resolved PID to the index
         iri = resolve_curie(self.model, record.pid)
         self._add_iri_to_index(iri, storage_path)
+        # Add the resolved PID to the saved index
+        self.add_to_saved_index(iri, storage_path)
 
         return record
 
