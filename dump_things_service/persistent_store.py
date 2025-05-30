@@ -70,7 +70,7 @@ class PersistentStore:
         if not isinstance(value, str):
             msg = f'Key must be a string, got {type(key)}'
             raise TypeError(msg)
-        self.add_item(key, value)
+        self._add_item(key, value)
 
     def __delitem__(self, key):
         if not isinstance(key, str):
@@ -81,14 +81,14 @@ class PersistentStore:
         msg = f'Key {key} not found in persistent store at {self.path}'
         raise KeyError(msg)
 
-    def add_item(self, key: str, value: str) -> bool:
-        with self.lock:
-            existing_value = self.index.get(key)
-            if existing_value and existing_value == value:
-                return False
-            self.index[key] = value
-            self._locked_add_to_disk(key, value)
-            return True
+    def __len__(self):
+        return len(self.index)
+
+    def items(self):
+        return self.index.items()
+
+    def values(self):
+        return self.index.values()
 
     def get(self, key: str, default: str | None = None) -> str | None:
         return self.index.get(key, default)
@@ -100,6 +100,27 @@ class PersistentStore:
                 self._locked_remove_from_disk(key)
                 return True
             return False
+
+    def compact(self):
+        with self.lock:
+            self._locked_load()
+            self._locked_save()
+
+    def clear(self):
+        with self.lock:
+            self.index = {}
+            self.writer.seek(0, 0)
+            self.writer.truncate()
+            self.writer.flush()
+
+    def _add_item(self, key: str, value: str) -> bool:
+        with self.lock:
+            existing_value = self.index.get(key)
+            if existing_value and existing_value == value:
+                return False
+            self.index[key] = value
+            self._locked_add_to_disk(key, value)
+            return True
 
     def _locked_add_to_disk(self, key: str, value: str):
         self.writer.write(f'+ {quote_plus(key)} {quote_plus(value)}\n')
@@ -144,8 +165,3 @@ class PersistentStore:
         for key, value in self.index.items():
             self._locked_add_to_disk(key, value)
         self.writer.flush()
-
-    def compact(self):
-        with self.lock:
-            self._locked_load()
-            self._locked_save()

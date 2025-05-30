@@ -17,6 +17,7 @@ from dump_things_service import (
     JSON,
     config_file_name,
 )
+from dump_things_service.persistent_store import PersistentStore
 from dump_things_service.resolve_curie import resolve_curie
 from dump_things_service.utils import cleaned_json
 
@@ -32,7 +33,7 @@ if TYPE_CHECKING:
     from dump_things_service.config import InstanceConfig
 
 
-index_file_name = '.index.yaml'
+index_file_name = '.index.txt'
 ignored_files = {'.', '..', config_file_name, index_file_name}
 
 lgr = logging.getLogger('uvicorn')
@@ -49,48 +50,47 @@ class RecordDirStore:
         root: Path,
         model: Any,
         pid_mapping_function: Callable,
+        *,
+        rebuild_index: bool = False,
     ):
         if not root.is_absolute():
             msg = f'Store root is not absolute: {root}'
             raise ValueError(msg)
-        self.root = root
+        if root.exists() and not root.is_dir():
+            msg = f'Store root is not a directory: {root}'
+            raise ValueError(msg)
         root.mkdir(parents=True, exist_ok=True)
+        self.root = root
         self.model = model
         self.pid_mapping_function = pid_mapping_function
-        self.index = {}
-        self.index_lock = Lock()
-        if not self.load_index():
-            self._build_index()
-            self.writer = (root / index_file_name).open(mode='wt+')
-            self.save_index()
-        else:
-            self.writer = (root / index_file_name).open(mode='at+')
+
+        # Handle the persistent index
+        load_index_from_disk = False
+        if not (root / index_file_name).exists():
+            load_index_from_disk = True
+        self.index = PersistentStore(root / index_file_name)
+        if rebuild_index is True:
+            self.index.clear()
+            load_index_from_disk = True
+        if load_index_from_disk:
+            self._load_index()
 
     def __del__(self):
-        """Ensure the index is flushed and closed on deletion."""
-        self.close_index()
+        # Ensure that the index is properly closed.
+        del self.index
+        self.index = None
 
-    def _build_index(self):
-        with self.index_lock:
-            lgr.info('Building IRI index for records in %s', self.root)
-            for path in self.root.rglob('*'):
-                if path.is_file() and path.name not in ignored_files:
-                    record = yaml.load(path.read_text(), Loader=yaml.SafeLoader)
-                    iri = resolve_curie(self.model, record['pid'])
-                    self._add_iri_to_index_locked(iri, path)
-            lgr.info('Index built with %d IRIs', len(self.index))
+    def _load_index(self):
+        lgr.info('Building IRI index for records in %s', self.root)
+        for path in self.root.rglob('*'):
+            if path.is_file() and path.name not in ignored_files:
+                record = yaml.load(path.read_text(), Loader=yaml.SafeLoader)
+                iri = resolve_curie(self.model, record['pid'])
+                self.index[iri] = str(path.relative_to(self.root))
+        lgr.info('Index built with %d IRIs', len(self.index))
 
     def _add_iri_to_index(self, iri: str, path: Path) -> bool:
         """Add an IRI to the index, or update it if it already exists.
-
-        Returns: `True` if the index changed, i.e., if the IRI was added or updated,
-        and `False` if no changes were made.
-        """
-        with self.index_lock:
-            return self._add_iri_to_index_locked(iri, path)
-
-    def _add_iri_to_index_locked(self, iri: str, path: Path) -> bool:
-        """Add an IRI to the locked index, or update it if it already exists.
 
         Returns: `True` if the index changed, i.e., if the IRI was added or updated,
         and `False` if no changes were made.
@@ -117,8 +117,10 @@ class RecordDirStore:
         # 4. The existing record is a different class (not `Thing`) and probably
         #    a different PID. That indicates that two different records have the
         #    same IRI. This is an error condition, and we raise an exception
-        existing_path = self.index.get(iri)
-        if existing_path:
+        existing_value = self.index.get(iri)
+        if existing_value:
+            existing_path = Path(existing_value)
+
             # Case 1: existing record is updated
             if path == existing_path:
                 return False
@@ -129,7 +131,7 @@ class RecordDirStore:
             # Case 2: `Thing` record is replaced with a non-`Thing` record.
             if existing_class == 'Thing' and new_class != 'Thing':
                 if path.name == existing_path.name:
-                    self.index[iri] = path
+                    self.index[iri] = str(path)
                     return True
                 msg = f'IRI {iri} existing {existing_class} instance at {existing_path} might not be a placeholder for {new_class} at {path}, PIDs differ!'
                 raise HTTPException(
@@ -155,80 +157,8 @@ class RecordDirStore:
                 detail=msg,
             )
 
-        self.index[iri] = path
+        self.index[iri] = str(path.relative_to(self.root))
         return True
-
-    def rebuild_index(self):
-        self.index = {}
-        self._build_index()
-        self.save_index()
-
-    def load_index(self) -> bool:
-        with self.index_lock:
-            index_file = self.root / index_file_name
-            if index_file.exists():
-                return self._load_index_locked(index_file)
-        return False
-
-    def _load_index_locked(self, index_file: Path) -> bool:
-        lgr.info('Loading IRI index from %s', self.root / index_file_name)
-        index = {}
-        with open(index_file, 'rt') as f:
-            while True:
-                line = f.readline().strip()
-                if line == '':
-                    break
-                if line.startswith('+ '):
-                    iri, path = line[2:].split(': ', 1)
-                    index[iri] = path
-                elif line.startswith('- '):
-                    iri = line[2:]
-                    if iri in index:
-                        del index[iri]
-                else:
-                    lgr.error(f'Invalid line in index file: {line}')
-                    return False
-        self.index = index
-        lgr.info('Index loaded with %d IRIs', len(self.index))
-        return True
-
-    def save_index(self) -> None:
-        from time import time
-        with self.index_lock:
-            start_time = time()
-            self.writer.seek(0, 0)  # Reset the file pointer to the beginning
-            for iri, path in self.index.items():
-                self.writer.write(f'+ {iri}: {path}\n')
-            duration = time() - start_time
-            print('XXXXXXX Index save duration:', duration, 'seconds')
-            lgr.info('Index saved with %d IRIs', len(self.index))
-
-    def add_to_saved_index(self, iri: str, path: Path) -> None:
-        from time import time
-        start_time = time()
-        with self.index_lock:
-            lgr.info(f'Appending IRI %s to index', iri)
-            self.writer.write(f'+ {iri}: {path}\n')
-        duration = time() - start_time
-        print('XXXXXXX Index append duration:', duration, 'seconds')
-
-    def close_index(self) -> None:
-        with self.index_lock:
-            self._flush_index_locked()
-
-    def _close_index_locked(self) -> None:
-        if self.writer:
-            self.writer.flush()
-            self.writer.close()
-            self.writer = None
-
-    def flush_index(self) -> None:
-        with self.index_lock:
-            self._flush_index_locked()
-
-    def _flush_index_locked(self) -> None:
-        if self.writer:
-            self.writer.flush()
 
     def _get_class_name(self, path: Path) -> str:
         """Get the class name from the path."""
@@ -323,9 +253,7 @@ class RecordDirStore:
 
         # Add the resolved PID to the index
         iri = resolve_curie(self.model, record.pid)
-        if self._add_iri_to_index(iri, storage_path):
-            # If the index changed, persist the changes
-            self.add_to_saved_index(iri, storage_path)
+        self.index[iri] = str(storage_path.relative_to(self.root))
 
         return record
 
@@ -358,20 +286,22 @@ class RecordDirStore:
         self,
         iri: str,
     ) -> tuple[str, JSON] | tuple[None, None]:
-        path = self.index.get(iri)
-        if path is None:
+        value = self.index.get(iri)
+        if value is None:
             return None, None
+        path = self.root / value
         record = yaml.load(path.read_text(), Loader=yaml.SafeLoader)
         class_name = self._get_class_name(path)
         return class_name, record
 
     def get_records_of_class(self, class_name: str) -> Iterable[tuple[str, JSON]]:
-        for path in self.index.values():
-            path_class_name = self._get_class_name(path)
+        for value in self.index.values():
+            path = Path(value)
+            path_class_name = path.parts[0]
             if class_name == path_class_name:
                 yield (
                     class_name,
-                    yaml.load(path.read_text(), Loader=yaml.SafeLoader),
+                    yaml.load((self.root / path).read_text(), Loader=yaml.SafeLoader),
                 )
 
 
@@ -380,6 +310,7 @@ def get_record_dir_store(
         root: Path,
         model: Any,
         pid_mapping_function: Callable,
+        *,
         rebuild_index: bool = False,
 ) -> RecordDirStore:
     """Get a record directory store for the given root directory."""
@@ -389,6 +320,7 @@ def get_record_dir_store(
             root=root,
             model=model,
             pid_mapping_function=pid_mapping_function,
+            rebuild_index=rebuild_index,
         )
         instance_config.stores[root] = existing_store
 

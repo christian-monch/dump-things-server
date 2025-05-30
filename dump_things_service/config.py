@@ -215,8 +215,8 @@ def process_config(
         store_path: Path,
         config_file: Path,
         globals_dict: dict[str, Any],
-        *
-        rebuild_index: bool,
+        *,
+        rebuild_index: bool = False,
 ) -> InstanceConfig:
 
     config_object = Config.get_config_from_file(config_file)
@@ -233,7 +233,7 @@ def process_config_object(
     config_object: GlobalConfig,
     globals_dict: dict[str, Any],
     *,
-    rebuild_index: bool,
+    rebuild_index: bool = False,
 ):
     from dump_things_service.record import get_record_dir_store
 
@@ -257,7 +257,7 @@ def process_config_object(
             store_path / collection_info.curated,
             model,
             get_mapping_function(collection_config),
-            rebuild_index,
+            rebuild_index=rebuild_index,
         )
         instance_config.curated_stores[collection_name] = curated_store
         if collection_info.incoming:
