@@ -3,7 +3,6 @@ from __future__ import annotations
 import logging
 from itertools import chain
 from pathlib import Path
-from threading import Lock
 from typing import (
     TYPE_CHECKING,
     Callable,
