@@ -157,6 +157,7 @@ def test_inline_extraction_locally(dump_stores_simple):
         root=root / 'collection_1' / 'token_1',
         model=MockedModule(),
         pid_mapping_function=None,
+        suffix='yaml',
     )
     records = store.extract_inlined(inlined_object, 'hans')
     _check_result_objects(records, tree)
@@ -187,6 +188,7 @@ def test_dont_extract_empty_things_locally(dump_stores_simple):
         root=root / 'collection_1' / 'token_1',
         model=MockedModule(),
         pid_mapping_function=None,
+        suffix='yaml',
     )
     records = store.extract_inlined(empty_inlined_object, 'dieter')
     assert len(records) == 1
