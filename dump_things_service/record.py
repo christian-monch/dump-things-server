@@ -32,7 +32,7 @@ if TYPE_CHECKING:
 
 ignored_files = {'.', '..', config_file_name}
 
-lgr = logging.getLogger('uvicorn')
+lgr = logging.getLogger('dump_things_service')
 
 submitter_class = 'NCIT_C54269'
 submitter_class_base = 'http://purl.obolibrary.org/obo/'
