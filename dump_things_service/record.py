@@ -300,8 +300,6 @@ def get_record_dir_store(
     """Get a record directory store for the given root directory."""
     existing_store = instance_config.stores.get(root)
     if not existing_store:
-        import sys
-        print('XXX Creating new RecordDirStore at:', root, file=sys.stderr)
         existing_store = RecordDirStore(
             root=root,
             model=model,
