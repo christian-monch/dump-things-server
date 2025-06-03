@@ -26,14 +26,15 @@ classifiers = [
 ]
 dependencies = [
     "aiohttp",
-    "fastapi[standard]",
     "click==8.1.8",
+    "fastapi[standard]",
     "fsspec",
     "linkml",
     "pydantic==2.8.0",
     "PyYAML",
     "rdflib",
     "requests",
+    "uvicorn",
 ]
 
 [project.urls]
@@ -42,14 +43,24 @@ Issues = "https://github.com/christian-monch/dump-things-server/issues"
 Source = "https://github.com/christian-monch/dump-things-server"
 
 [tool.hatch.build.targets.wheel]
-packages = ["dump_things_service"]
+only-include = [
+    "dump_things_service",
+    "datalad-concepts/patches",
+    "datalad-concepts/tools/patch_linkml",
+]
+
+[tool.hatch.build.targets.sdist]
+only-include = [
+    "dump_things_service",
+    "datalad-concepts/patches",
+    "datalad-concepts/tools/patch_linkml",
+]
 
 [tool.hatch.version]
 path = "dump_things_service/__about__.py"
 
 [tool.hatch.envs.default]
 post-install-commands = [
-    "git submodule update --init --recursive",
     "{root}/tools/call_patch_linkml",
 ]
 
@@ -61,14 +72,13 @@ extra-dependencies = [
 check = "mypy --install-types --non-interactive {args:src tests}"
 
 [tool.coverage.run]
-source_pkgs = ["dump_things_service", "tests"]
+source_pkgs = ["dump_things_service"]
 branch = true
 parallel = true
 omit = ["dump_things_service/__about__.py"]
 
 [tool.coverage.paths]
 src = ["dump_things_service"]
-tests = ["tests"]
 
 [tool.coverage.report]
 exclude_lines = [
@@ -116,4 +126,4 @@ quote-style = "single"
     "N802",
 ]
 # permit relative import in subpackage root
-"datalad_core/*/__init__.py" = ["TID252"]
+"dump_things_service/*/__init__.py" = ["TID252"]

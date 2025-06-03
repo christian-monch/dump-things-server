@@ -12,9 +12,9 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Install dependencies
+      - name: Install hatch
         run: |
-          pip install -r requirements.txt
+          pip install hatch
 
       - name: Install subdatasets
         run: |
