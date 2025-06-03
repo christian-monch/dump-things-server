@@ -77,7 +77,11 @@ class RecordDirStore:
                     continue
 
                 iri = resolve_curie(self.model, pid)
-                self._add_iri_to_index(iri, path)
+                # On startup, log PID collision errors and continue building the index
+                try:
+                    self._add_iri_to_index(iri, path)
+                except HTTPException as e:
+                    lgr.error(e.detail)
         lgr.info('Index built with %d IRIs', len(self.index))
 
     def _add_iri_to_index(self, iri: str, path: Path):
@@ -117,7 +121,7 @@ class RecordDirStore:
                 if path.name == existing_path.name:
                     self.index[iri] = path
                     return
-                msg = f'IRI {iri} existing {existing_class} instance at {existing_path} might not be a placeholder for {new_class} at {path}, PIDs differ!'
+                msg = f'IRI {iri} existing {existing_class}-instance at {existing_path} might not be a placeholder for {new_class}-instance at {path}, PIDs differ!'
                 raise HTTPException(
                     HTTP_400_BAD_REQUEST,
                     detail=msg,
@@ -128,14 +132,14 @@ class RecordDirStore:
                 if path.name == existing_path.name:
                     # The `Thing` record is just a placeholder, we can ignore it
                     return
-                msg = f'IRI {iri} existing {existing_class} instance at {existing_path} cannot be replace by {new_class} instance. PIDs differ!'
+                msg = f'IRI {iri} existing {existing_class}-instance at {existing_path} must not be replace by {new_class}-instance at {path}. PIDs differ!'
                 raise HTTPException(
                     HTTP_400_BAD_REQUEST,
                     detail=msg,
                 )
 
             # Case 4:
-            msg = f'Duplicated IRI ({iri}): existing {existing_class} instance at {existing_path} has the same IRI as new {new_class} instance.'
+            msg = f'Duplicated IRI ({iri}): already index {existing_class}-instance at {existing_path} has the same IRI as new {new_class}-instance at {path}.'
             raise HTTPException(
                 HTTP_400_BAD_REQUEST,
                 detail=msg,
