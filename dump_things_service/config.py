@@ -248,10 +248,11 @@ def process_config_object(
         globals_dict[model_var_name] = model
 
         curated_store = get_record_dir_store(
-            instance_config,
-            store_path / collection_info.curated,
-            model,
-            get_mapping_function(collection_config)
+            instance_config=instance_config,
+            root=store_path / collection_info.curated,
+            model=model,
+            pid_mapping_function=get_mapping_function(collection_config),
+            suffix=collection_config.format,
         )
         instance_config.curated_stores[collection_name] = curated_store
         if collection_info.incoming:
@@ -267,9 +268,22 @@ def process_config_object(
         instance_config.token_stores[token_name] = entry
         for collection_name, token_collection_info in token_info.collections.items():
             entry['collections'][collection_name] = {}
+
             # A token might be a pure curated read token, i.e., have the mode
             # `READ_COLLECTION`. In this case there might be no incoming store.
-            if collection_name in instance_config.incoming:
+            if (
+                    collection_name in instance_config.incoming and
+                    token_collection_info.mode not in (
+                        TokenModes.READ_CURATED,
+                        TokenModes.NOTHING,
+                    )
+            ):
+                # Check that the incoming label is set for a token that has
+                # access rights to incoming records.
+                if not token_collection_info.incoming_label:
+                    msg = f'Token `{token_name}` with mode {token_collection_info.mode} must not have an empty `incoming_label`'
+                    raise ConfigError(msg)
+
                 if collection_name not in instance_config.zones:
                     instance_config.zones[collection_name] = {}
                 instance_config.zones[collection_name][token_name] = token_collection_info.incoming_label
@@ -283,10 +297,11 @@ def process_config_object(
                 )
                 store_dir.mkdir(parents=True, exist_ok=True)
                 token_store = get_record_dir_store(
-                    instance_config,
-                    store_dir,
-                    model,
-                    mapping_function,
+                    instance_config=instance_config,
+                    root=store_dir,
+                    model=model,
+                    pid_mapping_function=mapping_function,
+                    suffix=instance_config.curated_stores[collection_name].suffix,
                 )
                 entry['collections'][collection_name]['store'] = token_store
             entry['collections'][collection_name]['permissions'] = get_permissions(
