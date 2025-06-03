@@ -61,7 +61,6 @@ path = "dump_things_service/__about__.py"
 
 [tool.hatch.envs.default]
 post-install-commands = [
-    "git submodule update --init --recursive",
     "{root}/tools/call_patch_linkml",
 ]
 
@@ -73,14 +72,13 @@ extra-dependencies = [
 check = "mypy --install-types --non-interactive {args:src tests}"
 
 [tool.coverage.run]
-source_pkgs = ["dump_things_service", "tests"]
+source_pkgs = ["dump_things_service"]
 branch = true
 parallel = true
 omit = ["dump_things_service/__about__.py"]
 
 [tool.coverage.paths]
 src = ["dump_things_service"]
-tests = ["tests"]
 
 [tool.coverage.report]
 exclude_lines = [
@@ -128,4 +126,4 @@ quote-style = "single"
     "N802",
 ]
 # permit relative import in subpackage root
-"datalad_core/*/__init__.py" = ["TID252"]
+"dump_things_service/*/__init__.py" = ["TID252"]
