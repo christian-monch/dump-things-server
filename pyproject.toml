@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "dump-things-service"
 dynamic = ["version"]
-description = ''
+description = 'I simple service to store and retrieve schema-conform data records'
 readme = "README.md"
 requires-python = ">=3.8"
 license = "MIT"
@@ -49,6 +49,7 @@ path = "dump_things_service/__about__.py"
 
 [tool.hatch.envs.default]
 post-install-commands = [
+    "git submodule update --init --recursive",
     "{root}/tools/call_patch_linkml",
 ]
 
