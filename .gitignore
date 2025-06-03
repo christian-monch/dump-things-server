@@ -1,3 +1,5 @@
 .idea/**
+dist/**
+tmp/**
 **/__pycache__
 **/.hypothesis
