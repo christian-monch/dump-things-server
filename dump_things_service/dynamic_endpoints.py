@@ -5,7 +5,7 @@ from fastapi import FastAPI
 
 from dump_things_service.config import InstanceConfig
 
-lgr = logging.getLogger('uvicorn')
+logger = logging.getLogger('dump_things_service')
 
 
 _endpoint_template = """
@@ -14,7 +14,7 @@ async def {name}(
         api_key: str = Depends(api_key_header_scheme),
         format: Format = Format.json,
 ) -> JSONResponse | PlainTextResponse:
-    lgr.info('{name}(%s, %s, %s, %s, %s)', repr(data), repr('{class_name}'), repr({model_var_name}), repr(format))
+    uvicorn_logger.info('{name}(%s, %s, %s, %s, %s)', repr(data), repr('{class_name}'), repr({model_var_name}), repr(format))
     return store_record('{collection}', data, '{class_name}', {model_var_name}, format, api_key)
 """
 
@@ -25,7 +25,7 @@ def create_endpoints(
     global_dict: dict,
 ):
     # Create endpoints for all classes in all collections
-    lgr.info('Creating dynamic endpoints...')
+    logger.info('Creating dynamic endpoints...')
     serial_number = count()
 
     for collection, (model, classes, model_var_name) in instance_config.model_info.items():
@@ -53,4 +53,4 @@ def create_endpoints(
                 response_model=None,
             )
 
-    lgr.info('Creation of %d endpoints completed.', next(serial_number))
+    logger.info('Creation of %d endpoints completed.', next(serial_number))

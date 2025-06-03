@@ -41,6 +41,8 @@ test_record_curated = f"""pid: {pid_curated}
 given_name: {given_name_curated}
 """
 
+faulty_yaml = ': : -: : :'
+
 
 def create_store(
     root_dir: Path,
@@ -108,3 +110,9 @@ def create_collection(
         )
         record_path.parent.mkdir(parents=True, exist_ok=True)
         record_path.write_text(record)
+
+    # Add some faulty entries to check error handling while reading collections
+    (curated_dir / 'faulty-file.yaml').write_text(faulty_yaml)
+
+    # Add an erroneous yaml file with a non-yaml extension
+    (curated_dir / 'faulty-file.txt').write_text(faulty_yaml)

@@ -32,7 +32,7 @@ if TYPE_CHECKING:
 
 ignored_files = {'.', '..', config_file_name}
 
-lgr = logging.getLogger('uvicorn')
+lgr = logging.getLogger('dump_things_service')
 
 submitter_class = 'NCIT_C54269'
 submitter_class_base = 'http://purl.obolibrary.org/obo/'
@@ -46,6 +46,7 @@ class RecordDirStore:
         root: Path,
         model: Any,
         pid_mapping_function: Callable,
+        suffix: str,
     ):
         if not root.is_absolute():
             msg = f'Store root is not absolute: {root}'
@@ -53,16 +54,34 @@ class RecordDirStore:
         self.root = root
         self.model = model
         self.pid_mapping_function = pid_mapping_function
+        self.suffix = suffix
         self.index = {}
         self._build_index()
 
     def _build_index(self):
         lgr.info('Building IRI index for records in %s', self.root)
-        for path in self.root.rglob('*'):
+        for path in self.root.rglob(f'*.{self.suffix}'):
             if path.is_file() and path.name not in ignored_files:
-                record = yaml.load(path.read_text(), Loader=yaml.SafeLoader)
-                iri = resolve_curie(self.model, record['pid'])
-                self._add_iri_to_index(iri, path)
+
+                try:
+                    # Catch YAML structure errors
+                    record = yaml.load(path.read_text(), Loader=yaml.SafeLoader)
+                except Exception as e:  # noqa: BLE001
+                    lgr.error('Error: reading YAML record from %s: %s', path, e)
+                    continue
+
+                try:
+                    pid = record['pid']
+                except Exception:   # noqa: BLE001
+                    lgr.error('Error: record at %s does not contain a mapping with `pid`', path)
+                    continue
+
+                iri = resolve_curie(self.model, pid)
+                # On startup, log PID collision errors and continue building the index
+                try:
+                    self._add_iri_to_index(iri, path)
+                except HTTPException as e:
+                    lgr.error(e.detail)
         lgr.info('Index built with %d IRIs', len(self.index))
 
     def _add_iri_to_index(self, iri: str, path: Path):
@@ -102,7 +121,7 @@ class RecordDirStore:
                 if path.name == existing_path.name:
                     self.index[iri] = path
                     return
-                msg = f'IRI {iri} existing {existing_class} instance at {existing_path} might not be a placeholder for {new_class} at {path}, PIDs differ!'
+                msg = f'IRI {iri} existing {existing_class}-instance at {existing_path} might not be a placeholder for {new_class}-instance at {path}, PIDs differ!'
                 raise HTTPException(
                     HTTP_400_BAD_REQUEST,
                     detail=msg,
@@ -113,14 +132,14 @@ class RecordDirStore:
                 if path.name == existing_path.name:
                     # The `Thing` record is just a placeholder, we can ignore it
                     return
-                msg = f'IRI {iri} existing {existing_class} instance at {existing_path} cannot be replace by {new_class} instance. PIDs differ!'
+                msg = f'IRI {iri} existing {existing_class}-instance at {existing_path} must not be replace by {new_class}-instance at {path}. PIDs differ!'
                 raise HTTPException(
                     HTTP_400_BAD_REQUEST,
                     detail=msg,
                 )
 
             # Case 4:
-            msg = f'Duplicated IRI ({iri}): existing {existing_class} instance at {existing_path} has the same IRI as new {new_class} instance.'
+            msg = f'Duplicated IRI ({iri}): already index {existing_class}-instance at {existing_path} has the same IRI as new {new_class}-instance at {path}.'
             raise HTTPException(
                 HTTP_400_BAD_REQUEST,
                 detail=msg,
@@ -280,6 +299,7 @@ def get_record_dir_store(
         root: Path,
         model: Any,
         pid_mapping_function: Callable,
+        suffix: str,
 ) -> RecordDirStore:
     """Get a record directory store for the given root directory."""
     existing_store = instance_config.stores.get(root)
@@ -288,11 +308,20 @@ def get_record_dir_store(
             root=root,
             model=model,
             pid_mapping_function=pid_mapping_function,
+            suffix=suffix,
         )
         instance_config.stores[root] = existing_store
 
-    if existing_store.model != model or existing_store.pid_mapping_function != pid_mapping_function:
-        msg = f'Store at {root} already exists with different model or PID mapping function.'
+    if existing_store.model != model:
+        msg = f'Store at {root} already exists with different model.'
+        raise ValueError(msg)
+
+    if existing_store.pid_mapping_function != pid_mapping_function:
+        msg = f'Store at {root} already exists with different PID mapping function.'
+        raise ValueError(msg)
+
+    if existing_store.suffix != suffix:
+        msg = f'Store at {root} already exists with different format.'
         raise ValueError(msg)
 
     return existing_store

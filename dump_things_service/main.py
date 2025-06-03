@@ -66,6 +66,10 @@ class TokenCapabilityRequest(BaseModel):
     token: str | None
 
 
+logger = logging.getLogger('dump_things_service')
+uvicorn_logger = logging.getLogger('uvicorn')
+
+
 parser = argparse.ArgumentParser()
 parser.add_argument('--host', default='0.0.0.0')  # noqa S104
 parser.add_argument('--port', default=8000, type=int)
@@ -79,16 +83,27 @@ parser.add_argument(
 parser.add_argument(
     '--error-mode',
     action='store_true',
-    help="Don't exit with non-zero status on error, instead return the error on every request.",
+    help="Don't exit with non-zero status on errors that prevent the service from proper operation, instead return the error on every request.",
+)
+parser.add_argument(
+    '--log-level',
+    default='WARNING',
+    help="Set the log level for the service, allowed values are 'ERROR', 'WARNING', 'INFO', 'DEBUG'. Default is 'warning'.",
 )
 parser.add_argument(
     'store',
     help='The root of the data stores, it should contain a global_store and token_stores.',
 )
 
+
 arguments = parser.parse_args()
 
-lgr = logging.getLogger('uvicorn')
+# Set the log level
+numeric_level = getattr(logging, arguments.log_level.upper(), None)
+if not isinstance(numeric_level, int):
+    logger.error('Invalid log level: %s, defaulting to level "WARNING"', arguments.log_level)
+else:
+    logging.basicConfig(level=numeric_level)
 
 store_path = Path(arguments.store)
 
@@ -102,7 +117,7 @@ try:
         globals_dict=globals(),
     )
 except ConfigError as e:
-    lgr.error(
+    logger.error(
         'ERROR: invalid configuration file at: `%s`:\n---> %s',
         config_path,
         str(e),
@@ -123,7 +138,7 @@ def handle_global_error():
 # the error to any request that is made to the server.
 if g_error:
     if __name__ == '__main__' and arguments.error_mode:
-        lgr.warning('Server runs in error mode, all endpoints will return error information.')
+        logger.warning('Server runs in error mode, all endpoints will return error information.')
 
         @app.post('/{full_path:path}')
         def post_global_error(request: Request, full_path: str):  # noqa: ARG001
