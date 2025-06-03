@@ -46,6 +46,7 @@ class RecordDirStore:
         root: Path,
         model: Any,
         pid_mapping_function: Callable,
+        suffix: str,
     ):
         if not root.is_absolute():
             msg = f'Store root is not absolute: {root}'
@@ -53,15 +54,29 @@ class RecordDirStore:
         self.root = root
         self.model = model
         self.pid_mapping_function = pid_mapping_function
+        self.suffix = suffix
         self.index = {}
         self._build_index()
 
     def _build_index(self):
         lgr.info('Building IRI index for records in %s', self.root)
-        for path in self.root.rglob('*'):
+        for path in self.root.rglob(f'*.{self.suffix}'):
             if path.is_file() and path.name not in ignored_files:
-                record = yaml.load(path.read_text(), Loader=yaml.SafeLoader)
-                iri = resolve_curie(self.model, record['pid'])
+
+                try:
+                    # Catch YAML structure errors
+                    record = yaml.load(path.read_text(), Loader=yaml.SafeLoader)
+                except Exception as e:
+                    lgr.error('Error: reading YAML record from %s: %s', path, e)
+                    continue
+
+                try:
+                    pid = record['pid']
+                except Exception as e:
+                    lgr.error('Error: record at %s does not contain a mapping with `pid`', path)
+                    continue
+
+                iri = resolve_curie(self.model, pid)
                 self._add_iri_to_index(iri, path)
         lgr.info('Index built with %d IRIs', len(self.index))
 
@@ -280,19 +295,31 @@ def get_record_dir_store(
         root: Path,
         model: Any,
         pid_mapping_function: Callable,
+        suffix: str,
 ) -> RecordDirStore:
     """Get a record directory store for the given root directory."""
     existing_store = instance_config.stores.get(root)
     if not existing_store:
+        import sys
+        print('XXX Creating new RecordDirStore at:', root, file=sys.stderr)
         existing_store = RecordDirStore(
             root=root,
             model=model,
             pid_mapping_function=pid_mapping_function,
+            suffix=suffix,
         )
         instance_config.stores[root] = existing_store
 
-    if existing_store.model != model or existing_store.pid_mapping_function != pid_mapping_function:
-        msg = f'Store at {root} already exists with different model or PID mapping function.'
+    if existing_store.model != model:
+        msg = f'Store at {root} already exists with different model.'
+        raise ValueError(msg)
+
+    if existing_store.pid_mapping_function != pid_mapping_function:
+        msg = f'Store at {root} already exists with different PID mapping function.'
+        raise ValueError(msg)
+
+    if existing_store.suffix != suffix:
+        msg = f'Store at {root} already exists with different format.'
         raise ValueError(msg)
 
     return existing_store
