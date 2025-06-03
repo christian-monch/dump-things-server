@@ -43,7 +43,18 @@ Issues = "https://github.com/christian-monch/dump-things-server/issues"
 Source = "https://github.com/christian-monch/dump-things-server"
 
 [tool.hatch.build.targets.wheel]
-packages = ["dump_things_service"]
+only-include = [
+    "dump_things_service",
+    "datalad-concepts/patches",
+    "datalad-concepts/tools/patch_linkml",
+]
+
+[tool.hatch.build.targets.sdist]
+only-include = [
+    "dump_things_service",
+    "datalad-concepts/patches",
+    "datalad-concepts/tools/patch_linkml",
+]
 
 [tool.hatch.version]
 path = "dump_things_service/__about__.py"
