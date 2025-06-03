@@ -66,13 +66,13 @@ class RecordDirStore:
                 try:
                     # Catch YAML structure errors
                     record = yaml.load(path.read_text(), Loader=yaml.SafeLoader)
-                except Exception as e:
+                except Exception as e:  # noqa: BLE001
                     lgr.error('Error: reading YAML record from %s: %s', path, e)
                     continue
 
                 try:
                     pid = record['pid']
-                except Exception as e:
+                except Exception:   # noqa: BLE001
                     lgr.error('Error: record at %s does not contain a mapping with `pid`', path)
                     continue
 
