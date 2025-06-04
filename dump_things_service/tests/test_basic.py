@@ -1,5 +1,3 @@
-import json
-
 import pytest  # F401
 
 from .. import (
@@ -15,6 +13,7 @@ from .create_store import (
 from .test_utils import basic_write_locations
 
 extra_record = {
+    'schema_type': 'abc:Person',
     'pid': 'abc:aaaa',
     'given_name': 'DavidÖÄÜ',
 }
@@ -35,7 +34,11 @@ def test_search_by_pid(fastapi_client_simple):
             headers={'x-dumpthings-token': 'basic_access'},
         )
         assert response.status_code == HTTP_200_OK
-        assert json.loads(response.text) == {'pid': pid, 'given_name': given_name}
+        assert response.json() == {
+            'schema_type': 'abc:Person',
+            'pid': pid,
+            'given_name': given_name,
+        }
 
 
 def test_search_by_pid_no_token(fastapi_client_simple):
@@ -45,7 +48,11 @@ def test_search_by_pid_no_token(fastapi_client_simple):
             f'/collection_{i}/record?pid={pid}',
         )
         assert response.status_code == HTTP_200_OK
-        assert response.json() == {'pid': pid, 'given_name': given_name}
+        assert response.json() == {
+            'schema_type': 'abc:Person',
+            'pid': pid,
+            'given_name': given_name,
+        }
 
 
 def test_store_record(fastapi_client_simple):
@@ -79,7 +86,11 @@ def test_store_record(fastapi_client_simple):
             f'/collection_{i}/records/Person',
             headers={'x-dumpthings-token': 'basic_access'},
         )
-        assert response.json() == [{'pid': pid, 'given_name': given_name}]
+        assert response.json() == [{
+            'schema_type': 'abc:Person',
+            'pid': pid,
+            'given_name': given_name,
+        }]
 
     # Check that subclasses are retrieved
     for i, token in basic_write_locations:
@@ -89,7 +100,11 @@ def test_store_record(fastapi_client_simple):
         )
         cleaned_response = cleaned_json(response.json(), remove_keys=('annotations',))
         assert extra_record in cleaned_response
-        assert {'pid': pid, 'given_name': given_name} in cleaned_response
+        assert {
+           'schema_type': 'abc:Person',
+            'pid': pid,
+            'given_name': given_name
+        } in cleaned_response
 
 
 def test_encoding(fastapi_client_simple):
@@ -220,6 +235,7 @@ def test_curie_expansion(fastapi_client_simple):
     )
     assert response.status_code == HTTP_200_OK
     assert response.json() == {
+        'schema_type': 'abc:Person',
         'pid': 'abc:mode_test',
         'given_name': 'mode_curated',
     }

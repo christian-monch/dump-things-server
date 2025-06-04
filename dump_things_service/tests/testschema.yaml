@@ -47,6 +47,8 @@ classes:
       pid:
         identifier: true
         required: true
+      schema_type:
+        range: string
 
   Annotation:
     slots:

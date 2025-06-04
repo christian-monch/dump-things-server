@@ -214,11 +214,11 @@ class RecordDirStore:
 
         # Convert the record object into a YAML object
         data = yaml.dump(
-            # Remove the `schema_type` entry from the record. It does not belong
-            # to the declared classes.
+            # Remove the `schema_type` entry from the record. The type is
+            # defined by the path under which the record is stored.
             data=cleaned_json(
                 record.model_dump(exclude_none=True, mode='json'),
-                remove_keys=('schema_type',),
+                remove_keys=('schema_type', '@type'),
             ),
             sort_keys=False,
             allow_unicode=True,

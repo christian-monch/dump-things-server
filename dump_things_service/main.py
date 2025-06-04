@@ -205,11 +205,20 @@ def store_record(
     else:
         record = data
 
-    stored_records = store.store_record(
-        record=record,
-        submitter_id=g_instance_config.token_stores[token]['user_id'],
-        model=model,
+    stored_records = tuple(
+        store.store_record(
+            record=record,
+            submitter_id=g_instance_config.token_stores[token]['user_id'],
+            model=model,
+        )
     )
+
+    # Add `schema_type` to the records
+    for record in stored_records:
+        record.schema_type = _get_schema_type_curie(
+            collection,
+            record.__class__.__name__,
+        )
 
     if input_format == Format.ttl:
         return PlainTextResponse(
@@ -221,7 +230,7 @@ def store_record(
                         record.__class__.__name__,
                         cleaned_json(
                             record.model_dump(mode='json', exclude_none=True),
-                            remove_keys=('@type', 'schema_type'),
+                            remove_keys=('@type',),
                         )
                     )
                     for record in stored_records
@@ -232,7 +241,7 @@ def store_record(
     return JSONResponse(
         list(
             map(
-                partial(cleaned_json, remove_keys=('@type', 'schema_type')),
+                partial(cleaned_json),
                 map(jsonable_encoder, stored_records),
             )
         )
@@ -299,15 +308,16 @@ async def read_record_with_pid(
     if not record and final_permissions.curated_read:
         class_name, record = g_instance_config.curated_stores[collection].get_record_by_iri(iri)
 
-    record = cleaned_json(record, remove_keys=('@type', 'schema_type'))
-    if record and format == Format.ttl:
-        ttl_record = convert_json_to_ttl(
-            g_instance_config,
-            collection,
-            class_name,
-            record,
-        )
-        return PlainTextResponse(ttl_record, media_type='text/turtle')
+    if record:
+        if format == Format.ttl:
+            ttl_record = convert_json_to_ttl(
+                g_instance_config,
+                collection,
+                class_name,
+                record,
+            )
+            return PlainTextResponse(ttl_record, media_type='text/turtle')
+        record['schema_type'] = _get_schema_type_curie(collection, class_name)
     return record
 
 
@@ -341,12 +351,14 @@ async def read_records_of_type(
             for record_class_name, record in g_instance_config.curated_stores[collection].get_records_of_class(
                 search_class_name
             ):
-                records[record['pid']] = record_class_name, record
+                record['schema_type'] = _get_schema_type_curie(collection, record_class_name)
+                records[record['pid']] = record
 
     if final_permissions.incoming_read:
         for search_class_name in get_subclasses(model, class_name):
             for record_class_name, record in token_store.get_records_of_class(search_class_name):
-                records[record['pid']] = record_class_name, record
+                record['schema_type'] = _get_schema_type_curie(collection, record_class_name)
+                records[record['pid']] = record
 
     if format == Format.ttl:
         ttls = [
@@ -354,17 +366,24 @@ async def read_records_of_type(
                 g_instance_config,
                 collection,
                 target_class=record_class_name,
-                json=cleaned_json(record, remove_keys=('@type', 'schema_type')),
+                json=cleaned_json(record),
             )
-            for record_class_name, record in records.values()
+            for record in records.values()
         ]
         if ttls:
             return PlainTextResponse(combine_ttl(ttls), media_type='text/turtle')
         return PlainTextResponse('', media_type='text/turtle')
-    return [
-        cleaned_json(record, remove_keys=('@type', 'schema_type'))
-        for _, record in records.values()
-    ]
+    return tuple(records.values())
+
+
+def _get_schema_type_curie(
+    collection: str,
+    class_name: str,
+) -> str:
+    schema_url = g_instance_config.schemas[collection]
+    schema_module = g_instance_config.conversion_objects[schema_url]['schema_module']
+    class_object = getattr(schema_module, class_name)
+    return class_object.class_class_curie
 
 
 # Create dynamic endpoints and rebuild the app to include all dynamically

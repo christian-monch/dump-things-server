@@ -3,7 +3,8 @@ import pytest  # noqa F401
 from .. import HTTP_200_OK
 from ..utils import cleaned_json
 
-json_record = {'pid': 'xyz:bbbb', 'given_name': 'John'}
+json_record = {'schema_type': 'abc:Person', 'pid': 'xyz:bbbb', 'given_name': 'John'}
+json_record_out = {'schema_type': 'abc:Person', **json_record}
 new_ttl_pid = 'xyz:cccc'
 
 ttl_record = """@prefix abc: <http://example.org/person-schema/abc/> .
@@ -16,6 +17,19 @@ xyz:HenryAdams a abc:Person ;
             abc:annotation_value "test_user_1" ] ;
     abc:given_name "Henryöäß" .
 """
+
+ttl_result_record = """@prefix abc: <http://example.org/person-schema/abc/> .
+@prefix oxo: <http://purl.obolibrary.org/obo/> .
+@prefix xyz: <http://example.org/person-schema/xyz/> .
+
+xyz:HenryAdams a abc:Person ;
+    abc:annotations [ a abc:Annotation ;
+            abc:annotation_tag oxo:NCIT_C54269 ;
+            abc:annotation_value "test_user_1" ] ;
+    abc:given_name "Henryöäß" ;
+    abc:schema_type "Person" .
+"""
+
 new_json_pid = 'xyz:HenryBaites'
 
 
@@ -55,9 +69,9 @@ def test_json_ttl_json(fastapi_client_simple):
     )
     assert response.status_code == HTTP_200_OK
     json_object = cleaned_json(response.json(), remove_keys=('annotations',))
-    assert json_object != json_record
-    json_object['pid'] = json_record['pid']
-    assert json_object == json_record
+    assert json_object != json_record_out
+    json_object['pid'] = json_record_out['pid']
+    assert json_object == json_record_out
 
 
 def test_ttl_json_ttl(fastapi_client_simple):
