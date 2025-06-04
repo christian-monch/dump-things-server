@@ -142,7 +142,7 @@ except ConfigError:
         config_path,
     )
     g_error = 'Server runs in error mode due to an invalid configuration. See server error-log for details.'
-
+    g_instance_config = None
 
 app = FastAPI()
 
@@ -478,11 +478,12 @@ async def process_token(instance_config, api_key, collection):
     return final_permissions, token_store
 
 
-# Create dynamic endpoints and rebuild the app to include all dynamically
-# created endpoints.
-create_endpoints(app, g_instance_config, globals())
-app.openapi_schema = None
-app.setup()
+# If we have a valid configuration, create dynamic endpoints and rebuild the
+# app to include all dynamically created endpoints.
+if g_instance_config:
+    create_endpoints(app, g_instance_config, globals())
+    app.openapi_schema = None
+    app.setup()
 
 # Add CORS origins
 app.add_middleware(
