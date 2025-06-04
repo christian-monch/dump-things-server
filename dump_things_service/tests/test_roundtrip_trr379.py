@@ -7,6 +7,10 @@ json_record = {
     'pid': 'trr379:test_john_json',
     'given_name': 'Johnöüß',
 }
+json_record_out = {
+    'schema_type': 'dlsocial:Person',
+    **json_record,
+}
 
 new_ttl_pid = 'trr379:another_john_json'
 
@@ -80,9 +84,9 @@ def test_json_ttl_json_trr379(fastapi_client_simple):
     )
     assert response.status_code == HTTP_200_OK
     json_object = cleaned_json(response.json(), remove_keys=('annotations',))
-    assert json_object != json_record
+    assert cleaned_json(json_object, remove_keys=('schema_type',)) != json_record
     json_object['pid'] = json_record['pid']
-    assert json_object == json_record
+    assert json_object == json_record_out
 
 
 def test_ttl_json_ttl_trr379(fastapi_client_simple):
