@@ -46,8 +46,10 @@ class ConfigError(Exception):
 class MappingMethod(enum.Enum):
     digest_md5 = 'digest-md5'
     digest_md5_p3 = 'digest-md5-p3'
+    digest_md5_p3_p3 = 'digest-md5-p3-p3'
     digest_sha1 = 'digest-sha1'
     digest_sha1_p3 = 'digest-sha1-p3'
+    digest_sha1_p3_p3 = 'digest-sha1-p3-p3'
     after_last_colon = 'after-last-colon'
 
 
@@ -143,6 +145,15 @@ def mapping_digest_p3(
     return Path(hex_digest[:3]) / (hex_digest[3:] + '.' + suffix)
 
 
+def mapping_digest_p3_p3(
+        hasher: Callable,
+        pid: str,
+        suffix: str,
+) -> Path:
+    hex_digest = get_hex_digest(hasher, pid)
+    return Path(hex_digest[:3]) / hex_digest[3:6] / (hex_digest[6:] + '.' + suffix)
+
+
 def mapping_digest(hasher: Callable, pid: str, suffix: str) -> Path:
     hex_digest = get_hex_digest(hasher, pid)
     return Path(hex_digest + '.' + suffix)
@@ -160,8 +171,10 @@ def mapping_after_last_colon(pid: str, suffix: str) -> Path:
 mapping_functions = {
     MappingMethod.digest_md5: partial(mapping_digest, hashlib.md5),
     MappingMethod.digest_md5_p3: partial(mapping_digest_p3, hashlib.md5),
+    MappingMethod.digest_md5_p3_p3: partial(mapping_digest_p3_p3, hashlib.md5),
     MappingMethod.digest_sha1: partial(mapping_digest, hashlib.sha1),
     MappingMethod.digest_sha1_p3: partial(mapping_digest_p3, hashlib.sha1),
+    MappingMethod.digest_sha1_p3_p3: partial(mapping_digest_p3_p3, hashlib.sha1),
     MappingMethod.after_last_colon: mapping_after_last_colon,
 }
 

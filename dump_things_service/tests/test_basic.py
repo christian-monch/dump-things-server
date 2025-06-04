@@ -29,7 +29,7 @@ unicode_record = {
 
 def test_search_by_pid(fastapi_client_simple):
     test_client, _ = fastapi_client_simple
-    for i in range(1, 6):
+    for i in range(1, 8):
         response = test_client.get(
             f'/collection_{i}/record?pid={pid}',
             headers={'x-dumpthings-token': 'basic_access'},
@@ -40,7 +40,7 @@ def test_search_by_pid(fastapi_client_simple):
 
 def test_search_by_pid_no_token(fastapi_client_simple):
     test_client, _ = fastapi_client_simple
-    for i in range(1, 6):
+    for i in range(1, 8):
         response = test_client.get(
             f'/collection_{i}/record?pid={pid}',
         )
@@ -114,7 +114,7 @@ def test_encoding(fastapi_client_simple):
 
 def test_global_store_write_fails(fastapi_client_simple):
     test_client, _ = fastapi_client_simple
-    for i in range(1, 6):
+    for i in range(1, 8):
         # Since we provide no token, the default token will be used. This will
         # only allow reading from curated, not posting.
         response = test_client.post(
