@@ -45,6 +45,12 @@ collections:
   collection_5:
     default_token: basic_access
     curated: {curated}/collection_5
+  collection_6:
+    default_token: basic_access
+    curated: {curated}/collection_6
+  collection_7:
+    default_token: basic_access
+    curated: {curated}/collection_7
   collection_trr379:
     default_token: basic_access
     curated: {curated}/collection_trr379
@@ -67,6 +73,12 @@ tokens:
         mode: READ_CURATED
         incoming_label: ''
       collection_5:
+        mode: READ_CURATED
+        incoming_label: ''
+      collection_6:
+        mode: READ_CURATED
+        incoming_label: ''
+      collection_7:
         mode: READ_CURATED
         incoming_label: ''
       collection_trr379:
@@ -151,7 +163,7 @@ def dump_stores_simple(tmp_path_factory):
     (tmp_path / config_file_name).write_text(global_config_text)
 
     default_entries = {
-        f'collection_{i}': [('Person', pid, test_record)] for i in range(1, 6)
+        f'collection_{i}': [('Person', pid, test_record)] for i in range(1, 8)
     }
     default_entries['collection_1'].extend(
         [
@@ -173,6 +185,8 @@ def dump_stores_simple(tmp_path_factory):
             'collection_3': (str(schema_path), 'digest-sha1'),
             'collection_4': (str(schema_path), 'digest-sha1-p3'),
             'collection_5': (str(schema_path), 'after-last-colon'),
+            'collection_6': (str(schema_path), 'digest-md5-p3-p3'),
+            'collection_7': (str(schema_path), 'digest-sha1-p3-p3'),
             'collection_trr379': (
                 'https://concepts.trr379.de/s/base/unreleased.yaml',
                 'digest-md5',
