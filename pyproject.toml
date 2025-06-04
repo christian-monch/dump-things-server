@@ -103,8 +103,13 @@ extra-dependencies = [
 ]
 
 [tool.hatch.envs.tests.scripts]
-#run = 'pushd datalad-concepts; ./tools/patch_linkml; popd; python -m pytest {args}'
 run = 'python -m pytest {args}'
+
+post-install-commands = [
+    "pushd datalad-concepts",
+    "./tools/call_patch_linkml",
+    "popd",
+]
 
 [tool.ruff]
 exclude = [
