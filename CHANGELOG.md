@@ -1,3 +1,18 @@
+# 0.2.0 (2025-07-04)
+
+## New features
+  
+  - set `schema_type`-attribute in all JSON records that are returned when storing or retrieving records
+  - add mapping functions with 2-stage directory hierarchies: `digest_md5_p3_p3` and `digest_sha1_p3_p3`.
+  - move all dependency definitions into `pyproject.toml`, remove `requirements.txt` and `requirements-devel.txt`
+
+
+# 0.1.1 (2025-07-03)
+
+## Bugfixes
+
+  - fix a logging call in dynamically created code
+
 # 0.1.0 (2025-06-03)
 
 ## New features
