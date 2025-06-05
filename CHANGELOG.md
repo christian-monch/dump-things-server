@@ -1,3 +1,17 @@
+# 0.2.2 (2025-07-06)
+
+## Bugfixes
+
+ - describe the pypi-installation and start of the service in the README
+
+# 0.2.1 (2025-07-05)
+
+## New feature
+
+ - dump-things-service is now available via pypi.
+ - add `dump-things-service` command. This command can be used after installation to start the service
+
+
 # 0.2.0 (2025-07-04)
 
 ## New features
