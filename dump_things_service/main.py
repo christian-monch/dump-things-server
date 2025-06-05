@@ -393,10 +393,14 @@ app.openapi_schema = None
 app.setup()
 
 
-if __name__ == '__main__':
+def main():
     uvicorn.run(
         app,
         host=arguments.host,
         port=arguments.port,
         root_path=arguments.root_path,
     )
+
+
+if __name__ == '__main__':
+    main()
