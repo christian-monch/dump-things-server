@@ -1,3 +1,9 @@
+# 0.2.3 (2025-07-06)
+
+## Bugfixes
+
+ - bump the version to 0.2.3
+
 # 0.2.2 (2025-07-06)
 
 ## Bugfixes
