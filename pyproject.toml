@@ -48,15 +48,11 @@ dump-things-service = "dump_things_service.main:main"
 [tool.hatch.build.targets.wheel]
 only-include = [
     "dump_things_service",
-    "datalad-concepts/patches",
-    "datalad-concepts/tools/patch_linkml",
 ]
 
 [tool.hatch.build.targets.sdist]
 only-include = [
     "dump_things_service",
-    "datalad-concepts/patches",
-    "datalad-concepts/tools/patch_linkml",
 ]
 
 [tool.hatch.version]
