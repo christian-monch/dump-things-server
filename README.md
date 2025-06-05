@@ -23,9 +23,15 @@ That allows multiple submitters to work together when storing records in the ser
 
 The service provides a HTTP-based API to store and retrieve data objects, and to verify token capabilities.
 
+### Installing the service
+
+The service is available via `pypi`, and can be installed by `pip`.
+Execute the command `pip install dump-things-service` to install the service.
+
 
 ### Running the service
 
+After installation the service can be started via the command `dump-things-service`. 
 The basic service configuration is done via command line parameters and configuration files.
 
 The following command line parameters are supported:
@@ -183,17 +189,17 @@ The service supports the following command line parameters:
 
 - `--error-mode`: if set, the service will run even if an error prevents it from starting properly. It will report the error on every request. This can be useful if the service is deployed automatically and a no other monitoring method is available.
 
-The service can be started via `hatch` like this:
+The service can be started with the following command:
 
 ```bash
-hatch run fastapi:run /data-storage/store
+dump-things-service
 ```
 In this example the service will run on the network location `0.0.0.0:8000` and provide access to the stores under `/data-storage/store`.
 
 To run the service on a specific host and port, use the command line options `--host` and `--port`, for example:
 
 ```bash
-hatch run fastapi:run /data-storage/store --host 127.0.0.1 --port 8000
+dump-things-service /data-storage/store --host 127.0.0.1 --port 8000
 ```
 
 ### Endpoints
