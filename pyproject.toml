@@ -42,6 +42,9 @@ Documentation = "https://github.com/christian-monch/dump-things-server"
 Issues = "https://github.com/christian-monch/dump-things-server/issues"
 Source = "https://github.com/christian-monch/dump-things-server"
 
+[project.scripts]
+dump-things-service = "dump_things_service.main:main"
+
 [tool.hatch.build.targets.wheel]
 only-include = [
     "dump_things_service",
