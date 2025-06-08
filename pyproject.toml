@@ -34,6 +34,7 @@ dependencies = [
     "PyYAML",
     "rdflib",
     "requests",
+    "strawberry-graphql",
     "uvicorn",
 ]
 
