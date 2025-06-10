@@ -46,11 +46,17 @@ Source = "https://github.com/christian-monch/dump-things-server"
 dump-things-service = "dump_things_service.main:main"
 
 [tool.hatch.build.targets.wheel]
+exclude = [
+    "dump_things_service/tests",
+]
 only-include = [
     "dump_things_service",
 ]
 
 [tool.hatch.build.targets.sdist]
+exclude = [
+    "dump_things_service/tests",
+]
 only-include = [
     "dump_things_service",
 ]
