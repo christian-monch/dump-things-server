@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "dump-things-service"
 dynamic = ["version"]
-description = 'I simple service to store and retrieve schema-conform data records'
+description = 'A simple service to store and retrieve schema-conform data records'
 readme = "README.md"
 requires-python = ">=3.8"
 license = "MIT"
@@ -66,7 +66,9 @@ path = "dump_things_service/__about__.py"
 
 [tool.hatch.envs.default]
 post-install-commands = [
-    "{root}/tools/call_patch_linkml",
+    "pushd datalad-concepts",
+    "./tools/call_patch_linkml",
+    "popd",
 ]
 
 [tool.hatch.envs.types]
@@ -94,11 +96,16 @@ exclude_lines = [
 
 [tool.hatch.envs.fastapi]
 description = "fastapi dev environment"
+post-install-commands = [
+    "pushd datalad-concepts",
+    "./tools/call_patch_linkml",
+    "popd",
+]
 
 [tool.hatch.envs.fastapi.scripts]
 run = "python -m dump_things_service.main {args}"
 
-[tool.hatch.envs.test]
+[tool.hatch.envs.tests]
 default-args = ["dump_things_service"]
 extra-dependencies = [
     "dump_things_service",
@@ -106,15 +113,14 @@ extra-dependencies = [
     "pytest",
     "pytest-cov",
 ]
-
-[tool.hatch.envs.tests.scripts]
-run = 'python -m pytest {args}'
-
 post-install-commands = [
     "pushd datalad-concepts",
     "./tools/call_patch_linkml",
     "popd",
 ]
+
+[tool.hatch.envs.tests.scripts]
+run = 'python -m pytest {args}'
 
 [tool.ruff]
 exclude = [
