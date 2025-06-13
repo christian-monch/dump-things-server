@@ -13,6 +13,8 @@ from dump_things_service.utils import (
     sys_path,
 )
 
+from dump_things_service.graphql.graphql_generator import GraphQLGenerator
+
 
 __all__ = [
     'generate_graphql_module_from_linkml',
@@ -22,47 +24,36 @@ __all__ = [
 serial_number = count()
 
 
-created_modules: dict[tuple[str, tuple[str, ...]], Any] = {}
+created_modules: dict[str, Any] = {}
 
 
 def _generate_graphql_from_linkml(
     temp_dir: Path,
     linkml_schema_url: str,
-    scalars: list[str] | None = None,
 ) -> Path:
     """
     Generate a GraphQL schema from a LinkML schema.
 
-    This method uses LinkML's `gen-graphql` command to generate a GraphQL
-    schema from a LinkML-schema. It adds the provided scalars tp the schema.
-
     :param temp_dir: Directory in which linkml and graphql files are generated,
         existing files might be overwritten.
     :param linkml_schema_url: URL of the LinkML schema.
-    :param scalars: List of scalar types to include in the GraphQL schema.
-    :return: A string representing the GraphQL schema with the specified
-        scalars included.
+    :return: A path where the resulting GraphQL schema is stored.
     """
+    # Fetch linkml schema from URL and store it in a temporary file
     linkml_schema_path = Path(temp_dir) / f'linkml-schema.yaml'
     linkml_schema_path.write_text(read_url(linkml_schema_url))
 
+    # Generate GraphQL schema from LinkML schema
+    graphql_schema_generator = GraphQLGenerator(str(linkml_schema_path))
+    graphql_schema = graphql_schema_generator.serialize()
+
+    # Store the GraphQL schema in a temporary file
     graphql_schema_path = Path(temp_dir) / f'graphql-schema.graphql'
-    with graphql_schema_path.open('w') as graphql_schema_file:
-        graphql_schema_file.write(
-            '\n'.join([f'scalar {scalar}' for scalar in scalars or []])
-        )
-        graphql_schema_file.flush()
-
-        subprocess.run(
-            args=['gen-graphql', str(linkml_schema_path)],
-            stdout=graphql_schema_file,
-            check=True,
-        )
-
+    graphql_schema_path.write_text(graphql_schema)
     return graphql_schema_path
 
 
-def _generate_module_from_graphql(
+def _generate_strawberry_module_from_graphql(
     temp_dir: Path,
     graphql_schema_path: Path,
 ) -> Any:
@@ -91,7 +82,6 @@ def _generate_module_from_graphql(
 
 def generate_graphql_module_from_linkml(
     linkml_schema_url: str,
-    scalars: list[str] | None = None,
 ) -> Any:
     """
     Generate a GraphQL schema from a LinkML schema URL.
@@ -102,25 +92,25 @@ def generate_graphql_module_from_linkml(
     """
     with tempfile.TemporaryDirectory() as temp_dir:
         temp_dir_path = Path(temp_dir)
+
         graphql_schema_path = _generate_graphql_from_linkml(
             temp_dir_path,
             linkml_schema_url,
-            scalars,
         )
 
-        return _generate_module_from_graphql(
+        return _generate_strawberry_module_from_graphql(
             temp_dir_path,
             graphql_schema_path,
         )
 
 
-def get_graphql_module_for_linkml_schema(
-    linkml_schema_url: str,
-    scalars: list[str] | None = None,
-) -> Any:
-    scalar_key = tuple(sorted(scalars or []))
-    if (linkml_schema_url, scalar_key) not in created_modules:
-        created_modules[(linkml_schema_url, scalar_key)] = (
-            generate_graphql_module_from_linkml(linkml_schema_url, scalars)
+def get_strawberry_module_for_linkml_schema(linkml_schema_url: str) -> Any:
+    if linkml_schema_url not in created_modules:
+        created_modules[linkml_schema_url] = (
+            generate_graphql_module_from_linkml(linkml_schema_url)
         )
-    return created_modules[(linkml_schema_url, scalar_key)]
+    return created_modules[linkml_schema_url]
+
+
+if __name__ == "__main__":
+    print(get_strawberry_module_for_linkml_schema(sys.argv[1]))
