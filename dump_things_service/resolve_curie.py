@@ -10,7 +10,10 @@ def resolve_curie(
     model: types.ModuleType,
     curie: str,
 ) -> str:
-    if ':' not in curie:
+    if curie[0] == '<' and curie[-1] == '>':
+        return curie
+
+    if ":" not in curie:
         return curie
 
     if curie.startswith(('http://', 'https://')):
