@@ -1,0 +1,45 @@
+# metamodel_version: 1.7.0
+type Agent
+  {
+    relations: [Thing]
+    annotations: [Annotation]
+    pid: String!
+    schemaType: String
+    actedOnBehalfOf: [String]
+  }
+
+type Annotation
+  {
+    annotationTag: Thing!
+    annotationValue: String
+  }
+
+type InstantaneousEvent
+  {
+    relations: [Thing]
+    annotations: [Annotation]
+    pid: String!
+    schemaType: String
+    atTime: String
+  }
+
+type Person
+  {
+    relations: [Thing]
+    annotations: [Annotation]
+    pid: String!
+    schemaType: String
+    actedOnBehalfOf: [String]
+    givenName: String
+  }
+
+type Thing
+  {
+    relations: [Thing]
+    annotations: [Annotation]
+    pid: String!
+    schemaType: String
+  }
+
+
+union Records = Agent | InstantaneousEvent | Person | Annotation | Thing
