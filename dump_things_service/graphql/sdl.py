@@ -7,13 +7,16 @@ import tempfile
 from itertools import count
 from pathlib import Path
 from typing import Any
+from typing import TYPE_CHECKING
 
 from dump_things_service.utils import (
     read_url,
     sys_path,
 )
-
 from dump_things_service.graphql.graphql_generator import GraphQLGenerator
+
+if TYPE_CHECKING:
+    from types import ModuleType
 
 
 __all__ = [
@@ -24,7 +27,7 @@ __all__ = [
 serial_number = count()
 
 
-created_modules: dict[str, Any] = {}
+created_modules: dict[str, ModuleType] = {}
 
 
 def _generate_graphql_from_linkml(
@@ -82,12 +85,11 @@ def _generate_strawberry_module_from_graphql(
 
 def generate_graphql_module_from_linkml(
     linkml_schema_url: str,
-) -> Any:
+) -> ModuleType:
     """
     Generate a GraphQL schema from a LinkML schema URL.
 
     :param linkml_schema_url: URL of the LinkML schema.
-    :param scalars: List of scalar types to include in the GraphQL schema.
     :return: A Python module representing the generated GraphQL schema.
     """
     with tempfile.TemporaryDirectory() as temp_dir:
