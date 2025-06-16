@@ -1,0 +1,444 @@
+# metamodel_version: 1.7.0
+# version: UNRELEASED
+enum LicensedSoftware
+  {
+    adobe
+    forklift
+    matlab
+    matlab_toolboxes
+    msoffice
+    spss
+    zoom
+  }
+
+enum OrganizationType
+  {
+    team
+    group
+    division
+    institute
+    researchcenter
+    researchorganization
+    faculty
+    college
+    university
+    nonprofit
+    business
+  }
+
+enum RequestableAccessory
+  {
+    screen_keyboard_mouse
+    headset_std
+    headset_custom
+    other
+  }
+
+enum RequestableLaptop
+  {
+    mac_new_querty
+    mac_new_quertz
+    mac_used_querty
+    mac_used_quertz
+    lenovolinux_new_querty
+    lenovolinux_new_quertz
+    lenovolinux_used_querty
+    lenovolinux_used_quertz
+    other
+  }
+
+enum UserClassification
+  {
+    inm7_fzj_employee
+    inm7_hhu_employee
+    student
+    external
+  }
+
+type Account implements CurationAid
+  {
+    pid: Uriorcurie!
+    relations: [Thing]
+    characterizedBy: [Statement]
+    attributes: [AttributeSpecification]
+    description: String
+    annotations: [Annotation]
+    exactMappings: [Uriorcurie]
+    closeMappings: [Uriorcurie]
+    broadMappings: [Uriorcurie]
+    narrowMappings: [Uriorcurie]
+    relatedMappings: [Uriorcurie]
+    schemaType: NodeUriOrCurie
+    name: String
+    curationComments: [String]
+    displayLabel: String
+    identifiers: [Identifier]
+    recordContact: Person
+  }
+
+type Annotation
+  {
+    annotationTag: Thing!
+    annotationValue: String
+  }
+
+type AttributeSpecification implements ThingMixin & ValueSpecificationMixin
+  {
+    predicate: Property!
+    annotations: [Annotation]
+    broadMappings: [Uriorcurie]
+    closeMappings: [Uriorcurie]
+    description: String
+    exactMappings: [Uriorcurie]
+    attributes: [AttributeSpecification]
+    characterizedBy: [Statement]
+    narrowMappings: [Uriorcurie]
+    relatedMappings: [Uriorcurie]
+    schemaType: NodeUriOrCurie
+    range: Uriorcurie
+    value: String
+  }
+
+type Building implements CurationAid
+  {
+    pid: Uriorcurie!
+    relations: [Thing]
+    characterizedBy: [Statement]
+    attributes: [AttributeSpecification]
+    description: String
+    annotations: [Annotation]
+    exactMappings: [Uriorcurie]
+    closeMappings: [Uriorcurie]
+    broadMappings: [Uriorcurie]
+    narrowMappings: [Uriorcurie]
+    relatedMappings: [Uriorcurie]
+    schemaType: NodeUriOrCurie
+    name: String!
+    site: Site
+    displayLabel: String
+    curationComments: [String]
+    identifiers: [Identifier]
+    recordContact: Person
+  }
+
+type BuildingLevel implements CurationAid
+  {
+    pid: Uriorcurie!
+    relations: [Thing]
+    characterizedBy: [Statement]
+    attributes: [AttributeSpecification]
+    description: String
+    annotations: [Annotation]
+    exactMappings: [Uriorcurie]
+    closeMappings: [Uriorcurie]
+    broadMappings: [Uriorcurie]
+    narrowMappings: [Uriorcurie]
+    relatedMappings: [Uriorcurie]
+    schemaType: NodeUriOrCurie
+    name: String!
+    building: Building
+    displayLabel: String
+    curationComments: [String]
+    identifiers: [Identifier]
+    recordContact: Person
+  }
+
+type Checksum
+  {
+    schemaType: NodeUriOrCurie
+    creator: Uriorcurie!
+    notation: HexBinary!
+  }
+
+type ComputedIdentifier
+  {
+    creator: Uriorcurie
+    notation: String!
+    schemaType: NodeUriOrCurie
+  }
+
+interface CurationAid
+  {
+    curationComments: [String]
+    displayLabel: String
+    identifiers: [Identifier]
+    recordContact: Person
+  }
+
+type DOI
+  {
+    schemaType: NodeUriOrCurie
+    creator: Uriorcurie
+    notation: String!
+    schemaAgency: String
+  }
+
+type Identifier
+  {
+    creator: Uriorcurie
+    notation: String!
+    schemaType: NodeUriOrCurie
+  }
+
+type IssuedIdentifier
+  {
+    creator: Uriorcurie
+    notation: String!
+    schemaType: NodeUriOrCurie
+    schemaAgency: String
+  }
+
+type JuselessAccount
+  {
+    pid: Uriorcurie!
+    relations: [Thing]
+    characterizedBy: [Statement]
+    attributes: [AttributeSpecification]
+    description: String
+    annotations: [Annotation]
+    exactMappings: [Uriorcurie]
+    closeMappings: [Uriorcurie]
+    broadMappings: [Uriorcurie]
+    narrowMappings: [Uriorcurie]
+    relatedMappings: [Uriorcurie]
+    schemaType: NodeUriOrCurie
+    name: String
+    curationComments: [String]
+    displayLabel: String
+    identifiers: [Identifier]
+    recordContact: Person
+    memberOf: [JuselessGroup]
+  }
+
+type JuselessGroup
+  {
+    pid: Uriorcurie!
+    relations: [Thing]
+    characterizedBy: [Statement]
+    attributes: [AttributeSpecification]
+    description: String
+    annotations: [Annotation]
+    exactMappings: [Uriorcurie]
+    closeMappings: [Uriorcurie]
+    broadMappings: [Uriorcurie]
+    narrowMappings: [Uriorcurie]
+    relatedMappings: [Uriorcurie]
+    schemaType: NodeUriOrCurie
+    name: String
+    curationComments: [String]
+    displayLabel: String
+    identifiers: [Identifier]
+    recordContact: Person
+  }
+
+type Organization implements CurationAid
+  {
+    pid: Uriorcurie!
+    relations: [Thing]
+    characterizedBy: [Statement]
+    attributes: [AttributeSpecification]
+    description: String
+    annotations: [Annotation]
+    exactMappings: [Uriorcurie]
+    closeMappings: [Uriorcurie]
+    broadMappings: [Uriorcurie]
+    narrowMappings: [Uriorcurie]
+    relatedMappings: [Uriorcurie]
+    schemaType: NodeUriOrCurie
+    name: String!
+    shortName: String
+    parentOrganization: Organization
+    organizationType: OrganizationType
+    leaders: [Person]
+    displayLabel: String
+    curationComments: [String]
+    identifiers: [Identifier]
+    recordContact: Person
+  }
+
+type Person implements CurationAid
+  {
+    pid: Uriorcurie!
+    relations: [Thing]
+    characterizedBy: [Statement]
+    attributes: [AttributeSpecification]
+    description: String
+    annotations: [Annotation]
+    exactMappings: [Uriorcurie]
+    closeMappings: [Uriorcurie]
+    broadMappings: [Uriorcurie]
+    narrowMappings: [Uriorcurie]
+    relatedMappings: [Uriorcurie]
+    schemaType: NodeUriOrCurie
+    additionalNames: [String]
+    familyName: String
+    givenName: String
+    honorificNamePrefix: String
+    honorificNameSuffix: String
+    emails: [EmailAddress]
+    memberOf: [Organization]
+    orcid: String
+    displayLabel: String
+    curationComments: [String]
+    identifiers: [Identifier]
+    recordContact: Person
+  }
+
+type Property
+  {
+    pid: Uriorcurie!
+    relations: [Thing]
+    characterizedBy: [Statement]
+    attributes: [AttributeSpecification]
+    description: String
+    annotations: [Annotation]
+    exactMappings: [Uriorcurie]
+    closeMappings: [Uriorcurie]
+    broadMappings: [Uriorcurie]
+    narrowMappings: [Uriorcurie]
+    relatedMappings: [Uriorcurie]
+    schemaType: NodeUriOrCurie
+  }
+
+type Room implements CurationAid
+  {
+    pid: Uriorcurie!
+    relations: [Thing]
+    characterizedBy: [Statement]
+    attributes: [AttributeSpecification]
+    description: String
+    annotations: [Annotation]
+    exactMappings: [Uriorcurie]
+    closeMappings: [Uriorcurie]
+    broadMappings: [Uriorcurie]
+    narrowMappings: [Uriorcurie]
+    relatedMappings: [Uriorcurie]
+    schemaType: NodeUriOrCurie
+    name: String!
+    buildingLevel: BuildingLevel
+    displayLabel: String
+    curationComments: [String]
+    identifiers: [Identifier]
+    recordContact: Person
+  }
+
+type Site implements CurationAid
+  {
+    pid: Uriorcurie!
+    relations: [Thing]
+    characterizedBy: [Statement]
+    attributes: [AttributeSpecification]
+    description: String
+    annotations: [Annotation]
+    exactMappings: [Uriorcurie]
+    closeMappings: [Uriorcurie]
+    broadMappings: [Uriorcurie]
+    narrowMappings: [Uriorcurie]
+    relatedMappings: [Uriorcurie]
+    schemaType: NodeUriOrCurie
+    name: String!
+    displayLabel: String
+    curationComments: [String]
+    identifiers: [Identifier]
+    recordContact: Person
+  }
+
+type Statement
+  {
+    object: Thing!
+    predicate: Property!
+  }
+
+type Thing implements ThingMixin
+  {
+    pid: Uriorcurie!
+    relations: [Thing]
+    characterizedBy: [Statement]
+    attributes: [AttributeSpecification]
+    description: String
+    annotations: [Annotation]
+    exactMappings: [Uriorcurie]
+    closeMappings: [Uriorcurie]
+    broadMappings: [Uriorcurie]
+    narrowMappings: [Uriorcurie]
+    relatedMappings: [Uriorcurie]
+    schemaType: NodeUriOrCurie
+  }
+
+interface ThingMixin
+  {
+    annotations: [Annotation]
+    broadMappings: [Uriorcurie]
+    closeMappings: [Uriorcurie]
+    description: String
+    exactMappings: [Uriorcurie]
+    attributes: [AttributeSpecification]
+    characterizedBy: [Statement]
+    narrowMappings: [Uriorcurie]
+    relatedMappings: [Uriorcurie]
+    schemaType: NodeUriOrCurie
+  }
+
+type User
+  {
+    pid: Uriorcurie!
+    relations: [Thing]
+    characterizedBy: [Statement]
+    attributes: [AttributeSpecification]
+    annotations: [Annotation]
+    exactMappings: [Uriorcurie]
+    closeMappings: [Uriorcurie]
+    broadMappings: [Uriorcurie]
+    narrowMappings: [Uriorcurie]
+    relatedMappings: [Uriorcurie]
+    schemaType: NodeUriOrCurie
+    curationComments: [String]
+    identifiers: [Identifier]
+    recordContact: Person
+    allocatedSoftwareLicenses: [LicensedSoftware]
+    endDate: W3CISO8601!
+    juselessAccount: JuselessAccount
+    requestedAccessories: [RequestableAccessory]
+    requestedJuselessAccountName: String
+    juselessGroupMembership: [JuselessGroup]
+    requestedLaptop: RequestableLaptop
+    startDate: W3CISO8601!
+    userClassifications: [UserClassification]!
+    familyName: String!
+    givenName: String!
+    additionalNames: [String]
+    honorificNamePrefix: String
+    honorificNameSuffix: String
+    memberOf: [Organization]
+    offices: String
+    emails: [EmailAddress]
+    orcid: String
+    description: String
+    displayLabel: String
+  }
+
+type ValueSpecification implements ValueSpecificationMixin
+  {
+    pid: Uriorcurie!
+    relations: [Thing]
+    characterizedBy: [Statement]
+    attributes: [AttributeSpecification]
+    description: String
+    annotations: [Annotation]
+    exactMappings: [Uriorcurie]
+    closeMappings: [Uriorcurie]
+    broadMappings: [Uriorcurie]
+    narrowMappings: [Uriorcurie]
+    relatedMappings: [Uriorcurie]
+    schemaType: NodeUriOrCurie
+    value: String!
+    range: Uriorcurie
+  }
+
+type ValueSpecificationMixin
+  {
+    range: Uriorcurie
+    value: String
+  }
+
+

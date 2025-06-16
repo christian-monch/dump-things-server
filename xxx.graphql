@@ -1,0 +1,751 @@
+scalar NodeUriOrCurie
+scalar Uri
+scalar Uriorcurie
+scalar W3CISO8601
+scalar HexBinary
+scalar NonNegativeInteger
+
+
+# metamodel_version: 1.7.0
+# version: UNRELEASED
+type AccessMethod
+  {
+    schemaType: NodeUriOrCurie
+  }
+
+type AccessThroughLandingPage
+  {
+    schemaType: NodeUriOrCurie
+    landingPage: Uri
+  }
+
+type AttributeSpecification implements ThingMixin & ValueSpecificationMixin
+  {
+    predicate: Property!
+    annotations: [Annotation]
+    broadMappings: [Uriorcurie]
+    closeMappings: [Uriorcurie]
+    description: String
+    exactMappings: [Uriorcurie]
+    attributes: [AttributeSpecification]
+    characterizedBy: [Statement]
+    narrowMappings: [Uriorcurie]
+    relatedMappings: [Uriorcurie]
+    schemaType: NodeUriOrCurie
+    range: Uriorcurie
+    value: String
+  }
+
+type Checksum
+  {
+    schemaType: NodeUriOrCurie
+    creator: Uriorcurie!
+    notation: HexBinary!
+  }
+
+type ComputedIdentifier
+  {
+    creator: Uriorcurie
+    notation: String!
+    schemaType: NodeUriOrCurie
+  }
+
+type DataService
+  {
+    pid: Uriorcurie!
+    relations: [Thing]
+    characterizedBy: [Statement]
+    attributes: [AttributeSpecification]
+    description: String
+    annotations: [Annotation]
+    exactMappings: [Uriorcurie]
+    closeMappings: [Uriorcurie]
+    broadMappings: [Uriorcurie]
+    narrowMappings: [Uriorcurie]
+    relatedMappings: [Uriorcurie]
+    schemaType: NodeUriOrCurie
+    identifiers: [Identifier]
+    qualifiedRelations: [Relationship]
+    attributedTo: [Agent]
+    derivedFrom: [Entity]
+    generatedBy: [Activity]
+    about: [Thing]
+    accessMethods: [AccessMethod]
+    conformsTo: Thing
+    dateModified: W3CISO8601
+    datePublished: W3CISO8601
+    keywords: [String]
+    previousVersion: Resource
+    sameAs: Thing
+    shortName: String
+    title: String
+    versionLabel: String
+    versionNotes: [String]
+  }
+
+type DataServiceAccess
+  {
+    schemaType: NodeUriOrCurie
+    dataService: DataService!
+    locator: String!
+  }
+
+type Dataset
+  {
+    pid: Uriorcurie!
+    relations: [Thing]
+    characterizedBy: [Statement]
+    attributes: [AttributeSpecification]
+    description: String
+    annotations: [Annotation]
+    exactMappings: [Uriorcurie]
+    closeMappings: [Uriorcurie]
+    broadMappings: [Uriorcurie]
+    narrowMappings: [Uriorcurie]
+    relatedMappings: [Uriorcurie]
+    schemaType: NodeUriOrCurie
+    identifiers: [Identifier]
+    qualifiedRelations: [Relationship]
+    attributedTo: [Agent]
+    derivedFrom: [Entity]
+    generatedBy: [Activity]
+    about: [Thing]
+    accessMethods: [AccessMethod]
+    conformsTo: Thing
+    dateModified: W3CISO8601
+    datePublished: W3CISO8601
+    keywords: [String]
+    previousVersion: Resource
+    sameAs: Thing
+    shortName: String
+    title: String
+    versionLabel: String
+    versionNotes: [String]
+    distributions: [Distribution]
+  }
+
+type DirectDownload
+  {
+    schemaType: NodeUriOrCurie
+    downloadUrls: [Uri]
+  }
+
+type Distribution
+  {
+    pid: Uriorcurie!
+    relations: [Thing]
+    characterizedBy: [Statement]
+    attributes: [AttributeSpecification]
+    description: String
+    annotations: [Annotation]
+    exactMappings: [Uriorcurie]
+    closeMappings: [Uriorcurie]
+    broadMappings: [Uriorcurie]
+    narrowMappings: [Uriorcurie]
+    relatedMappings: [Uriorcurie]
+    schemaType: NodeUriOrCurie
+    identifiers: [Identifier]
+    qualifiedRelations: [Relationship]
+    attributedTo: [Agent]
+    derivedFrom: [Entity]
+    generatedBy: [Activity]
+    about: [Thing]
+    accessMethods: [AccessMethod]
+    conformsTo: Thing
+    dateModified: W3CISO8601
+    datePublished: W3CISO8601
+    keywords: [String]
+    sameAs: Thing
+    shortName: String
+    title: String
+    versionLabel: String
+    versionNotes: [String]
+    distributionOf: Resource
+    previousVersion: Distribution
+  }
+
+type Document
+  {
+    pid: Uriorcurie!
+    relations: [Thing]
+    characterizedBy: [Statement]
+    attributes: [AttributeSpecification]
+    description: String
+    annotations: [Annotation]
+    exactMappings: [Uriorcurie]
+    closeMappings: [Uriorcurie]
+    broadMappings: [Uriorcurie]
+    narrowMappings: [Uriorcurie]
+    relatedMappings: [Uriorcurie]
+    schemaType: NodeUriOrCurie
+    identifiers: [Identifier]
+    qualifiedRelations: [Relationship]
+    attributedTo: [Agent]
+    derivedFrom: [Entity]
+    generatedBy: [Activity]
+    about: [Thing]
+    accessMethods: [AccessMethod]
+    conformsTo: Thing
+    dateModified: W3CISO8601
+    datePublished: W3CISO8601
+    keywords: [String]
+    previousVersion: Resource
+    sameAs: Thing
+    shortName: String
+    title: String
+    versionLabel: String
+    versionNotes: [String]
+    distributions: [Distribution]
+  }
+
+type DOI
+  {
+    schemaType: NodeUriOrCurie
+    creator: Uriorcurie
+    notation: String!
+    schemaAgency: String
+  }
+
+type ElectronicDistribution
+  {
+    pid: Uriorcurie!
+    relations: [Thing]
+    characterizedBy: [Statement]
+    attributes: [AttributeSpecification]
+    description: String
+    annotations: [Annotation]
+    exactMappings: [Uriorcurie]
+    closeMappings: [Uriorcurie]
+    broadMappings: [Uriorcurie]
+    narrowMappings: [Uriorcurie]
+    relatedMappings: [Uriorcurie]
+    schemaType: NodeUriOrCurie
+    identifiers: [Identifier]
+    qualifiedRelations: [Relationship]
+    attributedTo: [Agent]
+    derivedFrom: [Entity]
+    generatedBy: [Activity]
+    about: [Thing]
+    accessMethods: [AccessMethod]
+    conformsTo: Thing
+    dateModified: W3CISO8601
+    datePublished: W3CISO8601
+    keywords: [String]
+    sameAs: Thing
+    shortName: String
+    title: String
+    versionLabel: String
+    versionNotes: [String]
+    distributionOf: Resource
+    byteSize: NonNegativeInteger
+    checksums: [Checksum]
+    format: Thing
+    mediaType: String
+    previousVersion: ElectronicDistribution
+  }
+
+type Entity
+  {
+    pid: Uriorcurie!
+    relations: [Thing]
+    characterizedBy: [Statement]
+    attributes: [AttributeSpecification]
+    description: String
+    annotations: [Annotation]
+    exactMappings: [Uriorcurie]
+    closeMappings: [Uriorcurie]
+    broadMappings: [Uriorcurie]
+    narrowMappings: [Uriorcurie]
+    relatedMappings: [Uriorcurie]
+    schemaType: NodeUriOrCurie
+    identifiers: [Identifier]
+    qualifiedRelations: [Relationship]
+    attributedTo: [Agent]
+    derivedFrom: [Entity]
+    generatedBy: [Activity]
+  }
+
+type Grant
+  {
+    pid: Uriorcurie!
+    relations: [Thing]
+    characterizedBy: [Statement]
+    attributes: [AttributeSpecification]
+    description: String
+    annotations: [Annotation]
+    exactMappings: [Uriorcurie]
+    closeMappings: [Uriorcurie]
+    broadMappings: [Uriorcurie]
+    narrowMappings: [Uriorcurie]
+    relatedMappings: [Uriorcurie]
+    schemaType: NodeUriOrCurie
+    identifiers: [Identifier]
+    qualifiedRelations: [Relationship]
+    attributedTo: [Agent]
+    derivedFrom: [Entity]
+    generatedBy: [Activity]
+    about: [Thing]
+    accessMethods: [AccessMethod]
+    conformsTo: Thing
+    dateModified: W3CISO8601
+    datePublished: W3CISO8601
+    keywords: [String]
+    previousVersion: Resource
+    sameAs: Thing
+    shortName: String
+    title: String
+    versionLabel: String
+    versionNotes: [String]
+    sponsor: Agent
+  }
+
+type Group
+  {
+    pid: Uriorcurie!
+    relations: [Thing]
+    characterizedBy: [Statement]
+    attributes: [AttributeSpecification]
+    description: String
+    annotations: [Annotation]
+    exactMappings: [Uriorcurie]
+    closeMappings: [Uriorcurie]
+    broadMappings: [Uriorcurie]
+    narrowMappings: [Uriorcurie]
+    relatedMappings: [Uriorcurie]
+    schemaType: NodeUriOrCurie
+    actedOnBehalfOf: [Agent]
+    atLocation: Location
+    identifiers: [Identifier]
+    qualifiedRelations: [Relationship]
+  }
+
+type Identifier
+  {
+    creator: Uriorcurie
+    notation: String!
+    schemaType: NodeUriOrCurie
+  }
+
+type IndexedResourcePart
+  {
+    roles: [Role]
+    schemaType: NodeUriOrCurie
+    locator: String!
+    object: Resource!
+  }
+
+type IndexedResourcePartOf
+  {
+    roles: [Role]
+    schemaType: NodeUriOrCurie
+    locator: String!
+    object: Resource!
+  }
+
+type IndexedResourceRelationship
+  {
+    roles: [Role]
+    schemaType: NodeUriOrCurie
+    locator: String!
+    object: Resource!
+  }
+
+type InstantaneousEvent
+  {
+    pid: Uriorcurie!
+    relations: [Thing]
+    characterizedBy: [Statement]
+    attributes: [AttributeSpecification]
+    description: String
+    annotations: [Annotation]
+    exactMappings: [Uriorcurie]
+    closeMappings: [Uriorcurie]
+    broadMappings: [Uriorcurie]
+    narrowMappings: [Uriorcurie]
+    relatedMappings: [Uriorcurie]
+    schemaType: NodeUriOrCurie
+    atTime: W3CISO8601
+    identifiers: [Identifier]
+    qualifiedRelations: [Relationship]
+  }
+
+type Instrument
+  {
+    pid: Uriorcurie!
+    relations: [Thing]
+    characterizedBy: [Statement]
+    attributes: [AttributeSpecification]
+    description: String
+    annotations: [Annotation]
+    exactMappings: [Uriorcurie]
+    closeMappings: [Uriorcurie]
+    broadMappings: [Uriorcurie]
+    narrowMappings: [Uriorcurie]
+    relatedMappings: [Uriorcurie]
+    schemaType: NodeUriOrCurie
+    identifiers: [Identifier]
+    qualifiedRelations: [Relationship]
+    attributedTo: [Agent]
+    derivedFrom: [Entity]
+    generatedBy: [Activity]
+    about: [Thing]
+    accessMethods: [AccessMethod]
+    conformsTo: Thing
+    dateModified: W3CISO8601
+    datePublished: W3CISO8601
+    keywords: [String]
+    previousVersion: Resource
+    sameAs: Thing
+    shortName: String
+    title: String
+    versionLabel: String
+    versionNotes: [String]
+  }
+
+type IssuedIdentifier
+  {
+    creator: Uriorcurie
+    notation: String!
+    schemaType: NodeUriOrCurie
+    schemaAgency: String
+  }
+
+type Location
+  {
+    pid: Uriorcurie!
+    relations: [Thing]
+    characterizedBy: [Statement]
+    attributes: [AttributeSpecification]
+    description: String
+    annotations: [Annotation]
+    exactMappings: [Uriorcurie]
+    closeMappings: [Uriorcurie]
+    broadMappings: [Uriorcurie]
+    narrowMappings: [Uriorcurie]
+    relatedMappings: [Uriorcurie]
+    schemaType: NodeUriOrCurie
+    identifiers: [Identifier]
+    qualifiedRelations: [Relationship]
+  }
+
+type Organization
+  {
+    pid: Uriorcurie!
+    relations: [Thing]
+    characterizedBy: [Statement]
+    attributes: [AttributeSpecification]
+    description: String
+    annotations: [Annotation]
+    exactMappings: [Uriorcurie]
+    closeMappings: [Uriorcurie]
+    broadMappings: [Uriorcurie]
+    narrowMappings: [Uriorcurie]
+    relatedMappings: [Uriorcurie]
+    schemaType: NodeUriOrCurie
+    actedOnBehalfOf: [Agent]
+    atLocation: Location
+    identifiers: [Identifier]
+    qualifiedRelations: [Relationship]
+    name: String
+    shortName: String
+  }
+
+type Person
+  {
+    pid: Uriorcurie!
+    relations: [Thing]
+    characterizedBy: [Statement]
+    attributes: [AttributeSpecification]
+    description: String
+    annotations: [Annotation]
+    exactMappings: [Uriorcurie]
+    closeMappings: [Uriorcurie]
+    broadMappings: [Uriorcurie]
+    narrowMappings: [Uriorcurie]
+    relatedMappings: [Uriorcurie]
+    schemaType: NodeUriOrCurie
+    actedOnBehalfOf: [Agent]
+    atLocation: Location
+    identifiers: [Identifier]
+    qualifiedRelations: [Relationship]
+    additionalNames: [String]
+    familyName: String
+    givenName: String
+    honorificNamePrefix: String
+    honorificNameSuffix: String
+    formattedName: String
+  }
+
+type PersonalRequest
+  {
+    schemaType: NodeUriOrCurie
+    description: String
+  }
+
+type Project
+  {
+    pid: Uriorcurie!
+    relations: [Thing]
+    characterizedBy: [Statement]
+    attributes: [AttributeSpecification]
+    description: String
+    annotations: [Annotation]
+    exactMappings: [Uriorcurie]
+    closeMappings: [Uriorcurie]
+    broadMappings: [Uriorcurie]
+    narrowMappings: [Uriorcurie]
+    relatedMappings: [Uriorcurie]
+    schemaType: NodeUriOrCurie
+    atLocation: Location
+    endedAt: W3CISO8601
+    identifiers: [Identifier]
+    qualifiedRelations: [Relationship]
+    startedAt: W3CISO8601
+    associatedWith: [Agent]
+    informedBy: [Activity]
+    shortName: String
+    title: String
+  }
+
+type Property
+  {
+    pid: Uriorcurie!
+    relations: [Thing]
+    characterizedBy: [Statement]
+    attributes: [AttributeSpecification]
+    description: String
+    annotations: [Annotation]
+    exactMappings: [Uriorcurie]
+    closeMappings: [Uriorcurie]
+    broadMappings: [Uriorcurie]
+    narrowMappings: [Uriorcurie]
+    relatedMappings: [Uriorcurie]
+    schemaType: NodeUriOrCurie
+  }
+
+type Publication
+  {
+    pid: Uriorcurie!
+    relations: [Thing]
+    characterizedBy: [Statement]
+    attributes: [AttributeSpecification]
+    description: String
+    annotations: [Annotation]
+    exactMappings: [Uriorcurie]
+    closeMappings: [Uriorcurie]
+    broadMappings: [Uriorcurie]
+    narrowMappings: [Uriorcurie]
+    relatedMappings: [Uriorcurie]
+    schemaType: NodeUriOrCurie
+    identifiers: [Identifier]
+    qualifiedRelations: [Relationship]
+    attributedTo: [Agent]
+    derivedFrom: [Entity]
+    generatedBy: [Activity]
+    about: [Thing]
+    accessMethods: [AccessMethod]
+    conformsTo: Thing
+    keywords: [String]
+    previousVersion: Resource
+    sameAs: Thing
+    shortName: String
+    title: String
+    versionLabel: String
+    versionNotes: [String]
+    dateModified: W3CISO8601
+    datePublished: W3CISO8601
+  }
+
+type Relationship
+  {
+    object: Thing!
+    roles: [Role]
+    schemaType: NodeUriOrCurie
+  }
+
+type Resource
+  {
+    pid: Uriorcurie!
+    relations: [Thing]
+    characterizedBy: [Statement]
+    attributes: [AttributeSpecification]
+    description: String
+    annotations: [Annotation]
+    exactMappings: [Uriorcurie]
+    closeMappings: [Uriorcurie]
+    broadMappings: [Uriorcurie]
+    narrowMappings: [Uriorcurie]
+    relatedMappings: [Uriorcurie]
+    schemaType: NodeUriOrCurie
+    identifiers: [Identifier]
+    qualifiedRelations: [Relationship]
+    attributedTo: [Agent]
+    derivedFrom: [Entity]
+    generatedBy: [Activity]
+    about: [Thing]
+    accessMethods: [AccessMethod]
+    conformsTo: Thing
+    dateModified: W3CISO8601
+    datePublished: W3CISO8601
+    keywords: [String]
+    previousVersion: Resource
+    sameAs: Thing
+    shortName: String
+    title: String
+    versionLabel: String
+    versionNotes: [String]
+  }
+
+type Role
+  {
+    pid: Uriorcurie!
+    relations: [Thing]
+    characterizedBy: [Statement]
+    attributes: [AttributeSpecification]
+    description: String
+    annotations: [Annotation]
+    exactMappings: [Uriorcurie]
+    closeMappings: [Uriorcurie]
+    broadMappings: [Uriorcurie]
+    narrowMappings: [Uriorcurie]
+    relatedMappings: [Uriorcurie]
+    schemaType: NodeUriOrCurie
+  }
+
+type SoftwareAgent
+  {
+    pid: Uriorcurie!
+    relations: [Thing]
+    characterizedBy: [Statement]
+    attributes: [AttributeSpecification]
+    description: String
+    annotations: [Annotation]
+    exactMappings: [Uriorcurie]
+    closeMappings: [Uriorcurie]
+    broadMappings: [Uriorcurie]
+    narrowMappings: [Uriorcurie]
+    relatedMappings: [Uriorcurie]
+    schemaType: NodeUriOrCurie
+    actedOnBehalfOf: [Agent]
+    atLocation: Location
+    identifiers: [Identifier]
+    qualifiedRelations: [Relationship]
+  }
+
+type Statement
+  {
+    object: Thing!
+    predicate: Property!
+  }
+
+type Annotation
+{
+  annotationTag: Thing!
+  annotationValue: String
+}
+
+interface ThingMixin
+{
+  annotations: [Annotation]
+  broadMappings: [Uriorcurie]
+  closeMappings: [Uriorcurie]
+  description: String
+  exactMappings: [Uriorcurie]
+  attributes: [AttributeSpecification]
+  characterizedBy: [Statement]
+  narrowMappings: [Uriorcurie]
+  relatedMappings: [Uriorcurie]
+  schemaType: NodeUriOrCurie
+}
+
+type Thing implements ThingMixin
+  {
+    pid: Uriorcurie!
+    relations: [Thing]
+    characterizedBy: [Statement]
+    attributes: [AttributeSpecification]
+    description: String
+    annotations: [Annotation]
+    exactMappings: [Uriorcurie]
+    closeMappings: [Uriorcurie]
+    broadMappings: [Uriorcurie]
+    narrowMappings: [Uriorcurie]
+    relatedMappings: [Uriorcurie]
+    schemaType: NodeUriOrCurie
+  }
+
+type Activity
+{
+  pid: Uriorcurie!
+  relations: [Thing]
+  characterizedBy: [Statement]
+  attributes: [AttributeSpecification]
+  description: String
+  annotations: [Annotation]
+  exactMappings: [Uriorcurie]
+  closeMappings: [Uriorcurie]
+  broadMappings: [Uriorcurie]
+  narrowMappings: [Uriorcurie]
+  relatedMappings: [Uriorcurie]
+  schemaType: NodeUriOrCurie
+  atLocation: Location
+  endedAt: W3CISO8601
+  identifiers: [Identifier]
+  qualifiedRelations: [Relationship]
+  startedAt: W3CISO8601
+  associatedWith: [Agent]
+  informedBy: [Activity]
+}
+
+type Agent
+{
+  pid: Uriorcurie!
+  relations: [Thing]
+  characterizedBy: [Statement]
+  attributes: [AttributeSpecification]
+  description: String
+  annotations: [Annotation]
+  exactMappings: [Uriorcurie]
+  closeMappings: [Uriorcurie]
+  broadMappings: [Uriorcurie]
+  narrowMappings: [Uriorcurie]
+  relatedMappings: [Uriorcurie]
+  schemaType: NodeUriOrCurie
+  actedOnBehalfOf: [Agent]
+  atLocation: Location
+  identifiers: [Identifier]
+  qualifiedRelations: [Relationship]
+}
+
+type TransientRelationship
+  {
+    object: Thing!
+    roles: [Role]
+    schemaType: NodeUriOrCurie
+    startedAt: W3CISO8601
+    endedAt: W3CISO8601
+  }
+
+type ValueSpecification implements ValueSpecificationMixin
+  {
+    pid: Uriorcurie!
+    relations: [Thing]
+    characterizedBy: [Statement]
+    attributes: [AttributeSpecification]
+    description: String
+    annotations: [Annotation]
+    exactMappings: [Uriorcurie]
+    closeMappings: [Uriorcurie]
+    broadMappings: [Uriorcurie]
+    narrowMappings: [Uriorcurie]
+    relatedMappings: [Uriorcurie]
+    schemaType: NodeUriOrCurie
+    value: String!
+    range: Uriorcurie
+  }
+
+type ValueSpecificationMixin
+  {
+    range: Uriorcurie
+    value: String
+  }
