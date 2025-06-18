@@ -2,7 +2,9 @@ from __future__ import annotations
 
 import sys
 from enum import Enum
+from pathlib import Path
 from typing import (
+    cast,
     Any,
     Optional,
 )
@@ -14,51 +16,43 @@ from starlette.middleware.cors import CORSMiddleware
 from strawberry.asgi import GraphQL
 
 from dump_things_service.graphql.sdl import get_strawberry_module_for_linkml_schema
+from dump_things_service.config import Config
+from dump_things_service.record import RecordDirStore
 
 
-module = get_strawberry_module_for_linkml_schema(sys.argv[1])
+
+record_dir_root = sys.argv[1]  # '/home/cristian/tmp/dumpthings/store_new/flatusers'
+record_dir_root = Path(record_dir_root)
+config = Config.get_collection_dir_config(record_dir_root)
+
+module = get_strawberry_module_for_linkml_schema(config.schema)
+
+from dump_thing_service_graphql_strawberry_module import (
+    AllThings,
+    AllRecords,
+    ClassNames,
+)
 
 
-AllThings = module.AllThings
-AllRecords = module.AllRecords
-Agent = module.Agent
-Person = module.Person
-Thing = module.Thing
-ClassNames = module.ClassNames
+from dump_things_service.graphql.resolvers import (
+    get_all_records,
+    get_record_by_pid,
+    get_records_by_class_name,
+)
+
 
 
 def resolve_pid(pid: strawberry.ID) -> AllThings | None:
-    if pid.lower().startswith('person'):
-        return Person(
-            pid=strawberry.ID(pid),
-            given_name=f'John-{{pid}}',
-        )
-    elif pid.lower().startswith('agent'):
-        return Agent(
-            pid=strawberry.ID(pid),
-            at_location=f'Berlin-{{pid}}',
-        )
-    else:
-        return Thing(
-            pid=strawberry.ID(pid),
-            description=f'Thing description for {{pid}}',
-        )
+    return cast(AllThings, get_record_by_pid(module, pid))
 
 
 def resolve_all() -> list[AllRecords]:
-    return [
-        Agent(pid=strawberry.ID('agent-1'), at_location='Berlin'),
-        Person(pid=strawberry.ID('person-1'), given_name='John'),
-        Thing(pid=strawberry.ID('thing-1'), description='A sample thing'),
-    ]
+    return cast(list[AllRecords], get_all_records(module))
 
 
 def resolve_records(class_name: ClassNames) -> list[AllThings]:
-    return [
-        Agent(pid=strawberry.ID('agent-1'), at_location=f'Berlin {{class_name}}'),
-        Agent(pid=strawberry.ID('agent-2'), at_location=f'Berlin {{class_name}}'),
-        Agent(pid=strawberry.ID('agent-3'), at_location=f'Berlin {{class_name}}'),
-    ]
+    records = get_records_by_class_name(module, class_name)
+    return cast(list[AllThings], records)
 
 
 class LogLevel(str, Enum):
@@ -67,11 +61,9 @@ class LogLevel(str, Enum):
     warning = "warning"
     error = "error"
 
-    __slots__ = ()
-
 
 def server(
-        linkml_schema: str,
+        record_dir_root: str,
         host: str = '0.0.0.0',
         port: int = 8000,
         log_level: LogLevel = LogLevel.debug,
@@ -80,19 +72,18 @@ def server(
 
     # Windows doesn't support UTF-8 by default
     endl = " 🍓\n" if sys.platform != "win32" else "\n"
-    print(f"Running strawberry on http://{host}:{port}/graphql", end=endl)  # noqa: T201
+    print(f"Running strawberry on http://{host}:{port}/graphql, using store: {config.schema}", end=endl)  # noqa: T201
 
     app = Starlette(debug=True)
     app.add_middleware(
         CORSMiddleware, allow_headers=["*"], allow_origins=["*"], allow_methods=["*"]
     )
 
-    module = get_strawberry_module_for_linkml_schema(linkml_schema)
     @strawberry.type
     class Query:
-        record: Optional[module.AllThings] = strawberry.field(resolver=resolve_pid)
-        all: list[module.AllRecords] = strawberry.field(resolver=resolve_all)
-        records: list[module.AllThings] = strawberry.field(resolver=resolve_records)
+        record: Optional[AllThings] = strawberry.field(resolver=resolve_pid)
+        all: list[AllRecords] = strawberry.field(resolver=resolve_all)
+        records: list[AllThings] = strawberry.field(resolver=resolve_records)
 
     schema = strawberry.Schema(query=Query)
     graphql_app = GraphQL[Any, Any](schema, debug=True)

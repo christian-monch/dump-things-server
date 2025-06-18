@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import importlib
-import subprocess
 import sys
 import tempfile
 from itertools import count
@@ -24,7 +23,7 @@ __all__ = [
 ]
 
 
-serial_number = count()
+module_name = 'dump_thing_service_graphql_strawberry_module'
 
 created_modules: dict[str, ModuleType] = {}
 
@@ -47,7 +46,6 @@ def generate_strawberry_module_from_linkml(
 
         # Generate strawberry module schema from LinkML schema
         module_source = get_strawberry_source(linkml_schema_path)
-        module_name = f'strawberry_module_{next(serial_number)}'
         module_file = temp_dir_path / (module_name + '.py')
         module_file.write_text(module_source)
 
