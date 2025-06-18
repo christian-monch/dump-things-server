@@ -254,11 +254,11 @@ class StrawberryGenerator(Generator):
         """
         # Create a union of all non-mixin classes
         result = f'{union_name} = Annotated[\n{" " * 4}Union[\n{" " * 8}' + f'\n{" " * 8}'.join(
-            f'"{item}",' for item in items
+            f'{item},' for item in items
         ) + f'\n{" " * 4}],\n{" " * 4}strawberry.union(name="{union_name}"),\n]\n\n\n'
         self.item_definitions[union_name] = {
             'lines': [result],
-            'dependencies': set(),
+            'dependencies': set(items),
         }
         return result
 
