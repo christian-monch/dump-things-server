@@ -1,12 +1,16 @@
 from __future__ import annotations
+
 import sys
-from typing import Any, Optional, Union
+from enum import Enum
+from typing import (
+    Any,
+    Optional,
+)
 
 import strawberry
 import uvicorn
 from starlette.applications import Starlette
 from starlette.middleware.cors import CORSMiddleware
-from strawberry import Schema
 from strawberry.asgi import GraphQL
 
 from dump_things_service.graphql.sdl import get_strawberry_module_for_linkml_schema
@@ -15,9 +19,46 @@ from dump_things_service.graphql.sdl import get_strawberry_module_for_linkml_sch
 module = get_strawberry_module_for_linkml_schema(sys.argv[1])
 
 
-import os
-import sys
-from enum import Enum
+AllThings = module.AllThings
+AllRecords = module.AllRecords
+Agent = module.Agent
+Person = module.Person
+Thing = module.Thing
+ClassNames = module.ClassNames
+
+
+def resolve_pid(pid: strawberry.ID) -> AllThings | None:
+    if pid.lower().startswith('person'):
+        return Person(
+            pid=strawberry.ID(pid),
+            given_name=f'John-{{pid}}',
+        )
+    elif pid.lower().startswith('agent'):
+        return Agent(
+            pid=strawberry.ID(pid),
+            at_location=f'Berlin-{{pid}}',
+        )
+    else:
+        return Thing(
+            pid=strawberry.ID(pid),
+            description=f'Thing description for {{pid}}',
+        )
+
+
+def resolve_all() -> list[AllRecords]:
+    return [
+        Agent(pid=strawberry.ID('agent-1'), at_location='Berlin'),
+        Person(pid=strawberry.ID('person-1'), given_name='John'),
+        Thing(pid=strawberry.ID('thing-1'), description='A sample thing'),
+    ]
+
+
+def resolve_records(class_name: ClassNames) -> list[AllThings]:
+    return [
+        Agent(pid=strawberry.ID('agent-1'), at_location=f'Berlin {{class_name}}'),
+        Agent(pid=strawberry.ID('agent-2'), at_location=f'Berlin {{class_name}}'),
+        Agent(pid=strawberry.ID('agent-3'), at_location=f'Berlin {{class_name}}'),
+    ]
 
 
 class LogLevel(str, Enum):
@@ -46,8 +87,15 @@ def server(
         CORSMiddleware, allow_headers=["*"], allow_origins=["*"], allow_methods=["*"]
     )
 
-    assert isinstance(module.schema, Schema)
-    graphql_app = GraphQL[Any, Any](module.schema, debug=True)
+    module = get_strawberry_module_for_linkml_schema(linkml_schema)
+    @strawberry.type
+    class Query:
+        record: Optional[module.AllThings] = strawberry.field(resolver=resolve_pid)
+        all: list[module.AllRecords] = strawberry.field(resolver=resolve_all)
+        records: list[module.AllThings] = strawberry.field(resolver=resolve_records)
+
+    schema = strawberry.Schema(query=Query)
+    graphql_app = GraphQL[Any, Any](schema, debug=True)
 
     paths = ["/", "/graphql"]
     for path in paths:
