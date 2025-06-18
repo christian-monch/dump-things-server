@@ -57,55 +57,6 @@ import strawberry
 
 
 footer = ''
-x = f"""
-#resolve_pid: Callable[[strawberry.ID], Union[AllThings, None]] | None = None
-#resolve_all: Callable[[], list[AllRecords]] | None = None
-#resolve_records: Callable[[ClassNames], list[AllThings]] | None = None
-
-
-def resolve_pid(pid: strawberry.ID) -> AllThings | None:
-    if pid.lower().startswith('person'):
-        return Person(
-            pid=strawberry.ID(pid),
-            given_name=f'John-{{pid}}',
-        )
-    elif pid.lower().startswith('agent'):
-        return Agent(
-            pid=strawberry.ID(pid),
-            at_location=f'Berlin-{{pid}}',
-        )
-    else:
-        return Thing(
-            pid=strawberry.ID(pid),
-            description=f'Thing description for {{pid}}',
-        )
-
-
-def resolve_all() -> list[AllRecords]:
-    return [
-        Agent(pid=strawberry.ID('agent-1'), at_location='Berlin'),
-        Person(pid=strawberry.ID('person-1'), given_name='John'),
-        Thing(pid=strawberry.ID('thing-1'), description='A sample thing'),
-    ]
-
-
-def resolve_records(class_name: ClassNames) -> list[AllThings]:
-    return [
-        Agent(pid=strawberry.ID('agent-1'), at_location=f'Berlin {{class_name}}'),
-        Agent(pid=strawberry.ID('agent-2'), at_location=f'Berlin {{class_name}}'),
-        Agent(pid=strawberry.ID('agent-3'), at_location=f'Berlin {{class_name}}'),
-    ]
-
-
-@strawberry.type
-class Query:
-    record: Optional[AllThings] = strawberry.field(resolver=resolve_pid)
-    all: list[AllRecords] = strawberry.field(resolver=resolve_all)
-    records: list[AllThings] = strawberry.field(resolver=resolve_records)
-
-
-schema = strawberry.Schema(query=Query)
-"""
 
 
 @dataclass
