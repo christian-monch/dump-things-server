@@ -4,54 +4,65 @@ import sys
 import types
 from typing import (
     Any,
+    Iterable,
     cast,
 )
 
 import strawberry
 
-strawberry_module = sys.modules['dump_thing_service_graphql_strawberry_module']
+from dump_things_service.model import get_subclasses
 from dump_things_service.record import RecordDirStore
-
-AllThings = strawberry_module.AllThings
-AllRecords = strawberry_module.AllRecords
-ClassNames = strawberry_module.ClassNames
+from dump_things_service.resolve_curie import resolve_curie
 
 
-
-#def get_all_records(module: types.ModuleType) -> list[Any]:
-def get_all_records(dir_store: RecordDirStore) -> list[AllRecords]:
+def get_all_records(
+    strawberry_module: types.ModuleType,
+    dir_store: RecordDirStore
+) -> Iterable[Any]:
     """
     Resolver to get all records.
     """
     # TODO: this needs a new method in record dir store
-    return [
-        getattr(strawberry_module, class_name)(**record)
-        for class_name, record in dir_store.get_records_of_class('Thing')
-        if class_name and record
-    ]
+    yield from get_records_by_class_name(
+        strawberry_module,
+        dir_store,
+        'Thing'
+    )
+
 
 def get_record_by_pid(
+    strawberry_module: types.ModuleType,
     dir_store: RecordDirStore,
     pid: strawberry.ID,
-) -> AllThings | None:
+) -> Any | None:
     """
     Resolver to get a record by its PID.
     """
-    class_name, record = dir_store.get_record_by_iri(pid)
+    iri = resolve_curie(dir_store.model, pid)
+    class_name, record = dir_store.get_record_by_iri(iri)
     if class_name and record:
-        return getattr(strawberry_module, class_name)(**record)
+        x = getattr(strawberry_module, class_name)(
+            **{
+                **record,
+                'relations': [
+                    strawberry.ID(related)
+                    for related in record['relations']
+                ]
+            }
+        )
+        return x
     return None
 
 
 def get_records_by_class_name(
+    strawberry_module: types.ModuleType,
     dir_store: RecordDirStore,
     class_name: str
-) -> list[AllThings] | None:
+) -> Iterable[Any]:
     """
     Resolver to get records by class name.
     """
-    return [
-        getattr(strawberry_module, class_name)(**record)
-        for class_name, record in dir_store.get_records_of_class(class_name)
-        if class_name and record
-    ]
+    for subclass_name in get_subclasses(dir_store.model, class_name):
+        for _, record in dir_store.get_records_of_class(subclass_name):
+            if record:
+                yield getattr(strawberry_module, subclass_name)(**record)
