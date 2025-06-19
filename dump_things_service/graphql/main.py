@@ -16,42 +16,52 @@ from starlette.middleware.cors import CORSMiddleware
 from strawberry.asgi import GraphQL
 
 from dump_things_service.graphql.sdl import get_strawberry_module_for_linkml_schema
-from dump_things_service.config import Config
+from dump_things_service.config import Config, get_mapping_function
 from dump_things_service.record import RecordDirStore
 
 
-
-record_dir_root = sys.argv[1]  # '/home/cristian/tmp/dumpthings/store_new/flatusers'
-record_dir_root = Path(record_dir_root)
+# The next steps generate the module `dump_thing_service_graphql_strawberry_module`
+# that is the reason why they are performed here, before the module is imported:
+# read the configuration, and generate the strawberry module. The module will be
+# named `dump_thing_service_graphql_strawberry_module`.
+record_dir_root = Path(sys.argv[1])
 config = Config.get_collection_dir_config(record_dir_root)
-
 module = get_strawberry_module_for_linkml_schema(config.schema)
 
+# Import type unions and class names from the generated module.
 from dump_thing_service_graphql_strawberry_module import (
     AllThings,
     AllRecords,
     ClassNames,
 )
 
-
+# Import resolvers, this has to be done after the module was created because
+# the resolver module itself will import the generated module.
 from dump_things_service.graphql.resolvers import (
-    get_all_records,
     get_record_by_pid,
+    get_all_records,
     get_records_by_class_name,
 )
 
 
+store = RecordDirStore(
+    root=record_dir_root,
+    model=module,
+    pid_mapping_function=get_mapping_function(config),
+    suffix=config.format,
+)
+
 
 def resolve_pid(pid: strawberry.ID) -> AllThings | None:
-    return cast(AllThings, get_record_by_pid(module, pid))
+    return cast(AllThings, get_record_by_pid(store, pid))
 
 
 def resolve_all() -> list[AllRecords]:
-    return cast(list[AllRecords], get_all_records(module))
+    return cast(list[AllRecords], get_all_records(store))
 
 
 def resolve_records(class_name: ClassNames) -> list[AllThings]:
-    records = get_records_by_class_name(module, class_name)
+    records = get_records_by_class_name(store, class_name)
     return cast(list[AllThings], records)
 
 
@@ -63,7 +73,7 @@ class LogLevel(str, Enum):
 
 
 def server(
-        record_dir_root: str,
+        record_dir_root: Path,
         host: str = '0.0.0.0',
         port: int = 8000,
         log_level: LogLevel = LogLevel.debug,
@@ -102,4 +112,4 @@ def server(
 
 
 if __name__ == "__main__":
-    server(sys.argv[1])
+    server(record_dir_root)
