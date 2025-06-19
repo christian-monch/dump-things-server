@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import (
     cast,
     Any,
+    Iterable,
     Optional,
 )
 
@@ -15,54 +16,50 @@ from starlette.applications import Starlette
 from starlette.middleware.cors import CORSMiddleware
 from strawberry.asgi import GraphQL
 
-from dump_things_service.graphql.sdl import get_strawberry_module_for_linkml_schema
 from dump_things_service.config import Config, get_mapping_function
-from dump_things_service.record import RecordDirStore
-
-
-# The next steps generate the module `dump_thing_service_graphql_strawberry_module`
-# that is the reason why they are performed here, before the module is imported:
-# read the configuration, and generate the strawberry module. The module will be
-# named `dump_thing_service_graphql_strawberry_module`.
-record_dir_root = Path(sys.argv[1])
-config = Config.get_collection_dir_config(record_dir_root)
-module = get_strawberry_module_for_linkml_schema(config.schema)
-
-# Import type unions and class names from the generated module.
-from dump_thing_service_graphql_strawberry_module import (
-    AllThings,
-    AllRecords,
-    ClassNames,
-)
-
-# Import resolvers, this has to be done after the module was created because
-# the resolver module itself will import the generated module.
+from dump_things_service.graphql.sdl import get_strawberry_module_for_linkml_schema
 from dump_things_service.graphql.resolvers import (
     get_record_by_pid,
     get_all_records,
     get_records_by_class_name,
 )
+from dump_things_service.model import get_model_for_schema
+from dump_things_service.record import RecordDirStore
+
+
+# The next steps generate the GraphQL-module. This is needed for the resolver-
+# signatures.
+record_dir_root = Path(sys.argv[1])
+config = Config.get_collection_dir_config(record_dir_root)
+graphql_module = get_strawberry_module_for_linkml_schema(config.schema)
+linkml_model, classes, model_var_name = get_model_for_schema(config.schema)
+
+AllThings = graphql_module.AllThings
+AllRecords = graphql_module.AllRecords
+ClassNames = graphql_module.ClassNames
 
 
 store = RecordDirStore(
     root=record_dir_root,
-    model=module,
+    model=linkml_model,
     pid_mapping_function=get_mapping_function(config),
     suffix=config.format,
 )
 
 
 def resolve_pid(pid: strawberry.ID) -> AllThings | None:
-    return cast(AllThings, get_record_by_pid(store, pid))
+    global store
+    return cast(AllThings, get_record_by_pid(graphql_module, store, pid))
 
 
 def resolve_all() -> list[AllRecords]:
-    return cast(list[AllRecords], get_all_records(store))
+    global store
+    return list(get_all_records(graphql_module, store))
 
 
 def resolve_records(class_name: ClassNames) -> list[AllThings]:
-    records = get_records_by_class_name(store, class_name)
-    return cast(list[AllThings], records)
+    global store
+    return list(get_records_by_class_name(graphql_module, store, class_name.value))
 
 
 class LogLevel(str, Enum):
