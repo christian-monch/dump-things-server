@@ -1,59 +1,57 @@
 from __future__ import annotations
 
+import sys
 import types
-from typing import Any
+from typing import (
+    Any,
+    cast,
+)
 
 import strawberry
 
+strawberry_module = sys.modules['dump_thing_service_graphql_strawberry_module']
 from dump_things_service.record import RecordDirStore
-from dump_thing_service_graphql_strawberry_module import AllThings, AllRecords, ClassNames
+
+AllThings = strawberry_module.AllThings
+AllRecords = strawberry_module.AllRecords
+ClassNames = strawberry_module.ClassNames
 
 
-def get_all_records(module: types.ModuleType) -> list[Any]:
+
+#def get_all_records(module: types.ModuleType) -> list[Any]:
+def get_all_records(dir_store: RecordDirStore) -> list[AllRecords]:
     """
     Resolver to get all records.
     """
+    # TODO: this needs a new method in record dir store
     return [
-        module.Agent(pid=strawberry.ID('agent-1'), at_location='Berlin'),
-        module.Person(pid=strawberry.ID('person-1'), given_name='John'),
-        module.Thing(pid=strawberry.ID('thing-1'), description='A sample thing'),
+        getattr(strawberry_module, class_name)(**record)
+        for class_name, record in dir_store.get_records_of_class('Thing')
+        if class_name and record
     ]
 
-
 def get_record_by_pid(
-    module: types.ModuleType,
+    dir_store: RecordDirStore,
     pid: strawberry.ID,
-) -> Any | None:
+) -> AllThings | None:
     """
     Resolver to get a record by its PID.
     """
-
-    if pid.lower().startswith('person'):
-        return module.Person(
-            pid=strawberry.ID(pid),
-            given_name=f'John-{{pid}}',
-        )
-    elif pid.lower().startswith('agent'):
-        return module.Agent(
-            pid=strawberry.ID(pid),
-            at_location=f'Berlin-{{pid}}',
-        )
-    else:
-        return module.Thing(
-            pid=strawberry.ID(pid),
-            description=f'Thing description for {{pid}}',
-        )
+    class_name, record = dir_store.get_record_by_iri(pid)
+    if class_name and record:
+        return getattr(strawberry_module, class_name)(**record)
+    return None
 
 
 def get_records_by_class_name(
-    module: types.ModuleType,
+    dir_store: RecordDirStore,
     class_name: str
-) -> list[Any] | None:
+) -> list[AllThings] | None:
     """
     Resolver to get records by class name.
     """
     return [
-        module.Agent(pid=strawberry.ID('agent-1'), at_location=f'Berlin {{class_name}}'),
-        module.Agent(pid=strawberry.ID('agent-2'), at_location=f'Berlin {{class_name}}'),
-        module.Agent(pid=strawberry.ID('agent-3'), at_location=f'Berlin {{class_name}}'),
+        getattr(strawberry_module, class_name)(**record)
+        for class_name, record in dir_store.get_records_of_class(class_name)
+        if class_name and record
     ]
