@@ -162,7 +162,10 @@ class StrawberryGenerator(Generator):
                 type_spec = f'"{slot.range}"'
 
         if slot.multivalued:
-            type_spec = f'list[Optional[{type_spec}]]'
+            if slot.inlined or slot.inlined_as_list:
+                type_spec = f'list[{type_spec}]'
+            else:
+                type_spec = f'list[strawberry.ID]'
         if not slot.required:
             type_spec = f'Optional[{type_spec}] = None'
         result = f'    {aliased_slot_name}: {type_spec}\n'
