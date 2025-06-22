@@ -123,9 +123,11 @@ post-install-commands = [
 run = 'python -m pytest {args}'
 
 [tool.ruff]
-exclude = [
+extend-exclude = [
     # sphinx
     "docs",
+    # patches
+    "dump_things_service/patches/*",
 ]
 line-length = 88
 indent-width = 4
