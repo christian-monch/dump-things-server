@@ -10,6 +10,9 @@ from typing import (
     Any,
 )
 
+# Perform the patching before importing any third-party libraries
+from dump_things_service.patches import enabled
+
 import uvicorn
 from fastapi import (
     Body,  # noqa F401 -- used by generated code
@@ -182,6 +185,12 @@ def store_record(
     if input_format == Format.ttl and not isinstance(data, str):
         raise HTTPException(
             status_code=HTTP_400_BAD_REQUEST, detail='Invalid ttl data provided.'
+        )
+
+    if collection not in g_instance_config.model_info:
+        raise HTTPException(
+            status_code=HTTP_404_NOT_FOUND,
+            detail=f'No such collection: "{collection}".',
         )
 
     token = get_default_token_name(g_instance_config, collection) if api_key is None else api_key
