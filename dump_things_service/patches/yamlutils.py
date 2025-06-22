@@ -12,12 +12,12 @@ from typing import (
     Optional,
     Union,
 )
+
 from jsonasobj2 import (
     JsonObj,
     JsonObjTypes,
     as_dict,
 )
-
 from linkml_runtime.utils.formatutils import items
 from linkml_runtime.utils.yamlutils import (
     TypedNode,
@@ -29,7 +29,7 @@ YAMLObjTypes = Union[JsonObjTypes, "YAMLRoot"]
 try:
     from yaml import CSafeLoader as SafeLoader
 except ImportError:
-    from yaml.loader import SafeLoader
+    pass
 
 
 
@@ -122,25 +122,23 @@ def _normalize_inlined(self, slot_name: str, slot_type: type, key_name: str, key
             else:
                 # lone key [key1: , key2: ... }
                 order_up(list_entry, slot_type(**{key_name: list_entry}))
-    else:
-        # We have a dictionary
-        if key_name in raw_slot and raw_slot[key_name] is not None \
+    elif key_name in raw_slot and raw_slot[key_name] is not None \
                 and not isinstance(raw_slot[key_name], (list, dict, JsonObj)):
-            # Vanilla dictionary - {key: v11, s12: v12, ...}
-            order_up(raw_slot[key_name], slot_type(**as_dict(raw_slot)))
-        else:
-            # We have either {key1: {obj1}, key2: {obj2}...} or {key1:, key2:, ...}
-            for k, v in items(raw_slot):
-                if v is None:
-                    v = dict()
-                if isinstance(v, slot_type):
-                    order_up(k, v)
-                elif isinstance(v, (dict, JsonObj)):
-                    form_1({k: v})
-                elif not isinstance(v, list):
-                    order_up(k, slot_type(*[k, v]))
-                else:
-                    raise ValueError(f"Unrecognized entry: {loc(k)}: {str(v)}")
+        # Vanilla dictionary - {key: v11, s12: v12, ...}
+        order_up(raw_slot[key_name], slot_type(**as_dict(raw_slot)))
+    else:
+        # We have either {key1: {obj1}, key2: {obj2}...} or {key1:, key2:, ...}
+        for k, v in items(raw_slot):
+            if v is None:
+                v = dict()
+            if isinstance(v, slot_type):
+                order_up(k, v)
+            elif isinstance(v, (dict, JsonObj)):
+                form_1({k: v})
+            elif not isinstance(v, list):
+                order_up(k, slot_type(*[k, v]))
+            else:
+                raise ValueError(f"Unrecognized entry: {loc(k)}: {v!s}")
     self[slot_name] = cooked_slot
 
 

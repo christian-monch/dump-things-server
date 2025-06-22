@@ -17,10 +17,6 @@ from typing import (
 )
 
 from curies import Converter
-from rdflib import Graph, URIRef
-from rdflib.term import BNode, Literal
-from rdflib.namespace import RDF
-
 from linkml_runtime import MappingError
 from linkml_runtime.linkml_model import (
     ClassDefinition,
@@ -33,6 +29,15 @@ from linkml_runtime.utils.formatutils import underscore
 from linkml_runtime.utils.schemaview import SchemaView
 from linkml_runtime.utils.yamlutils import YAMLRoot
 from pydantic import BaseModel
+from rdflib import (
+    Graph,
+    URIRef,
+)
+from rdflib.namespace import RDF
+from rdflib.term import (
+    BNode,
+    Literal,
+)
 
 logger = logging.getLogger(__name__)
 
