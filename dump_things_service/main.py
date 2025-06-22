@@ -287,6 +287,12 @@ async def read_record_with_pid(
     format: Format = Format.json,  # noqa A002
     api_key: str = Depends(api_key_header_scheme),
 ):
+    if collection not in g_instance_config.model_info:
+        raise HTTPException(
+            status_code=HTTP_404_NOT_FOUND,
+            detail=f'No such collection: "{collection}".',
+        )
+
     token = get_default_token_name(g_instance_config, collection) if api_key is None else api_key
 
     token_store, token_permissions = get_token_store(g_instance_config, collection, token)
@@ -328,6 +334,12 @@ async def read_records_of_type(
     format: Format = Format.json,  # noqa A002
     api_key: str = Depends(api_key_header_scheme),
 ):
+    if collection not in g_instance_config.model_info:
+        raise HTTPException(
+            status_code=HTTP_404_NOT_FOUND,
+            detail=f'No such collection: "{collection}".',
+        )
+
     token = get_default_token_name(g_instance_config, collection) if api_key is None else api_key
 
     model = g_instance_config.model_info[collection][0]
