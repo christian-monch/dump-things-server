@@ -1,22 +1,38 @@
-# 0.2.4 (2025-07-07)
+# 0.2.5 (2025-06-22)
+
+## New feature
+
+- dump-things-service does now patch its environment as required. There is no more
+  need to provide a patched linkml-environment.
+- the distribution package is now smaller, it does not contain the test directory anymore.
+
+## Bugfixes
+
+- ensure that non-existing collections are properly reported in unauthenticated requests
+
+
+# 0.2.4 (2025-06-07)
 
 ## Bugfixes
 
 - add missing entry point for `dump-things-service`-command.
 
-# 0.2.3 (2025-07-06)
+
+# 0.2.3 (2025-06-06)
 
 ## Bugfixes
 
  - bump the version to 0.2.3
 
-# 0.2.2 (2025-07-06)
+
+# 0.2.2 (2025-06-06)
 
 ## Bugfixes
 
  - describe the pypi-installation and start of the service in the README
 
-# 0.2.1 (2025-07-05)
+
+# 0.2.1 (2025-06-05)
 
 ## New feature
 
@@ -24,7 +40,7 @@
  - add `dump-things-service` command. This command can be used after installation to start the service
 
 
-# 0.2.0 (2025-07-04)
+# 0.2.0 (2025-06-04)
 
 ## New features
   
@@ -33,7 +49,7 @@
   - move all dependency definitions into `pyproject.toml`, remove `requirements.txt` and `requirements-devel.txt`
 
 
-# 0.1.1 (2025-07-03)
+# 0.1.1 (2025-06-03)
 
 ## Bugfixes
 
