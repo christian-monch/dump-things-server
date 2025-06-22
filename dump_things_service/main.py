@@ -1,4 +1,4 @@
-from __future__ import annotations
+from __future__ import annotations   # noqa: I001 -- the patches have to be imported early
 
 import argparse
 import logging
@@ -9,6 +9,9 @@ from typing import (
     Annotated,  # noqa F401 -- used by generated code
     Any,
 )
+
+# Perform the patching before importing any third-party libraries
+from dump_things_service.patches import enabled  # noqa: F401
 
 import uvicorn
 from fastapi import (
@@ -39,6 +42,7 @@ from dump_things_service import (
 )
 from dump_things_service.config import (
     ConfigError,
+    InstanceConfig,
     get_default_token_name,
     get_model_info_for_collection,
     get_token_store,
@@ -116,11 +120,10 @@ try:
         config_file=config_path,
         globals_dict=globals(),
     )
-except ConfigError as e:
-    logger.error(
-        'ERROR: invalid configuration file at: `%s`:\n---> %s',
+except ConfigError:
+    logger.exception(
+        'ERROR: invalid configuration file at: `%s`',
         config_path,
-        str(e),
     )
     g_error = 'Server runs in error mode due to an invalid configuration. See server error-log for details.'
 
@@ -183,6 +186,8 @@ def store_record(
         raise HTTPException(
             status_code=HTTP_400_BAD_REQUEST, detail='Invalid ttl data provided.'
         )
+
+    _check_collection(g_instance_config, collection)
 
     token = get_default_token_name(g_instance_config, collection) if api_key is None else api_key
     # Get the token permissions and extend them by the default permissions
@@ -248,6 +253,17 @@ def store_record(
     )
 
 
+def _check_collection(
+    instance_config: InstanceConfig,
+    collection: str,
+):
+    if collection not in instance_config.collections:
+        raise HTTPException(
+            status_code=HTTP_404_NOT_FOUND,
+            detail=f'No such collection: "{collection}".',
+        )
+
+
 # Add CORS origins
 app.add_middleware(
     CORSMiddleware,
@@ -263,6 +279,7 @@ async def fetch_token_permissions(
     collection: str,
     body: TokenCapabilityRequest,
 ):
+    _check_collection(g_instance_config, collection)
     token = get_default_token_name(g_instance_config, collection) if body.token is None else body.token
     token_store, token_permissions = get_token_store(g_instance_config, collection, token)
     final_permissions = join_default_token_permissions(g_instance_config, token_permissions, collection)
@@ -287,6 +304,8 @@ async def read_record_with_pid(
     format: Format = Format.json,  # noqa A002
     api_key: str = Depends(api_key_header_scheme),
 ):
+    _check_collection(g_instance_config, collection)
+
     token = get_default_token_name(g_instance_config, collection) if api_key is None else api_key
 
     token_store, token_permissions = get_token_store(g_instance_config, collection, token)
@@ -328,6 +347,8 @@ async def read_records_of_type(
     format: Format = Format.json,  # noqa A002
     api_key: str = Depends(api_key_header_scheme),
 ):
+    _check_collection(g_instance_config, collection)
+
     token = get_default_token_name(g_instance_config, collection) if api_key is None else api_key
 
     model = g_instance_config.model_info[collection][0]
