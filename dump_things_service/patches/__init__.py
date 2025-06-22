@@ -2,12 +2,11 @@
 
 from __future__ import annotations
 
-from importlib import import_module
 import logging
+from importlib import import_module
 from typing import Any
 
-
-lgr = logging.getLogger('datalad.ext.next.patches')
+lgr = logging.getLogger('dump_things_service.patches')
 
 
 def apply_patch(
@@ -61,13 +60,8 @@ def apply_patch(
     lgr.debug(msg)
 
     # we want to fail on ImportError
-    mod = import_module(modname, package='dump_things_service')
-    if objname:
-        # we want to fail on a missing object
-        obj = getattr(mod, objname)
-    else:
-        # the target is the module itself
-        obj = mod
+    mod = import_module(modname)
+    obj = getattr(mod, objname) if objname else mod
 
     if expect_attr_present:
         # we want to fail on a missing attribute/object
