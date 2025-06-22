@@ -1,3 +1,10 @@
+# 0.2.6 (2025-06-22)
+
+## Bugfixes
+
+- ensure that the version number if correct
+
+
 # 0.2.5 (2025-06-22)
 
 ## New feature
