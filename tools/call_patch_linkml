@@ -1,9 +1,0 @@
-#!/bin/bash
-#
-# Call the patch script from `datalad-concepts`
-# to patch the active linkml installation.
-#
-
-pushd datalad-concepts
-./tools/patch_linkml
-popd
