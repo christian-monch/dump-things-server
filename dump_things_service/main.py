@@ -272,19 +272,6 @@ def _check_collection(
         )
 
 
-# Add CORS origins
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=arguments.origins,
-    allow_credentials=True,
-    allow_methods=['*'],
-    allow_headers=['*'],
-)
-
-# Add pagination
-add_pagination(app)
-
-
 @app.post('/{collection}/token_permissions')
 async def fetch_token_permissions(
     collection: str,
@@ -410,6 +397,18 @@ async def process_token(instance_config, api_key, collection):
 create_endpoints(app, g_instance_config, globals())
 app.openapi_schema = None
 app.setup()
+
+# Add CORS origins
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=arguments.origins,
+    allow_credentials=True,
+    allow_methods=['*'],
+    allow_headers=['*'],
+)
+
+# Add pagination
+add_pagination(app)
 
 
 def main():
