@@ -343,8 +343,6 @@ async def read_records_of_type(
 ) -> Page[dict | str]:
     _check_collection(g_instance_config, collection)
 
-    token = get_default_token_name(g_instance_config, collection) if api_key is None else api_key
-
     model = g_instance_config.model_info[collection][0]
     if class_name not in get_classes(model):
         raise HTTPException(
