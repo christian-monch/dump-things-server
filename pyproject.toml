@@ -64,13 +64,6 @@ only-include = [
 [tool.hatch.version]
 path = "dump_things_service/__about__.py"
 
-[tool.hatch.envs.default]
-post-install-commands = [
-    "pushd datalad-concepts",
-    "./tools/call_patch_linkml",
-    "popd",
-]
-
 [tool.hatch.envs.types]
 extra-dependencies = [
     "mypy>=1.0.0",
@@ -96,11 +89,6 @@ exclude_lines = [
 
 [tool.hatch.envs.fastapi]
 description = "fastapi dev environment"
-post-install-commands = [
-    "pushd datalad-concepts",
-    "./tools/call_patch_linkml",
-    "popd",
-]
 
 [tool.hatch.envs.fastapi.scripts]
 run = "python -m dump_things_service.main {args}"
@@ -112,11 +100,6 @@ extra-dependencies = [
     "httpx",
     "pytest",
     "pytest-cov",
-]
-post-install-commands = [
-    "pushd datalad-concepts",
-    "./tools/call_patch_linkml",
-    "popd",
 ]
 
 [tool.hatch.envs.tests.scripts]
