@@ -24,6 +24,11 @@ from fastapi import (
 from fastapi.encoders import jsonable_encoder
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import APIKeyHeader
+from fastapi_pagination import (
+    Page,
+    add_pagination,
+    paginate,
+)
 from pydantic import (
     BaseModel,
     TypeAdapter,
@@ -59,10 +64,12 @@ from dump_things_service.model import (
     get_classes,
     get_subclasses,
 )
+from dump_things_service.record_list import RecordList
 from dump_things_service.resolve_curie import resolve_curie
 from dump_things_service.utils import (
     cleaned_json,
     combine_ttl,
+    get_schema_type_curie,
 )
 
 
@@ -220,7 +227,8 @@ def store_record(
 
     # Add `schema_type` to the records
     for record in stored_records:
-        record.schema_type = _get_schema_type_curie(
+        record.schema_type = get_schema_type_curie(
+            g_instance_config,
             collection,
             record.__class__.__name__,
         )
@@ -272,6 +280,9 @@ app.add_middleware(
     allow_methods=['*'],
     allow_headers=['*'],
 )
+
+# Add pagination
+add_pagination(app)
 
 
 @app.post('/{collection}/token_permissions')
@@ -328,7 +339,11 @@ async def read_record_with_pid(
                 record,
             )
             return PlainTextResponse(ttl_record, media_type='text/turtle')
-        record['schema_type'] = _get_schema_type_curie(collection, class_name)
+        record['schema_type'] = get_schema_type_curie(
+            g_instance_config,
+            collection,
+            class_name,
+        )
     return record
 
 
@@ -338,8 +353,10 @@ async def read_records_of_type(
     class_name: str,
     format: Format = Format.json,  # noqa A002
     api_key: str = Depends(api_key_header_scheme),
-):
+) -> Page[dict | str]:
     _check_collection(g_instance_config, collection)
+
+    token = get_default_token_name(g_instance_config, collection) if api_key is None else api_key
 
     model = g_instance_config.model_info[collection][0]
     if class_name not in get_classes(model):
@@ -350,35 +367,30 @@ async def read_records_of_type(
 
     final_permissions, token_store = await process_token(g_instance_config, api_key, collection)
 
+    # We use a dictionary to implement prioritization of incoming records over curated records.
     records = {}
     if final_permissions.curated_read:
         for search_class_name in get_subclasses(model, class_name):
-            for record_class_name, record in g_instance_config.curated_stores[collection].get_records_of_class(
+            for record_class_name, pid, path in g_instance_config.curated_stores[collection].get_record_info_of_class(
                 search_class_name
             ):
-                record['schema_type'] = _get_schema_type_curie(collection, record_class_name)
-                records[record['pid']] = record
+                records[pid] = record_class_name, path
 
     if final_permissions.incoming_read:
         for search_class_name in get_subclasses(model, class_name):
-            for record_class_name, record in token_store.get_records_of_class(search_class_name):
-                record['schema_type'] = _get_schema_type_curie(collection, record_class_name)
-                records[record['pid']] = record
+            for record_class_name, pid, path in token_store.get_record_info_of_class(search_class_name):
+                records[pid] = record_class_name, path
 
-    if format == Format.ttl:
-        ttls = [
-            convert_json_to_ttl(
-                g_instance_config,
-                collection,
-                target_class=record_class_name,
-                json=cleaned_json(record),
-            )
-            for record in records.values()
-        ]
-        if ttls:
-            return PlainTextResponse(combine_ttl(ttls), media_type='text/turtle')
-        return PlainTextResponse('', media_type='text/turtle')
-    return tuple(records.values())
+    # Generate a result list from the `records` dictionary.
+    result_list = RecordList(
+        instance_config=g_instance_config,
+        collection=collection,
+        convert_to_ttl=(format == Format.ttl),
+    )
+    result_list.add_record_info(
+        (class_name, pid, path) for pid, (class_name, path) in records.items()
+    )
+    return paginate(result_list)
 
 
 async def process_token(instance_config, api_key, collection):
@@ -391,16 +403,6 @@ async def process_token(instance_config, api_key, collection):
             detail=f'No read access to curated or incoming data in collection "{collection}".',
         )
     return final_permissions, token_store
-
-
-def _get_schema_type_curie(
-    collection: str,
-    class_name: str,
-) -> str:
-    schema_url = g_instance_config.schemas[collection]
-    schema_module = g_instance_config.conversion_objects[schema_url]['schema_module']
-    class_object = getattr(schema_module, class_name)
-    return class_object.class_class_curie
 
 
 # Create dynamic endpoints and rebuild the app to include all dynamically

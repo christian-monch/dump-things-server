@@ -12,6 +12,7 @@ if TYPE_CHECKING:
     from pathlib import Path
 
     from dump_things_service import JSON
+    from dump_things_service.config import InstanceConfig
 
 
 @contextmanager
@@ -52,3 +53,14 @@ def cleaned_json(
 def combine_ttl(documents: list[str]) -> str:
     graphs = [Graph().parse(data=doc, format='ttl') for doc in documents]
     return reduce(lambda g1, g2: g1 + g2, graphs).serialize(format='ttl')
+
+
+def get_schema_type_curie(
+    instance_config: InstanceConfig,
+    collection: str,
+    class_name: str,
+) -> str:
+    schema_url = instance_config.schemas[collection]
+    schema_module = instance_config.conversion_objects[schema_url]['schema_module']
+    class_object = getattr(schema_module, class_name)
+    return class_object.class_class_curie
