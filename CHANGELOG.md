@@ -1,3 +1,14 @@
+# 0.2.7 (2025-06-24)
+
+## Bugfixes
+
+- monkeypatching was not triggered earlier, this is fixed now.
+
+## Cleanup
+- the datalad-concepts submodule was removed
+- any calls to patch via post-install script were removed
+
+
 # 0.2.6 (2025-06-22)
 
 ## Bugfixes
