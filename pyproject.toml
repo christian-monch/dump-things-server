@@ -28,6 +28,7 @@ dependencies = [
     "aiohttp",
     "click==8.1.8",
     "fastapi[standard]",
+    "fastapi-pagination",
     "fsspec",
     "linkml",
     "pydantic==2.8.0",
