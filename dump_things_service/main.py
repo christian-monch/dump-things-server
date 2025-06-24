@@ -306,15 +306,7 @@ async def read_record_with_pid(
 ):
     _check_collection(g_instance_config, collection)
 
-    token = get_default_token_name(g_instance_config, collection) if api_key is None else api_key
-
-    token_store, token_permissions = get_token_store(g_instance_config, collection, token)
-    final_permissions = join_default_token_permissions(g_instance_config, token_permissions, collection)
-    if not final_permissions.curated_read and not final_permissions.incoming_read:
-        raise HTTPException(
-            status_code=HTTP_403_FORBIDDEN,
-            detail=f'No read access to curated or incoming data in collection "{collection}".',
-        )
+    final_permissions, token_store = await process_token(g_instance_config, api_key, collection)
 
     iri = resolve_curie(
         get_model_info_for_collection(g_instance_config, collection)[0],
@@ -349,8 +341,6 @@ async def read_records_of_type(
 ):
     _check_collection(g_instance_config, collection)
 
-    token = get_default_token_name(g_instance_config, collection) if api_key is None else api_key
-
     model = g_instance_config.model_info[collection][0]
     if class_name not in get_classes(model):
         raise HTTPException(
@@ -358,13 +348,7 @@ async def read_records_of_type(
             detail=f'No "{class_name}"-class in collection "{collection}".',
         )
 
-    token_store, token_permissions = get_token_store(g_instance_config, collection, token)
-    final_permissions = join_default_token_permissions(g_instance_config, token_permissions, collection)
-    if not final_permissions.incoming_read and not final_permissions.curated_read:
-        raise HTTPException(
-            status_code=HTTP_403_FORBIDDEN,
-            detail=f'No read access to curated or incoming data in collection "{collection}".',
-        )
+    final_permissions, token_store = await process_token(g_instance_config, api_key, collection)
 
     records = {}
     if final_permissions.curated_read:
@@ -395,6 +379,18 @@ async def read_records_of_type(
             return PlainTextResponse(combine_ttl(ttls), media_type='text/turtle')
         return PlainTextResponse('', media_type='text/turtle')
     return tuple(records.values())
+
+
+async def process_token(instance_config, api_key, collection):
+    token = get_default_token_name(instance_config, collection) if api_key is None else api_key
+    token_store, token_permissions = get_token_store(instance_config, collection, token)
+    final_permissions = join_default_token_permissions(instance_config, token_permissions, collection)
+    if not final_permissions.incoming_read and not final_permissions.curated_read:
+        raise HTTPException(
+            status_code=HTTP_403_FORBIDDEN,
+            detail=f'No read access to curated or incoming data in collection "{collection}".',
+        )
+    return final_permissions, token_store
 
 
 def _get_schema_type_curie(
