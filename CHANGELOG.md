@@ -1,3 +1,15 @@
+# 0.3.0 (2025-06-25)
+
+## New features
+
+- pagination support for class instance retrieval. To keep backward-compatibility  a new endpoint is added, i.e., `/<collection>/records/p/<class>`.
+
+## Cleanup
+- 
+- the datalad-concepts submodule was removed
+- any calls to patch via post-install script were removed
+
+
 # 0.2.7 (2025-06-24)
 
 ## Bugfixes
