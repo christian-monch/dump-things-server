@@ -1,3 +1,17 @@
+# 0.4.0 (2025-06-25)
+
+## New features
+
+- limit the number of records that are returned via the `/<collection>/records/<class>`-endpoint.
+ The maximum number of JSON-records is 1200, the maximum number of TTL-records is 60 (due to the high cost of combining TTL-records).
+ An HTTP 413 error is returned if the number of records is execeeded.
+ This limits backward compatibility, as the previous behavior was to return all records.
+
+## Bugfixes
+
+- fix errors in README.md
+
+
 # 0.3.0 (2025-06-25)
 
 ## New features
