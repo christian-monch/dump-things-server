@@ -10,6 +10,8 @@ from typing import (
     Any,
 )
 
+from starlette.status import HTTP_413_REQUEST_ENTITY_TOO_LARGE
+
 # Perform the patching before importing any third-party libraries
 from dump_things_service.patches import enabled  # noqa: F401
 
@@ -341,6 +343,15 @@ async def read_records_of_type(
     format: Format = Format.json,  # noqa A002
     api_key: str = Depends(api_key_header_scheme),
 ):
+    def check_bounds(records: dict, max_length: int):
+        if len(records) > max_length:
+            raise HTTPException(
+                status_code=HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+                detail=f'Too many records found for class "{class_name}" in '
+                       f'collection "{collection}". Please use pagination '
+                       f'(/{collection}/records/p/{class_name}).',
+            )
+
     _check_collection(g_instance_config, collection)
 
     model = g_instance_config.model_info[collection][0]
@@ -357,18 +368,27 @@ async def read_records_of_type(
             detail=f'No read access to curated or incoming data in collection "{collection}".',
         )
 
+    # Set an upper limit for the number of result records to keep processing time for
+    # individual requests short and avoid overloading the server. The large difference
+    # between TTL and JSON is due to the fact that combining TTL results into a single
+    # TTL document has exponential complexity in the number of TTL documents.
+    max_records = 60 if format == Format.ttl else 1200
+
     records = {}
     if final_permissions.curated_read:
         for search_class_name in get_subclasses(model, class_name):
             for record_class_name, record in g_instance_config.curated_stores[collection].get_records_of_class(
                 search_class_name
             ):
+                check_bounds(records, max_records)
                 record['schema_type'] = get_schema_type_curie(g_instance_config, collection, record_class_name)
                 records[record['pid']] = record_class_name, record
+
 
     if final_permissions.incoming_read:
         for search_class_name in get_subclasses(model, class_name):
             for record_class_name, record in token_store.get_records_of_class(search_class_name):
+                check_bounds(records, max_records)
                 record['schema_type'] = get_schema_type_curie(g_instance_config, collection, record_class_name)
                 records[record['pid']] = record_class_name, record
 
@@ -389,7 +409,7 @@ async def read_records_of_type(
 
 
 @app.get('/{collection}/records/p/{class_name}')
-async def read_records_of_type(
+async def read_records_of_type_paginated(
     collection: str,
     class_name: str,
     format: Format = Format.json,  # noqa A002
