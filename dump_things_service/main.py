@@ -389,7 +389,7 @@ async def read_records_of_type(
 
 
 @app.get('/{collection}/records/p/{class_name}')
-async def read_records_of_type(
+async def read_records_of_type_paginated(
     collection: str,
     class_name: str,
     format: Format = Format.json,  # noqa A002
