@@ -340,6 +340,60 @@ async def read_records_of_type(
     class_name: str,
     format: Format = Format.json,  # noqa A002
     api_key: str = Depends(api_key_header_scheme),
+):
+    _check_collection(g_instance_config, collection)
+
+    model = g_instance_config.model_info[collection][0]
+    if class_name not in get_classes(model):
+        raise HTTPException(
+            status_code=HTTP_404_NOT_FOUND,
+            detail=f'No "{class_name}"-class in collection "{collection}".',
+        )
+
+    final_permissions, token_store = await process_token(g_instance_config, api_key, collection)
+    if not final_permissions.incoming_read and not final_permissions.curated_read:
+        raise HTTPException(
+            status_code=HTTP_403_FORBIDDEN,
+            detail=f'No read access to curated or incoming data in collection "{collection}".',
+        )
+
+    records = {}
+    if final_permissions.curated_read:
+        for search_class_name in get_subclasses(model, class_name):
+            for record_class_name, record in g_instance_config.curated_stores[collection].get_records_of_class(
+                search_class_name
+            ):
+                record['schema_type'] = get_schema_type_curie(g_instance_config, collection, record_class_name)
+                records[record['pid']] = record_class_name, record
+
+    if final_permissions.incoming_read:
+        for search_class_name in get_subclasses(model, class_name):
+            for record_class_name, record in token_store.get_records_of_class(search_class_name):
+                record['schema_type'] = get_schema_type_curie(g_instance_config, collection, record_class_name)
+                records[record['pid']] = record_class_name, record
+
+    if format == Format.ttl:
+        ttls = [
+            convert_json_to_ttl(
+                g_instance_config,
+                collection,
+                target_class=record_class_name,
+                json=cleaned_json(record),
+            )
+            for record_class_name, record in records.values()
+        ]
+        if ttls:
+            return PlainTextResponse(combine_ttl(ttls), media_type='text/turtle')
+        return PlainTextResponse('', media_type='text/turtle')
+    return tuple(map(lambda v: v[1], records.values()))
+
+
+@app.get('/{collection}/records/p/{class_name}')
+async def read_records_of_type(
+    collection: str,
+    class_name: str,
+    format: Format = Format.json,  # noqa A002
+    api_key: str = Depends(api_key_header_scheme),
 ) -> Page[dict | str]:
     _check_collection(g_instance_config, collection)
 
