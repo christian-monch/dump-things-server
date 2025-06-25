@@ -372,7 +372,7 @@ async def read_records_of_type(
         collection=collection,
         convert_to_ttl=(format == Format.ttl),
     )
-    result_list.add_record_info(
+    result_list.add_info(
         (class_name, pid, path) for pid, (class_name, path) in records.items()
     )
     return paginate(result_list)
