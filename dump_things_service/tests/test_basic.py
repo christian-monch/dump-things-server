@@ -106,6 +106,25 @@ def test_store_record(fastapi_client_simple):
             'given_name': given_name
         } in cleaned_response
 
+    # Check pagination
+    for i, token in basic_write_locations:
+        response = test_client.get(
+            f'/collection_{i}/records/p/Thing',
+            headers={'x-dumpthings-token': token},
+        )
+        assert response.status_code == HTTP_200_OK
+        for key in ('items', 'total', 'page', 'size', 'pages'):
+            assert key in response.json()
+        records = response.json()['items']
+        cleaned_response = cleaned_json(records, remove_keys=('annotations',))
+        assert extra_record in cleaned_response
+        assert {
+           'schema_type': 'abc:Person',
+           'pid': pid,
+           'given_name': given_name
+        } in cleaned_response
+
+
 
 def test_encoding(fastapi_client_simple):
     test_client, store_path = fastapi_client_simple
