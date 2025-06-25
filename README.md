@@ -220,20 +220,32 @@ The service provides the following endpoints:
  This might be more than one record if the posted object contains inlined records.
   
 
-- `GET /<collection>/records/<class>`: retrieve all objects of type `<class>` or any of its subclasses that are stored in a token storage space or the global storage space of the service.
- If the service was started with the `--no-global-store` flag, records in the global storage space will be ignored. 
- If a token is provided, all matching objects from the token storage space are returned.
-  If the service was started with the `--no-global-store` flag, it will only return objects from the token storage space, otherwise the service returns objects from the global storage space in addition.
- Objects from token space take precedence over objects from the global space, i.e. if there are two objects with identical `pid` in the global store and the object store, the record from the token store will be returned.
+- `GET /<collection>/records/<class>`: retrieve all readable objects from collection `<collection>` that are of type `<class>` or any of its subclasses.that are readable .
+ Objects are readable, if the default token for the collection allows reading of objects or if a token is provided that allows reading of objects in the collection.
+ Objects from incoming spaces will take precedence over objects from curated spaces, i.e. if there are two objects with identical `pid` in the curated space and in the incoming space, the object from the incoming space will be returned.
  The endpoint supports the query parameter `format`, which determines the format of the query result.
  It can be set to `json` (the default) or to `ttl`,
 
 
-- `GET /<collection>/record?pid=<pid>`: retrieve an object with the pid `<pid>` from a token storage space or from the global storage of the service.
-  If the service was started with the `--no-global-store` flag, records in the global storage space will be  ignored.
-  If a token is provided, the object is first searched in the token storage space.
-  If the service was started with the `--no-global-store` flag, it will only search in the token storage space, otherwise the service will also search in the global storage space in addition.
-  Only objects with a type defined by the schema associated with `<collection>` are considered.
+- `GET /<collection>/records/p/<class>`: this endpoint provides the same functionality as the endpoint `GET /<collection>/records/<class>` (with a `.../p/...` in the patch), but supports result pagination. In addition to the query parameter `format`, it supports the query parameters `page` and `size`.
+ The `page`-parameter defines the page number to retrieve, starting with 1.
+ The `size`-parameter defines how many records should be returned per page.
+ If no `size`-parameter is given, the default value of 50 is used.
+ Each response will also contain the total number of records and the total number of pages in the result.
+ The response is a JSON object with the following structure:
+ ```json
+{
+  "items": [ <JSON-record or ttl-string> ],
+  "total": <total number of records in the result>,
+  "page": <current page number>,
+  "size": <number of records per page>,
+  "pages": < number of pages in the result>
+}
+ ```
+  In contrast to the `GET /<collection>/records/<class>` endpoint, this endpoint will return individual ttl-records, not a combination of all ttl-records in the result.
+
+
+- `GET /<collection>/record?pid=<pid>`: retrieve an object with the pid `<pid>` from the collection `<collection>`, if the provided token allows reading. If the provided token allows reading of incoming and curated spaces, objects from incoming spaces will take precedence.
   The endpoint supports the query parameter `format`, which determines the format of the query result.
   It can be set to `json` (the default) or to `ttl`,
 

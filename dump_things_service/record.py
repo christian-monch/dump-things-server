@@ -79,12 +79,12 @@ class RecordDirStore:
                 iri = resolve_curie(self.model, pid)
                 # On startup, log PID collision errors and continue building the index
                 try:
-                    self._add_iri_to_index(iri, path)
+                    self._add_iri_to_index(iri, pid, path)
                 except HTTPException as e:
                     lgr.error(e.detail)
         lgr.info('Index built with %d IRIs', len(self.index))
 
-    def _add_iri_to_index(self, iri: str, path: Path):
+    def _add_iri_to_index(self, iri: str, pid: str, path: Path):
 
         # If the IRI is already in the index, the reasons may be:
         #
@@ -107,10 +107,12 @@ class RecordDirStore:
         # 4. The existing record is a different class (not `Thing`) and probably
         #    a different PID. That indicates that two different records have the
         #    same IRI. This is an error condition, and we raise an exception
-        existing_path = self.index.get(iri)
-        if existing_path:
+        existing_entry = self.index.get(iri)
+        if existing_entry:
+            existing_pid, existing_path = existing_entry
             # Case 1: existing record is updated
             if path == existing_path:
+                self.index[iri] = pid, path
                 return
 
             existing_class = self._get_class_name(existing_path)
@@ -119,7 +121,7 @@ class RecordDirStore:
             # Case 2: `Thing` record is replaced with a non-`Thing` record.
             if existing_class == 'Thing' and new_class != 'Thing':
                 if path.name == existing_path.name:
-                    self.index[iri] = path
+                    self.index[iri] = pid, path
                     return
                 msg = f'IRI {iri} existing {existing_class}-instance at {existing_path} might not be a placeholder for {new_class}-instance at {path}, PIDs differ!'
                 raise HTTPException(
@@ -145,7 +147,7 @@ class RecordDirStore:
                 detail=msg,
             )
 
-        self.index[iri] = path
+        self.index[iri] = pid, path
 
     def _get_class_name(self, path: Path) -> str:
         """Get the class name from the path."""
@@ -244,7 +246,7 @@ class RecordDirStore:
 
         # Add the resolved PID to the index
         iri = resolve_curie(self.model, record.pid)
-        self._add_iri_to_index(iri, storage_path)
+        self._add_iri_to_index(iri, record.pid, storage_path)
 
         return record
 
@@ -277,7 +279,7 @@ class RecordDirStore:
         self,
         iri: str,
     ) -> tuple[str, JSON] | tuple[None, None]:
-        path = self.index.get(iri)
+        pid, path = self.index.get(iri)
         if path is None:
             return None, None
         record = yaml.load(path.read_text(), Loader=yaml.SafeLoader)
@@ -285,13 +287,18 @@ class RecordDirStore:
         return class_name, record
 
     def get_records_of_class(self, class_name: str) -> Iterable[tuple[str, JSON]]:
-        for path in self.index.values():
+        for _, path in self.index.values():
             path_class_name = self._get_class_name(path)
             if class_name == path_class_name:
                 yield (
                     class_name,
                     yaml.load(path.read_text(), Loader=yaml.SafeLoader),
                 )
+
+    def get_record_info_of_class(self, class_name: str) -> Iterable[tuple[str, str, Path]]:
+        for pid, path in self.index.values():
+            if class_name == self._get_class_name(path):
+                yield class_name, pid, path
 
 
 def get_record_dir_store(
