@@ -227,7 +227,7 @@ The service provides the following endpoints:
  It can be set to `json` (the default) or to `ttl`,
 
 
-- `GET /<collection>/records/p/<class>`: this endpoint provides the same functionality as the endpoint `GET /<collection>/records/<class>` (with a `.../p/...` in the patch), but supports result pagination. In addition to the query parameter `format`, it supports the query parameters `page` and `size`.
+- `GET /<collection>/records/p/<class>`: this endpoint (ending on `.../p/<class>`) provides the same functionality as the endpoint `GET /<collection>/records/<class>` (without `.../p/...`) but supports result pagination. In addition to the query parameter `format`, it supports the query parameters `page` and `size`.
  The `page`-parameter defines the page number to retrieve, starting with 1.
  The `size`-parameter defines how many records should be returned per page.
  If no `size`-parameter is given, the default value of 50 is used.
@@ -239,7 +239,7 @@ The service provides the following endpoints:
   "total": <total number of records in the result>,
   "page": <current page number>,
   "size": <number of records per page>,
-  "pages": < number of pages in the result>
+  "pages": <number of pages in the result>
 }
  ```
   In contrast to the `GET /<collection>/records/<class>` endpoint, this endpoint will return individual ttl-records, not a combination of all ttl-records in the result.
