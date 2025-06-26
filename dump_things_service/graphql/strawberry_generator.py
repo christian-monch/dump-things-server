@@ -154,7 +154,7 @@ class StrawberryGenerator(Generator):
         if slot.identifier:
             type_spec = 'strawberry.ID'
         elif aliased_slot_name == 'relations' and slot.multivalued and slot.range == 'Thing':
-            type_spec = f'"{thing_union_name}"'
+            type_spec = f'strawberry.ID'
         else:
             if slot.range in known_types:
                 type_spec = known_types[slot.range]
@@ -166,6 +166,10 @@ class StrawberryGenerator(Generator):
                 type_spec = f'list[{type_spec}]'
             else:
                 type_spec = f'list[strawberry.ID]'
+        else:
+            if not slot.inlined:
+                type_spec = 'strawberry.ID'
+
         if not slot.required:
             type_spec = f'Optional[{type_spec}] = None'
         result = f'    {aliased_slot_name}: {type_spec}\n'
