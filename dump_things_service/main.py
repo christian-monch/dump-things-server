@@ -47,6 +47,7 @@ from dump_things_service import (
     Format,
     config_file_name,
 )
+from dump_things_service.common import get_permissions
 from dump_things_service.config import (
     ConfigError,
     InstanceConfig,
@@ -178,7 +179,7 @@ api_key_header_scheme = APIKeyHeader(
 )
 
 
-def store_record(
+async def store_record(
     collection: str,
     data: BaseModel | str,
     class_name: str,
@@ -196,12 +197,7 @@ def store_record(
             status_code=HTTP_400_BAD_REQUEST, detail='Invalid ttl data provided.'
         )
 
-    _check_collection(g_instance_config, collection)
-
-    token = get_default_token_name(g_instance_config, collection) if api_key is None else api_key
-    # Get the token permissions and extend them by the default permissions
-    store, token_permissions = get_token_store(g_instance_config, collection, token)
-    final_permissions = join_default_token_permissions(g_instance_config, token_permissions, collection)
+    final_permissions, store, token = get_permissions(g_instance_config, api_key, collection)
     if not final_permissions.incoming_write:
         raise HTTPException(
             status_code=HTTP_403_FORBIDDEN,
@@ -227,7 +223,7 @@ def store_record(
         )
     )
 
-    # Add `schema_type` to the records
+    # Add `schema_type` to the result records
     for record in stored_records:
         record.schema_type = get_schema_type_curie(
             g_instance_config,
@@ -263,26 +259,12 @@ def store_record(
     )
 
 
-def _check_collection(
-    instance_config: InstanceConfig,
-    collection: str,
-):
-    if collection not in instance_config.collections:
-        raise HTTPException(
-            status_code=HTTP_404_NOT_FOUND,
-            detail=f'No such collection: "{collection}".',
-        )
-
-
 @app.post('/{collection}/token_permissions')
 async def fetch_token_permissions(
     collection: str,
     body: TokenCapabilityRequest,
 ):
-    _check_collection(g_instance_config, collection)
-    token = get_default_token_name(g_instance_config, collection) if body.token is None else body.token
-    token_store, token_permissions = get_token_store(g_instance_config, collection, token)
-    final_permissions = join_default_token_permissions(g_instance_config, token_permissions, collection)
+    final_permissions, _, token = get_permissions(g_instance_config, body.token, collection)
     return JSONResponse(
         {
             'read_curated': final_permissions.curated_read,
@@ -304,14 +286,13 @@ async def read_record_with_pid(
     format: Format = Format.json,  # noqa A002
     api_key: str = Depends(api_key_header_scheme),
 ):
-    _check_collection(g_instance_config, collection)
-
-    final_permissions, token_store = await process_token(g_instance_config, api_key, collection)
+    final_permissions, token_store, _ = get_permissions(g_instance_config, api_key, collection)
 
     iri = resolve_curie(
         get_model_info_for_collection(g_instance_config, collection)[0],
         pid,
     )
+
     record = None
     if final_permissions.incoming_read:
         class_name, record = token_store.get_record_by_iri(iri)
@@ -352,8 +333,7 @@ async def read_records_of_type(
                        f'(/{collection}/records/p/{class_name}).',
             )
 
-    _check_collection(g_instance_config, collection)
-
+    final_permissions, token_store, _ = get_permissions(g_instance_config, api_key, collection)
     model = g_instance_config.model_info[collection][0]
     if class_name not in get_classes(model):
         raise HTTPException(
@@ -361,12 +341,6 @@ async def read_records_of_type(
             detail=f'No "{class_name}"-class in collection "{collection}".',
         )
 
-    final_permissions, token_store = await process_token(g_instance_config, api_key, collection)
-    if not final_permissions.incoming_read and not final_permissions.curated_read:
-        raise HTTPException(
-            status_code=HTTP_403_FORBIDDEN,
-            detail=f'No read access to curated or incoming data in collection "{collection}".',
-        )
 
     # Set an upper limit for the number of result records to keep processing time for
     # individual requests short and avoid overloading the server. The large difference
@@ -415,7 +389,8 @@ async def read_records_of_type_paginated(
     format: Format = Format.json,  # noqa A002
     api_key: str = Depends(api_key_header_scheme),
 ) -> Page[dict | str]:
-    _check_collection(g_instance_config, collection)
+
+    final_permissions, token_store, _ = get_permissions(g_instance_config, api_key, collection)
 
     model = g_instance_config.model_info[collection][0]
     if class_name not in get_classes(model):
@@ -423,8 +398,6 @@ async def read_records_of_type_paginated(
             status_code=HTTP_404_NOT_FOUND,
             detail=f'No "{class_name}"-class in collection "{collection}".',
         )
-
-    final_permissions, token_store = await process_token(g_instance_config, api_key, collection)
 
     # We use a dictionary to implement prioritization of incoming records over curated records.
     records = {}
@@ -450,18 +423,6 @@ async def read_records_of_type_paginated(
         (class_name, pid, path) for pid, (class_name, path) in records.items()
     )
     return paginate(result_list)
-
-
-async def process_token(instance_config, api_key, collection):
-    token = get_default_token_name(instance_config, collection) if api_key is None else api_key
-    token_store, token_permissions = get_token_store(instance_config, collection, token)
-    final_permissions = join_default_token_permissions(instance_config, token_permissions, collection)
-    if not final_permissions.incoming_read and not final_permissions.curated_read:
-        raise HTTPException(
-            status_code=HTTP_403_FORBIDDEN,
-            detail=f'No read access to curated or incoming data in collection "{collection}".',
-        )
-    return final_permissions, token_store
 
 
 # Create dynamic endpoints and rebuild the app to include all dynamically

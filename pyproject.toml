@@ -36,6 +36,7 @@ dependencies = [
     "rdflib",
     "requests",
     "strawberry-graphql",
+    "strawberry-graphql[fastapi]",
     "uvicorn",
 ]
 

@@ -15,7 +15,7 @@ async def {name}(
         format: Format = Format.json,
 ) -> JSONResponse | PlainTextResponse:
     uvicorn_logger.info('{name}(%s, %s, %s, %s)', repr(data), repr('{class_name}'), repr({model_var_name}), repr(format))
-    return store_record('{collection}', data, '{class_name}', {model_var_name}, format, api_key)
+    return await store_record('{collection}', data, '{class_name}', {model_var_name}, format, api_key)
 """
 
 
