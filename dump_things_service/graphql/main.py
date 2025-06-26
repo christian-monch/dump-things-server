@@ -2,29 +2,33 @@ from __future__ import annotations
 
 import argparse
 import logging
-import sys
+from functools import cached_property
 from pathlib import Path
 from typing import (
     cast,
-    Any,
     Optional,
 )
 
 import strawberry
 import uvicorn
-from starlette.applications import Starlette
+from click import Context
+from dns.tsig import get_context
+from fastapi import FastAPI
 from starlette.middleware.cors import CORSMiddleware
-from strawberry.asgi import GraphQL
+from strawberry.fastapi import (
+    BaseContext,
+    GraphQLRouter,
+)
 
-from dump_things_service.config import Config, get_mapping_function
+from dump_things_service import config_file_name
+from dump_things_service.config import process_config
+from dump_things_service.common import check_collection
 from dump_things_service.graphql.sdl import get_strawberry_module_for_linkml_schema
 from dump_things_service.graphql.resolvers import (
     get_record_by_pid,
     get_all_records,
     get_records_by_class_name,
 )
-from dump_things_service.model import get_model_for_schema
-from dump_things_service.record import RecordDirStore
 
 
 logger = logging.getLogger('dump_things_service.graphql')
@@ -35,6 +39,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--host', default='0.0.0.0')  # noqa S104
 parser.add_argument('--port', default=8000, type=int)
 parser.add_argument('--origins', action='append', default=['*'])
+parser.add_argument('-c', '--config')
 parser.add_argument(
     '--root-path',
     default='',
@@ -46,12 +51,12 @@ parser.add_argument(
     help="Set the log level for the service, allowed values are 'ERROR', 'WARNING', 'INFO', 'DEBUG'. Default is 'warning'.",
 )
 parser.add_argument(
-    'config_dir',
-    help='Directory that contains the config file for store.',
-)
-parser.add_argument(
     'store',
     help='The directory that stores the records.',
+)
+parser.add_argument(
+    'collection',
+    help='Collection that should be queried.',
 )
 
 arguments = parser.parse_args()
@@ -65,57 +70,87 @@ if not isinstance(numeric_level, int):
 logging.basicConfig(level=numeric_level)
 
 
+store_path = Path(arguments.store)
+config_path = Path(arguments.config) if arguments.config else store_path / config_file_name
+g_instance_config = process_config(
+    store_path=store_path,
+    config_file=config_path,
+    globals_dict=globals(),
+)
+check_collection(g_instance_config, arguments.collection)
+
 # The next steps generate the GraphQL module. This is needed for the
 # resolver-signatures.
-config_dir = Path(arguments.config_dir)
-record_root_dir = Path(arguments.store)
-config = Config.get_collection_dir_config(config_dir)
-graphql_module = get_strawberry_module_for_linkml_schema(config.schema)
-linkml_model, classes, model_var_name = get_model_for_schema(config.schema)
+schema = g_instance_config.schemas[arguments.collection]
+graphql_module = get_strawberry_module_for_linkml_schema(schema)
+linkml_model, classes, model_var_name = g_instance_config.model_info[arguments.collection]
 
 AllThings = graphql_module.AllThings
 AllRecords = graphql_module.AllRecords
 ClassNames = graphql_module.ClassNames
 
 
-store = RecordDirStore(
-    root=record_root_dir,
-    model=linkml_model,
-    pid_mapping_function=get_mapping_function(config),
-    suffix=config.format,
-)
+class Context(BaseContext):
+    @cached_property
+    def token(self) -> str | None:
+        if not self.request:
+            return None
+        return self.request.headers.get('X-Dumpthings-Token', None)
 
 
-def resolve_pid(pid: strawberry.ID) -> AllThings | None:
+def resolve_pid(pid: strawberry.ID, info: strawberry.Info[Context]) -> AllThings | None:
+    return cast(AllThings, get_record_by_pid(
+        g_instance_config,
+        arguments.collection,
+        graphql_module,
+        pid,
+        info.context,
+    ))
+
+
+def resolve_all(info: strawberry.Info[Context]) -> list[AllRecords]:
+    return list(get_all_records(
+        g_instance_config,
+        arguments.collection,
+        graphql_module,
+        info.context
+    ))
+
+
+def resolve_records(class_name: ClassNames, info: strawberry.Info[Context]) -> list[AllThings]:
     global store
-    return cast(AllThings, get_record_by_pid(graphql_module, store, pid))
+    return list(get_records_by_class_name(
+        g_instance_config,
+        arguments.collection,
+        graphql_module,
+        class_name.value,
+        info.context,
+    ))
 
 
-def resolve_all() -> list[AllRecords]:
-    global store
-    return list(get_all_records(graphql_module, store))
+@strawberry.type
+class Query:
+    record: Optional[AllThings] = strawberry.field(resolver=resolve_pid)
+    all: list[AllRecords] = strawberry.field(resolver=resolve_all)
+    records: list[AllThings] = strawberry.field(resolver=resolve_records)
 
 
-def resolve_records(class_name: ClassNames) -> list[AllThings]:
-    global store
-    return list(get_records_by_class_name(graphql_module, store, class_name.value))
+async def get_context() -> Context:
+    return Context()
 
 
 def server() -> None:
     host = arguments.host
     port = arguments.port
 
-    # Windows doesn't support UTF-8 by default
-    endl = " 🍓\n" if sys.platform != "win32" else "\n"
     print(
         f'Running strawberry on http://{host}:{port}/graphql,\n'
-        f'  store: {record_root_dir}\n'
-        f'  config dir: {config_dir}\n'
-        f'  schema: {config.schema}\n',
-        end=endl
+        f'  store: {store_path}\n'
+        f'  collection: {arguments.collection}\n'
+        f'  schema: {g_instance_config.schemas[arguments.collection]}\n',
     )
 
-    app = Starlette(debug=True)
+    app = FastAPI(debug=True) # Starlette(debug=True)
     app.add_middleware(
         CORSMiddleware,
         allow_origins=arguments.origins,
@@ -124,19 +159,12 @@ def server() -> None:
         allow_headers=['*'],
     )
 
-    @strawberry.type
-    class Query:
-        record: Optional[AllThings] = strawberry.field(resolver=resolve_pid)
-        all: list[AllRecords] = strawberry.field(resolver=resolve_all)
-        records: list[AllThings] = strawberry.field(resolver=resolve_records)
+    graphql_schema = strawberry.Schema(query=Query)
+    graphql_app = GraphQLRouter(graphql_schema, context_getter=get_context)
 
-    schema = strawberry.Schema(query=Query)
-    graphql_app = GraphQL[Any, Any](schema, debug=True)
-
-    paths = ["/", "/graphql"]
+    paths = ["/graphql"]
     for path in paths:
-        app.add_route(path, graphql_app)  # type: ignore
-        app.add_websocket_route(path, graphql_app)  # type: ignore
+        app.include_router(graphql_app, prefix=path)
 
     uvicorn.run(
         app,

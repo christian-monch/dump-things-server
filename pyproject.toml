@@ -37,6 +37,7 @@ dependencies = [
     "requests",
     "sqlalchemy",
     "strawberry-graphql",
+    "strawberry-graphql[fastapi]",
     "uvicorn",
 ]
 

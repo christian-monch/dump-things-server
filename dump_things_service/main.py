@@ -215,7 +215,7 @@ api_key_header_scheme = APIKeyHeader(
 )
 
 
-def store_record(
+async def store_record(
     collection: str,
     data: BaseModel | str,
     class_name: str,
@@ -233,18 +233,10 @@ def store_record(
             status_code=HTTP_400_BAD_REQUEST, detail='Invalid ttl data provided.'
         )
 
-    _check_collection(g_instance_config, collection)
+    final_permissions, store, token = await process_token(
+            g_instance_config, api_key, collection
+        )
 
-    token = (
-        get_default_token_name(g_instance_config, collection)
-        if api_key is None
-        else api_key
-    )
-    # Get the token permissions and extend them by the default permissions
-    store, token_permissions = get_token_store(g_instance_config, collection, token)
-    final_permissions = join_default_token_permissions(
-        g_instance_config, token_permissions, collection
-    )
     if not final_permissions.incoming_write:
         raise HTTPException(
             status_code=HTTP_403_FORBIDDEN,
@@ -261,9 +253,11 @@ def store_record(
     else:
         record = data
 
-    stored_records = store.store_object(
-        obj=record,
-        submitter=g_instance_config.token_stores[token]['user_id'],
+    stored_records = tuple(
+        store.store_object(
+            obj=record,
+            submitter=g_instance_config.token_stores[token]['user_id'],
+        )
     )
 
     if input_format == Format.ttl:
@@ -303,18 +297,10 @@ async def fetch_token_permissions(
     collection: str,
     body: TokenCapabilityRequest,
 ):
-    _check_collection(g_instance_config, collection)
-    token = (
-        get_default_token_name(g_instance_config, collection)
-        if body.token is None
-        else body.token
+    final_permissions, _, token = await process_token(
+        g_instance_config, body.token, collection
     )
-    token_store, token_permissions = get_token_store(
-        g_instance_config, collection, token
-    )
-    final_permissions = join_default_token_permissions(
-        g_instance_config, token_permissions, collection
-    )
+
     return JSONResponse(
         {
             'read_curated': final_permissions.curated_read,
@@ -338,7 +324,7 @@ async def read_record_with_pid(
 ):
     _check_collection(g_instance_config, collection)
 
-    final_permissions, token_store = await process_token(
+    final_permissions, token_store, _ = await process_token(
         g_instance_config, api_key, collection
     )
 
@@ -413,8 +399,8 @@ async def _read_records_of_type(
             raise HTTPException(
                 status_code=HTTP_413_REQUEST_ENTITY_TOO_LARGE,
                 detail=f'Too many records found for class "{class_name}" in '
-                f'collection "{collection}". Please use pagination '
-                f'(/{collection}/records/p/{class_name}).',
+                       f'collection "{collection}". Please use pagination '
+                       f'(/{collection}/records/p/{class_name}).',
             )
 
     _check_collection(g_instance_config, collection)
@@ -426,7 +412,7 @@ async def _read_records_of_type(
             detail=f'No "{class_name}"-class in collection "{collection}".',
         )
 
-    final_permissions, token_store = await process_token(
+    final_permissions, token_store, _ = await process_token(
         g_instance_config, api_key, collection
     )
 
@@ -469,7 +455,7 @@ async def process_token(
     instance_config: InstanceConfig,
     api_key: str,
     collection: str,
-) -> tuple[TokenPermission, ModelStore]:
+) -> tuple[TokenPermission, ModelStore, str]:
     token = (
         get_default_token_name(instance_config, collection)
         if api_key is None
@@ -484,7 +470,7 @@ async def process_token(
             status_code=HTTP_403_FORBIDDEN,
             detail=f'No read access to curated or incoming data in collection "{collection}".',
         )
-    return final_permissions, token_store
+    return final_permissions, token_store, token
 
 
 # If we have a valid configuration, create dynamic endpoints and rebuild the

@@ -2,42 +2,70 @@ from __future__ import annotations
 
 import types
 from typing import (
+    TYPE_CHECKING,
     Any,
     Iterable,
 )
 
 import strawberry
 
+from dump_things_service.common import get_permissions
+from dump_things_service.config import get_model_info_for_collection
 from dump_things_service.model import get_subclasses
-from dump_things_service.record import RecordDirStore
 from dump_things_service.resolve_curie import resolve_curie
+
+if TYPE_CHECKING:
+    from dump_things_service.config import InstanceConfig
 
 
 def get_all_records(
+    instance_config: InstanceConfig,
+    collection: str,
     strawberry_module: types.ModuleType,
-    dir_store: RecordDirStore
-) -> Iterable[Any]:
+    context,
+) -> Iterable:
     """
     Resolver to get all records.
     """
     # TODO: this needs a new method in record dir store
     yield from get_records_by_class_name(
+        instance_config,
+        collection,
         strawberry_module,
-        dir_store,
-        'Thing'
+        'Thing',
+        context,
     )
 
 
 def get_record_by_pid(
+    instance_config: InstanceConfig,
+    collection: str,
     strawberry_module: types.ModuleType,
-    dir_store: RecordDirStore,
     pid: strawberry.ID,
+    context,
 ) -> Any | None:
     """
     Resolver to get a record by its PID.
     """
-    iri = resolve_curie(dir_store.model, pid)
-    class_name, record = dir_store.get_record_by_iri(iri)
+    final_permissions, token_store, _ = get_permissions(
+        instance_config,
+        context.token,
+        collection,
+    )
+
+    iri = resolve_curie(
+        get_model_info_for_collection(instance_config, collection)[0],
+        pid,
+    )
+
+    class_name = None
+    record = None
+    if final_permissions.incoming_read:
+        class_name, record = token_store.get_record_by_iri(iri)
+
+    if not record and final_permissions.curated_read:
+        class_name, record = instance_config.curated_stores[collection].get_record_by_iri(iri)
+
     if class_name and record:
         _convert_relations(record)
         return getattr(strawberry_module, class_name)(**record)
@@ -45,18 +73,37 @@ def get_record_by_pid(
 
 
 def get_records_by_class_name(
+    instance_config: InstanceConfig,
+    collection: str,
     strawberry_module: types.ModuleType,
-    dir_store: RecordDirStore,
-    class_name: str
-) -> Iterable[Any]:
+    class_name: str,
+    context,
+) -> Iterable:
     """
     Resolver to get records by class name.
     """
-    for subclass_name in get_subclasses(dir_store.model, class_name):
-        for _, record in dir_store.get_records_of_class(subclass_name):
-            if record:
-                _convert_relations(record)
-                yield getattr(strawberry_module, subclass_name)(**record)
+    final_permissions, token_store, _ = get_permissions(
+        instance_config,
+        context.token,
+        collection,
+    )
+
+    records = {}
+    if final_permissions.curated_read:
+        for search_class_name in get_subclasses(instance_config.curated_stores[collection].model, class_name):
+            for record_class_name, record in instance_config.curated_stores[collection].get_records_of_class(
+                    search_class_name
+            ):
+                records[record['pid']] = record_class_name, record
+
+    if final_permissions.incoming_read:
+        for search_class_name in get_subclasses(token_store.model, class_name):
+            for record_class_name, record in token_store.get_records_of_class(search_class_name):
+                records[record['pid']] = record_class_name, record
+
+    for pid, (record_class_name, record) in records.items():
+        _convert_relations(record)
+        yield getattr(strawberry_module, record_class_name)(**record)
 
 
 def _convert_relations(
