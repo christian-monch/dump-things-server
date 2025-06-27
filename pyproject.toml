@@ -48,6 +48,7 @@ Source = "https://github.com/christian-monch/dump-things-server"
 
 [project.scripts]
 dump-things-service = "dump_things_service.main:main"
+dump-things-graphql = "dump_things_service.graphql.main:main"
 dump-things-rebuild-index = "dump_things_service.commands.rebuild_index:main"
 dump-things-copy-store = "dump_things_service.commands.copy_store:main"
 
@@ -98,6 +99,12 @@ description = "fastapi dev environment"
 
 [tool.hatch.envs.fastapi.scripts]
 run = "python -m dump_things_service.main {args}"
+
+[tool.hatch.envs.graphql]
+description = "graphql dev environment"
+
+[tool.hatch.envs.graphql.scripts]
+run = "python -m dump_things_service.graphql.main {args}"
 
 [tool.hatch.envs.tests]
 default-args = ["dump_things_service"]
