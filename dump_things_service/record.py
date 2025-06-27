@@ -37,6 +37,8 @@ lgr = logging.getLogger('dump_things_service')
 submitter_class = 'NCIT_C54269'
 submitter_class_base = 'http://purl.obolibrary.org/obo/'
 
+last_character = chr(0x10ffff)
+
 
 class RecordDirStore:
     """Store records in a directory structure"""
@@ -47,6 +49,7 @@ class RecordDirStore:
         model: Any,
         pid_mapping_function: Callable,
         suffix: str,
+        sort_keys: list,
     ):
         if not root.is_absolute():
             msg = f'Store root is not absolute: {root}'
@@ -56,6 +59,7 @@ class RecordDirStore:
         self.pid_mapping_function = pid_mapping_function
         self.suffix = suffix
         self.index = {}
+        self.sort_keys = sort_keys or ['pid']
         self._build_index()
 
     def _build_index(self):
@@ -77,14 +81,27 @@ class RecordDirStore:
                     continue
 
                 iri = resolve_curie(self.model, pid)
+                sort_string = '-'.join(
+                    (
+                        str(record.get(key)) if record.get(key) is not None else last_character
+                        for key in self.sort_keys
+                    )
+                )
+
                 # On startup, log PID collision errors and continue building the index
                 try:
-                    self._add_iri_to_index(iri, pid, path)
+                    self._add_iri_to_index(iri, pid, path, sort_string)
                 except HTTPException as e:
                     lgr.error(e.detail)
         lgr.info('Index built with %d IRIs', len(self.index))
 
-    def _add_iri_to_index(self, iri: str, pid: str, path: Path):
+    def _add_iri_to_index(
+            self,
+            iri: str,
+            pid: str,
+            path: Path,
+            sort_string: str,
+        ):
 
         # If the IRI is already in the index, the reasons may be:
         #
@@ -109,10 +126,10 @@ class RecordDirStore:
         #    same IRI. This is an error condition, and we raise an exception
         existing_entry = self.index.get(iri)
         if existing_entry:
-            existing_pid, existing_path = existing_entry
+            existing_pid, existing_path, existing_sort_string = existing_entry
             # Case 1: existing record is updated
             if path == existing_path:
-                self.index[iri] = pid, path
+                self.index[iri] = pid, path, sort_string
                 return
 
             existing_class = self._get_class_name(existing_path)
@@ -121,7 +138,7 @@ class RecordDirStore:
             # Case 2: `Thing` record is replaced with a non-`Thing` record.
             if existing_class == 'Thing' and new_class != 'Thing':
                 if path.name == existing_path.name:
-                    self.index[iri] = pid, path
+                    self.index[iri] = pid, path, sort_string
                     return
                 msg = f'IRI {iri} existing {existing_class}-instance at {existing_path} might not be a placeholder for {new_class}-instance at {path}, PIDs differ!'
                 raise HTTPException(
@@ -147,7 +164,7 @@ class RecordDirStore:
                 detail=msg,
             )
 
-        self.index[iri] = pid, path
+        self.index[iri] = pid, path, sort_string
 
     def _get_class_name(self, path: Path) -> str:
         """Get the class name from the path."""
@@ -246,7 +263,13 @@ class RecordDirStore:
 
         # Add the resolved PID to the index
         iri = resolve_curie(self.model, record.pid)
-        self._add_iri_to_index(iri, record.pid, storage_path)
+        sort_string = '-'.join(
+            (
+                getattr(record, key) if hasattr(record, key) else last_character
+                for key in self.sort_keys
+            )
+        )
+        self._add_iri_to_index(iri, record.pid, storage_path, sort_string)
 
         return record
 
@@ -278,27 +301,28 @@ class RecordDirStore:
     def get_record_by_iri(
         self,
         iri: str,
-    ) -> tuple[str, JSON] | tuple[None, None]:
-        pid, path = self.index.get(iri)
+    ) -> tuple[str, JSON, str] | tuple[None, None, None]:
+        pid, path, sort_key = self.index.get(iri)
         if path is None:
-            return None, None
+            return None, None, None
         record = yaml.load(path.read_text(), Loader=yaml.SafeLoader)
         class_name = self._get_class_name(path)
-        return class_name, record
+        return class_name, record, sort_key
 
-    def get_records_of_class(self, class_name: str) -> Iterable[tuple[str, JSON]]:
-        for _, path in self.index.values():
+    def get_records_of_class(self, class_name: str) -> Iterable[tuple[str, JSON, str]]:
+        for _, path, sort_key in self.index.values():
             path_class_name = self._get_class_name(path)
             if class_name == path_class_name:
                 yield (
                     class_name,
                     yaml.load(path.read_text(), Loader=yaml.SafeLoader),
+                    sort_key,
                 )
 
-    def get_record_info_of_class(self, class_name: str) -> Iterable[tuple[str, str, Path]]:
-        for pid, path in self.index.values():
+    def get_record_info_of_class(self, class_name: str) -> Iterable[tuple[str, str, Path, str]]:
+        for pid, path, sort_key in self.index.values():
             if class_name == self._get_class_name(path):
-                yield class_name, pid, path
+                yield class_name, pid, path, sort_key
 
 
 def get_record_dir_store(
@@ -307,6 +331,7 @@ def get_record_dir_store(
         model: Any,
         pid_mapping_function: Callable,
         suffix: str,
+        sort_keys: list
 ) -> RecordDirStore:
     """Get a record directory store for the given root directory."""
     existing_store = instance_config.stores.get(root)
@@ -316,6 +341,7 @@ def get_record_dir_store(
             model=model,
             pid_mapping_function=pid_mapping_function,
             suffix=suffix,
+            sort_keys=sort_keys,
         )
         instance_config.stores[root] = existing_store
 

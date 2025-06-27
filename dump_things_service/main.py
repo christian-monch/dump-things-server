@@ -104,6 +104,12 @@ parser.add_argument(
     help="Set the log level for the service, allowed values are 'ERROR', 'WARNING', 'INFO', 'DEBUG'. Default is 'warning'.",
 )
 parser.add_argument(
+    '--sort-by',
+    action='append',
+    default=[],
+    help='Sort results by the given fields. Multiple fields can be specified, e.g. `--sort-by pid --sort-by date`.',
+)
+parser.add_argument(
     'store',
     help='The root of the data stores, it should contain a global_store and token_stores.',
 )
@@ -127,6 +133,7 @@ try:
     g_instance_config = process_config(
         store_path=store_path,
         config_file=config_path,
+        sort_keys=arguments.sort_by,
         globals_dict=globals(),
     )
 except ConfigError:
@@ -314,10 +321,10 @@ async def read_record_with_pid(
     )
     record = None
     if final_permissions.incoming_read:
-        class_name, record = token_store.get_record_by_iri(iri)
+        class_name, record, _ = token_store.get_record_by_iri(iri)
 
     if not record and final_permissions.curated_read:
-        class_name, record = g_instance_config.curated_stores[collection].get_record_by_iri(iri)
+        class_name, record, _ = g_instance_config.curated_stores[collection].get_record_by_iri(iri)
 
     if record:
         if format == Format.ttl:
@@ -377,20 +384,23 @@ async def read_records_of_type(
     records = {}
     if final_permissions.curated_read:
         for search_class_name in get_subclasses(model, class_name):
-            for record_class_name, record in g_instance_config.curated_stores[collection].get_records_of_class(
+            for record_class_name, record, sort_key in g_instance_config.curated_stores[collection].get_records_of_class(
                 search_class_name
             ):
                 check_bounds(records, max_records)
                 record['schema_type'] = get_schema_type_curie(g_instance_config, collection, record_class_name)
-                records[record['pid']] = record_class_name, record
+                records[record['pid']] = record_class_name, record, sort_key
 
 
     if final_permissions.incoming_read:
         for search_class_name in get_subclasses(model, class_name):
-            for record_class_name, record in token_store.get_records_of_class(search_class_name):
+            for record_class_name, record, sort_key in token_store.get_records_of_class(search_class_name):
                 check_bounds(records, max_records)
                 record['schema_type'] = get_schema_type_curie(g_instance_config, collection, record_class_name)
-                records[record['pid']] = record_class_name, record
+                records[record['pid']] = record_class_name, record, sort_key
+
+    # Create a sorted result list from the records dictionary.
+    sorted_results = sorted(records.values(), key=lambda value: value[2])
 
     if format == Format.ttl:
         ttls = [
@@ -400,12 +410,12 @@ async def read_records_of_type(
                 target_class=record_class_name,
                 json=cleaned_json(record),
             )
-            for record_class_name, record in records.values()
+            for record_class_name, record, _ in sorted_results
         ]
         if ttls:
             return PlainTextResponse(combine_ttl(ttls), media_type='text/turtle')
         return PlainTextResponse('', media_type='text/turtle')
-    return tuple(map(lambda v: v[1], records.values()))
+    return tuple(map(lambda v: v[1], sorted_results))
 
 
 @app.get('/{collection}/records/p/{class_name}')
@@ -430,25 +440,29 @@ async def read_records_of_type_paginated(
     records = {}
     if final_permissions.curated_read:
         for search_class_name in get_subclasses(model, class_name):
-            for record_class_name, pid, path in g_instance_config.curated_stores[collection].get_record_info_of_class(
+            for record_class_name, pid, path, sort_key in g_instance_config.curated_stores[collection].get_record_info_of_class(
                 search_class_name
             ):
-                records[pid] = record_class_name, path
+                records[pid] = record_class_name, path, sort_key
 
     if final_permissions.incoming_read:
         for search_class_name in get_subclasses(model, class_name):
-            for record_class_name, pid, path in token_store.get_record_info_of_class(search_class_name):
-                records[pid] = record_class_name, path
+            for record_class_name, pid, path, sort_key in token_store.get_record_info_of_class(search_class_name):
+                records[pid] = record_class_name, path, sort_key
 
-    # Generate a result list from the `records` dictionary.
+    # Create a sorted result list from the `records` dictionary.
+    sorted_results = sorted(
+        (((class_name, pid, path), sort_key) for pid, (class_name, path, sort_key) in records.items()),
+        key=lambda item: item[1],
+    )
+
+    # Generate a lazy result list from `sorted_results`.
     result_list = RecordList(
         instance_config=g_instance_config,
         collection=collection,
         convert_to_ttl=(format == Format.ttl),
     )
-    result_list.add_info(
-        (class_name, pid, path) for pid, (class_name, path) in records.items()
-    )
+    result_list.add_info(map(lambda item: item[0], sorted_results))
     return paginate(result_list)
 
 

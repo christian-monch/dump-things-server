@@ -48,6 +48,10 @@ The following command line parameters are supported:
 
 - `--root-path <path>`: Set the ASGI 'root_path' for applications submounted below a given URL path.
 
+- `--sort-by <field>`: By default result records are sorted by the field `pid`.
+  This parameter allows overriding the sort field.
+  The parameter can be repeated to define secondary, tertiary, etc. sorting fields.
+  If a given field is not present in the record, the record will be sorted behind all records that possess the field.
 
 ### Configuration file
 

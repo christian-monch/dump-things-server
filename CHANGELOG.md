@@ -1,3 +1,12 @@
+# 0.5.0 (2025-06-27)
+
+## New features
+
+- support sorting of result record lists. By default, result records are sorted by
+  the field `pid`. The parameter `--sort-by` allows to define alternative fields
+  for sorting. Multiple fields can be specified by repeating the `--sort-by` parameter.
+
+
 # 0.4.0 (2025-06-25)
 
 ## New features
