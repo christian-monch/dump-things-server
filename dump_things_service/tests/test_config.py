@@ -22,7 +22,7 @@ def test_scanner_error_detection(tmp_path):
     config_file_path.write_text('type: col: le\n:xxx:')
     global_dict = {}
     with pytest.raises(ConfigError) as e:
-        process_config(tmp_path, config_file_path, global_dict)
+        process_config(tmp_path, config_file_path, [], global_dict)
     assert isinstance(e.value.__cause__, ScannerError)
 
 
@@ -31,7 +31,7 @@ def test_structure_error_detection(tmp_path):
     config_file_path.write_text('type: colle\n')
     global_dict = {}
     with pytest.raises(ConfigError) as e:
-        process_config(tmp_path, config_file_path, global_dict)
+        process_config(tmp_path, config_file_path, [], global_dict)
     assert isinstance(e.value.__cause__, ValidationError)
 
 
@@ -63,7 +63,7 @@ tokens:
     )
 
     global_dict = {}
-    instance_config = process_config_object(tmp_path, config_object, global_dict)
+    instance_config = process_config_object(tmp_path, config_object, [], global_dict)
     with pytest.raises(HTTPException):
         get_token_store(instance_config, 'collection_1', 'basic_access')
     with pytest.raises(HTTPException):

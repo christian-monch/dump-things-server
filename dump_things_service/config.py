@@ -227,6 +227,7 @@ class Config:
 def process_config(
         store_path: Path,
         config_file: Path,
+        sort_keys: list[str],
         globals_dict: dict[str, Any],
 ) -> InstanceConfig:
 
@@ -234,6 +235,7 @@ def process_config(
     return process_config_object(
         store_path=store_path,
         config_object=config_object,
+        sort_keys=sort_keys,
         globals_dict=globals_dict,
     )
 
@@ -241,6 +243,7 @@ def process_config(
 def process_config_object(
     store_path: Path,
     config_object: GlobalConfig,
+    sort_keys: list[str],
     globals_dict: dict[str, Any],
 ):
     from dump_things_service.record import get_record_dir_store
@@ -266,6 +269,7 @@ def process_config_object(
             model=model,
             pid_mapping_function=get_mapping_function(collection_config),
             suffix=collection_config.format,
+            sort_keys=sort_keys,
         )
         instance_config.curated_stores[collection_name] = curated_store
         if collection_info.incoming:
@@ -283,7 +287,7 @@ def process_config_object(
             entry['collections'][collection_name] = {}
 
             # A token might be a pure curated read token, i.e., have the mode
-            # `READ_COLLECTION`. In this case there might be no incoming store.
+            # `READ_COLLECTION`. In this case, there might be no incoming store.
             if (
                     collection_name in instance_config.incoming and
                     token_collection_info.mode not in (
@@ -315,6 +319,7 @@ def process_config_object(
                     model=model,
                     pid_mapping_function=mapping_function,
                     suffix=instance_config.curated_stores[collection_name].suffix,
+                    sort_keys=sort_keys,
                 )
                 entry['collections'][collection_name]['store'] = token_store
             entry['collections'][collection_name]['permissions'] = get_permissions(
