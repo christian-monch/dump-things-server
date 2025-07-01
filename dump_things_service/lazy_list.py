@@ -41,6 +41,7 @@ class LazyList(list, metaclass=ABCMeta):
             return self.lazy_list[self.index - 1]
 
     def __init__(self):
+        super().__init__()
         self.list_info = []
 
     def __iter__(self) -> LazyList.LazyListIterator:
@@ -96,7 +97,7 @@ class LazyList(list, metaclass=ABCMeta):
     def add_info(
         self,
         info: Iterable[Any],
-    ):
+    ) -> LazyList:
         """
         Add list entry information to the list.
 
@@ -104,3 +105,4 @@ class LazyList(list, metaclass=ABCMeta):
         can use to lazily generate a list element.
         """
         self.list_info.extend(info)
+        return self
