@@ -23,10 +23,13 @@ roughly 400 bytes per record
 Presumably, 180 bytes + JSON string size per record.
 
 """
+
 from __future__ import annotations
 
-from collections.abc import Iterable
-from typing import Any
+from typing import (
+    TYPE_CHECKING,
+    Any,
+)
 
 from sqlalchemy import (
     JSON,
@@ -42,7 +45,14 @@ from sqlalchemy.orm import (
     mapped_column,
 )
 
+from dump_things_service.backends import (
+    RecordInfo,
+    StorageBackend,
+)
 from dump_things_service.lazy_list import LazyList
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
 
 
 class Base(DeclarativeBase):
@@ -60,25 +70,29 @@ class Thing(Base):
 
 class LazySQLList(LazyList):
     def __init__(
-            self,
-            engine: Any,
+        self,
+        engine: Any,
     ):
         super().__init__()
         self.engine = engine
 
-    def generate_element(self, index: int, info: Any) -> Any:
+    def generate_element(self, _: int, info: Any) -> Any:
         with Session(self.engine) as session, session.begin():
             thing = session.get(Thing, info)
-            return thing.class_name, thing.object
+            return RecordInfo(
+                iri=thing.iri, class_name=thing.class_name, json_object=thing.object
+            )
 
 
-class SQLiteBackend:
-    def __init__(self, db_path: str, *, echo: bool = False) -> None:
+class SQLiteBackend(StorageBackend):
+    def __init__(
+        self, db_path: str, *, order_by: Iterable[str] | None = None, echo: bool = False
+    ) -> None:
+        super().__init__(order_by=order_by)
         self.engine = create_engine('sqlite:///' + db_path, echo=echo)
         Base.metadata.create_all(self.engine)
-        self._session = None
 
-    def add_data(
+    def add_record(
         self,
         iri: str,
         class_name: str,
@@ -93,38 +107,45 @@ class SQLiteBackend:
                 )
             )
 
-    def add_data_bulk(
+    def add_records_bulk(
         self,
-        object_info: Iterable[tuple[str, str, dict]],
+        record_infos: Iterable[RecordInfo],
     ):
         with Session(self.engine) as session, session.begin():
-            for iri, class_name, json_object in object_info:
+            for record_info in record_infos:
                 session.add(
                     Thing(
-                        iri=iri,
-                        class_name=class_name,
-                        object=json_object,
+                        iri=record_info.iri,
+                        class_name=record_info.class_name,
+                        object=record_info.json_object,
                     )
                 )
 
     def get_record_by_iri(
         self,
         iri: str,
-    ) -> tuple[str, dict] | None:
+    ) -> RecordInfo | None:
         with Session(self.engine) as session, session.begin():
             statement = select(Thing).filter_by(iri=iri)
             thing = session.scalar(statement)
-            return str(thing.class_name), thing.object if thing else None
+            if thing:
+                return RecordInfo(
+                    iri=thing.iri,
+                    class_name=thing.class_name,
+                    json_object=thing.object,
+                )
+        return None
 
     def get_records_of_class(
-            self,
-            class_name: str,
-            order_by: Iterable[str] | None = None,
-    ) -> LazySQLList:
+        self,
+        class_name: str,
+    ) -> LazySQLList[RecordInfo]:
         statement = select(Thing).filter_by(class_name=class_name)
-        for attribute in order_by or ['pid']:
-            statement = statement.order_by(Thing.object[attribute]).options(load_only(Thing.id))
+        for attribute in self.order_by:
+            statement = statement.order_by(Thing.object[attribute]).options(
+                load_only(Thing.id)
+            )
         with Session(self.engine) as session, session.begin():
             return LazySQLList(self.engine).add_info(
-                (thing.id for thing in session.scalars(statement).all())
+                thing.id for thing in session.scalars(statement).all()
             )
