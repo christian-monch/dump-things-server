@@ -21,7 +21,10 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
-    from typing import Any
+    from typing import (
+        Any,
+        Callable,
+    )
 
 
 class LazyList(list, metaclass=ABCMeta):
@@ -106,3 +109,75 @@ class LazyList(list, metaclass=ABCMeta):
         """
         self.list_info.extend(info)
         return self
+
+    def sort(
+        self,
+        *,
+        key: Callable | None = None,
+        reverse: bool = False,
+    ) -> LazyList:
+        """
+        Sort the lazy list based on a key function.
+        """
+        self.list_info.sort(key=key, reverse=reverse)
+        return self
+
+
+class PriorityList(LazyList):
+    """
+    A lazy list that emits every item, identified by `key` only once.
+
+    All lists should be added before the first iteration. All lists should be
+    of the same type, i.e., they should all be `RecordDirList`s or all be
+    `SQLList`s.
+    """
+    def __init__(
+        self,
+    ):
+        super().__init__()
+        self.seen = set()
+        self.type = None
+
+    def add_list(
+        self,
+        input_list: LazyList,
+        key: Callable,
+    ) -> PriorityList:
+        # Check the type
+        if self.type:
+            if not isinstance(input_list, self.type):
+                raise TypeError(
+                    f"Expected input_list of type {self.type}, "
+                    f"got {type(input_list)}"
+                )
+        else:
+            self.type = type(input_list)
+
+        for info in input_list.list_info:
+            criteria = key(info)
+            if criteria not in self.seen:
+                self.seen.add(criteria)
+                self.list_info.append((info, input_list))
+        return self
+
+    def generate_element(self, index: int, info: Any) -> Any:
+        # Delegate the generation to the input list
+        return info[1].generate_element(index, info[0])
+
+
+class ModifierList(LazyList):
+    """
+    A lazy list that modifies every item of inconing list by the `modifier`
+    """
+    def __init__(
+            self,
+            input_list: LazyList,
+            modifier: Callable,
+    ):
+        super().__init__()
+        self.input_list = input_list
+        self.modifier = modifier
+        self.list_info = input_list.list_info
+
+    def generate_element(self, index: int, info: Any) -> Any:
+        return self.modifier(self.input_list.generate_element(index, info))

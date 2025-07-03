@@ -58,11 +58,12 @@ def convert_json_to_ttl(
     target_class: str,
     json: JSON,
 ) -> str:
+    from dump_things_service.config import get_model_info_for_collection
 
     # Because we do not store type information in the records that we store,
     # we use pydantic's ability to infer the type from the data.
     pydantic_object = getattr(
-        instance_config.model_info[collection_name][0],
+        get_model_info_for_collection(instance_config, collection_name)[0],
         target_class
     )(**json)
 

@@ -47,7 +47,7 @@ from sqlalchemy.orm import (
 
 from dump_things_service.backends import (
     RecordInfo,
-    StorageBackend,
+    StorageBackend, create_sort_key,
 )
 from dump_things_service.lazy_list import LazyList
 
@@ -66,6 +66,7 @@ class Thing(Base):
     iri: Mapped[str] = mapped_column(nullable=False, unique=True, index=True)
     class_name: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
     object: Mapped[dict] = mapped_column(JSON, nullable=False)
+    sort_key: Mapped[str] = mapped_column(nullable=False)
 
 
 class LazySQLList(LazyList):
@@ -80,13 +81,17 @@ class LazySQLList(LazyList):
         with Session(self.engine) as session, session.begin():
             thing = session.get(Thing, info)
             return RecordInfo(
-                iri=thing.iri, class_name=thing.class_name, json_object=thing.object
+                iri=thing.iri, class_name=thing.class_name, json_object=thing.object, sort_key=thing.sort_key
             )
 
 
 class SQLiteBackend(StorageBackend):
     def __init__(
-        self, db_path: str, *, order_by: Iterable[str] | None = None, echo: bool = False
+        self,
+        db_path: str,
+        *,
+        order_by: Iterable[str] | None = None,
+        echo: bool = False
     ) -> None:
         super().__init__(order_by=order_by)
         self.engine = create_engine('sqlite:///' + db_path, echo=echo)
@@ -104,6 +109,7 @@ class SQLiteBackend(StorageBackend):
                     iri=iri,
                     class_name=class_name,
                     object=json_object,
+                    sort_key=create_sort_key(json_object, self.order_by),
                 )
             )
 
@@ -118,6 +124,7 @@ class SQLiteBackend(StorageBackend):
                         iri=record_info.iri,
                         class_name=record_info.class_name,
                         object=record_info.json_object,
+                        sort_key=create_sort_key(record_info.json_object, self.order_by),
                     )
                 )
 
@@ -133,14 +140,15 @@ class SQLiteBackend(StorageBackend):
                     iri=thing.iri,
                     class_name=thing.class_name,
                     json_object=thing.object,
+                    sort_key=thing.sort_key,
                 )
         return None
 
-    def get_records_of_class(
+    def get_records_of_classes(
         self,
-        class_name: str,
+        class_names: Iterable[str],
     ) -> LazySQLList[RecordInfo]:
-        statement = select(Thing).filter_by(class_name=class_name)
+        statement = select(Thing).where(Thing.class_name.in_(class_names))
         for attribute in self.order_by:
             statement = statement.order_by(Thing.object[attribute]).options(
                 load_only(Thing.id)
