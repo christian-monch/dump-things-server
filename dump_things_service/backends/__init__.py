@@ -1,5 +1,10 @@
 """
 Base class for storage backends
+
+Storage backends return multiple records as `LazyList[RecordInfo]` objects.
+The reason for using a lazy list instead of yielding records one by one is that
+fastapi endpoints and fastapi-pagination work with list like objects and not
+with generators, i.e. it uses index- or slice-based access to the records.
 """
 
 from __future__ import annotations
@@ -25,6 +30,9 @@ class RecordInfo:
     iri: str
     class_name: str
     json_object: dict[str, Any]
+    # We store a sort key to support sorting of records from multiple, probably
+    # sorted, sources.
+    sort_key: str
 
 
 class StorageBackend(metaclass=ABCMeta):
@@ -63,8 +71,20 @@ class StorageBackend(metaclass=ABCMeta):
         raise NotImplementedError
 
     @abstractmethod
-    def get_records_of_class(
+    def get_records_of_classes(
         self,
-        class_name: str,
+        class_names: Iterable[str],
     ) -> LazyList[RecordInfo]:
         raise NotImplementedError
+
+
+def create_sort_key(
+    json_object: dict[str, Any],
+    order_by: Iterable[str],
+) -> str:
+    return '-'.join(
+        str(json_object.get(key))
+        if json_object.get(key) is not None
+        else chr(0x10FFFF)
+        for key in order_by
+    )

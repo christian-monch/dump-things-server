@@ -171,7 +171,7 @@ def dump_stores_simple(tmp_path_factory):
             (
                 'Person',
                 'abc:mode_test',
-                'pid: abc:mode_test\ngiven_name: mode_curated\n',
+                'pid: abc:mode_test\ngiven_name: mode_curated\nschema_type: abc:Person\n',
             ),
         ]
     )

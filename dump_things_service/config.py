@@ -25,13 +25,14 @@ from dump_things_service import (
     HTTP_401_UNAUTHORIZED,
     HTTP_404_NOT_FOUND,
 )
+from dump_things_service.backends.record_dir import RecordDirStore
+from dump_things_service.backends.sqlite import SQLiteBackend
 from dump_things_service.convert import get_conversion_objects
 from dump_things_service.model import get_model_for_schema
+from dump_things_service.store.model_store import ModelStore
 
 if TYPE_CHECKING:
     import types
-
-    from dump_things_service.record import RecordDirStore
 
 
 config_file_name = '.dumpthings.yaml'
@@ -225,17 +226,17 @@ class Config:
 
 
 def process_config(
-        store_path: Path,
-        config_file: Path,
-        sort_keys: list[str],
-        globals_dict: dict[str, Any],
+    store_path: Path,
+    config_file: Path,
+    order_by: list[str],
+    globals_dict: dict[str, Any],
 ) -> InstanceConfig:
 
     config_object = Config.get_config_from_file(config_file)
     return process_config_object(
         store_path=store_path,
         config_object=config_object,
-        sort_keys=sort_keys,
+        order_by=order_by,
         globals_dict=globals_dict,
     )
 
@@ -243,7 +244,7 @@ def process_config(
 def process_config_object(
     store_path: Path,
     config_object: GlobalConfig,
-    sort_keys: list[str],
+    order_by: list[str],
     globals_dict: dict[str, Any],
 ):
     from dump_things_service.record import get_record_dir_store
@@ -251,8 +252,8 @@ def process_config_object(
     instance_config = InstanceConfig(store_path=store_path)
     instance_config.collections = config_object.collections
 
-    # Create a model for each collection, store it in `globals_dict`, and create
-    # a `RecordDirStore` for the `curated`-dir in each collection.
+    # Create a `ModelStore` (with currently fixed backend `RecordDirStore`) for
+    # the `curated`-dir in each collection.
     for collection_name, collection_info in config_object.collections.items():
 
         # Get the config from the curated directory
@@ -263,14 +264,23 @@ def process_config_object(
         instance_config.model_info[collection_name] = model, classes, model_var_name
         globals_dict[model_var_name] = model
 
-        curated_store = get_record_dir_store(
-            instance_config=instance_config,
-            root=store_path / collection_info.curated,
-            model=model,
-            pid_mapping_function=get_mapping_function(collection_config),
-            suffix=collection_config.format,
-            sort_keys=sort_keys,
+        if False:
+            curated_store_backend = RecordDirStore(
+                root=store_path / collection_info.curated,
+                schema=collection_config.schema,
+                pid_mapping_function=get_mapping_function(collection_config),
+                suffix=collection_config.format,
+                order_by=order_by,
+            )
+        else:
+            curated_store_backend = SQLiteBackend(
+                db_path=store_path / collection_info.curated / 'records.db',
+            )
+        curated_store = ModelStore(
+            schema=collection_config.schema,
+            backend=curated_store_backend,
         )
+
         instance_config.curated_stores[collection_name] = curated_store
         if collection_info.incoming:
             instance_config.incoming[collection_name] = collection_info.incoming
@@ -279,7 +289,8 @@ def process_config_object(
         if collection_config.schema not in instance_config.conversion_objects:
             instance_config.conversion_objects[collection_config.schema] = get_conversion_objects(collection_config.schema)
 
-    # Create a `RecordDirStore` for each token dir and fetch the permissions
+    # Create a `ModelStore` (with currently fixed backend `RecordDirStore`) for
+    # each token dir and fetch the permissions
     for token_name, token_info in config_object.tokens.items():
         entry = {'user_id': token_info.user_id, 'collections': {}}
         instance_config.token_stores[token_name] = entry
@@ -304,8 +315,7 @@ def process_config_object(
                 if collection_name not in instance_config.zones:
                     instance_config.zones[collection_name] = {}
                 instance_config.zones[collection_name][token_name] = token_collection_info.incoming_label
-                model = instance_config.curated_stores[collection_name].model
-                mapping_function = instance_config.curated_stores[collection_name].pid_mapping_function
+                #mapping_function = instance_config.curated_stores[collection_name].backend.pid_mapping_function
                 # Ensure that the store directory exists
                 store_dir = (
                         store_path
@@ -313,15 +323,24 @@ def process_config_object(
                         / token_collection_info.incoming_label
                 )
                 store_dir.mkdir(parents=True, exist_ok=True)
-                token_store = get_record_dir_store(
-                    instance_config=instance_config,
-                    root=store_dir,
-                    model=model,
-                    pid_mapping_function=mapping_function,
-                    suffix=instance_config.curated_stores[collection_name].suffix,
-                    sort_keys=sort_keys,
+                if False:
+                    token_store_backend = RecordDirStore(
+                        root=store_dir,
+                        schema=instance_config.schemas[collection_name],
+                        pid_mapping_function=mapping_function,
+                        suffix=instance_config.curated_stores[collection_name].backend.suffix,
+                        order_by=order_by,
+                    )
+                else:
+                    token_store_backend = SQLiteBackend(
+                        db_path=store_dir / 'records.db',
+                    )
+                token_store = ModelStore(
+                    schema=instance_config.schemas[collection_name],
+                    backend=token_store_backend,
                 )
                 entry['collections'][collection_name]['store'] = token_store
+
             entry['collections'][collection_name]['permissions'] = get_permissions(
                 token_collection_info.mode
             )
@@ -331,7 +350,7 @@ def process_config_object(
 def get_token_store(
         instance_config: InstanceConfig,
         collection_name: str, token: str
-) -> tuple[RecordDirStore, TokenPermission] | tuple[None, None]:
+) -> tuple[ModelStore, TokenPermission] | tuple[None, None]:
     if collection_name not in instance_config.curated_stores:
         raise HTTPException(
             status_code=HTTP_404_NOT_FOUND,

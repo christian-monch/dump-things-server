@@ -1,9 +1,26 @@
+"""
+Backend that stores records in a directory structure
+
+The disk-layout is described in <https://concepts.datalad.org/dump-things/>.
+
+The backend has a special handling for `schema_type` attributes. Because the
+class of the record is encoded in the record-path, the `schema_type` attribute
+in the top level dictionary is redundant. Therefore, it is set to `None` in
+stored records, i.e., the top-level `schema_type` attribute is not stored in
+the YAML files.
+
+When a record is read from disk, the `schema_type` attribute is added in all
+cases (because we don't keep track of whether the initial record had a
+`schema_type`-attribute or not).
+"""
 from __future__ import annotations
 
 import logging
+from types import ModuleType
 from typing import (
     TYPE_CHECKING,
     Callable,
+    Iterable,
 )
 
 import yaml
@@ -11,23 +28,27 @@ import yaml
 from dump_things_service import config_file_name
 from dump_things_service.backends import (
     RecordInfo,
-    StorageBackend,
+    StorageBackend, create_sort_key,
 )
 from dump_things_service.lazy_list import LazyList
+from dump_things_service.model import (
+    get_model_for_schema,
+    get_schema_model_for_schema,
+)
 from dump_things_service.resolve_curie import resolve_curie
 
 if TYPE_CHECKING:
     from pathlib import Path
     from typing import Any
 
-    from dump_things_service.config import InstanceConfig
 
+__all__ = [
+    'RecordDirStore',
+]
 
 ignored_files = {'.', '..', config_file_name}
 
 lgr = logging.getLogger('dump_things_service')
-
-last_character = chr(0x10FFFF)
 
 
 class RecordList(LazyList):
@@ -36,53 +57,68 @@ class RecordList(LazyList):
     mainly used as array argument for `fastapi_pagination.paginate` to load
     only the records that are needed for the current page.
     """
+    def __init__(self, schema_model: ModuleType):
+        """
+        Initialize the record list.
 
-    def __init__(
-        self,
-        instance_config: InstanceConfig | None = None,
-        collection: str | None = None,
-    ):
+        :param model: The python schema module to use for schema type resolution.
+        """
         super().__init__()
-        self.instance_config = instance_config
-        self.collection = collection
+        self.schema_model = schema_model
 
     def generate_element(self, _: int, info: Any) -> RecordInfo:
         """
         Generate a JSON representation of the record at index `index`.
 
-        :param _: The index of the record to retrieve.
+        :param _: The index of the record that should be retrieved (ignored).
         :param info: The tuple (iri, record_class_name, record_path).
         :return: A JSON object.
         """
-        with info[2].open('r') as f:
+        iri, class_name, path, sort_key = info
+        with path.open('r') as f:
+            json_object = yaml.load(f, Loader=yaml.SafeLoader)
+            json_object['schema_type'] = _get_schema_type(class_name, self.schema_model)
             return RecordInfo(
-                iri=info[0],
-                class_name=info[1],
-                json_object=yaml.load(f, Loader=yaml.SafeLoader),
+                iri=iri,
+                class_name=class_name,
+                json_object=json_object,
+                sort_key=sort_key,
             )
 
+    def unique_identifier(self, info: Any) -> Any:
+        # Return the IRI as unique identifier
+        return info[0]
 
-class RecordDirStore(StorageBackend):
+    def sort_key(self, info: Any) -> str:
+        # Return the sort_key entry as sort key
+        return info[3]
+
+
+class _RecordDirStore(StorageBackend):
     """Store records in a directory structure"""
 
     def __init__(
         self,
         root: Path,
-        model: Any,
+        # `schema` is required for two purposes:
+        #  1. CURIE prefix resolution during index creation
+        #  2. `schema_type` determination for records that are read from disk
+        schema: str,
         pid_mapping_function: Callable,
         suffix: str,
-        sort_keys: list,
+        order_by: Iterable[str] | None = None,
     ):
-        super().__init__()
+        super().__init__(order_by=order_by)
         if not root.is_absolute():
             msg = f'Store root is not absolute: {root}'
             raise ValueError(msg)
         self.root = root
-        self.model = model
+        self.schema = schema
+        self.model = get_model_for_schema(self.schema)[0]
+        self.schema_model = get_schema_model_for_schema(self.schema)
         self.pid_mapping_function = pid_mapping_function
         self.suffix = suffix
         self.index = {}
-        self.sort_keys = sort_keys or ['pid']
         self._build_index()
 
     def _build_index(self):
@@ -107,12 +143,7 @@ class RecordDirStore(StorageBackend):
                     continue
 
                 iri = resolve_curie(self.model, pid)
-                sort_string = '-'.join(
-                    str(record.get(key))
-                    if record.get(key) is not None
-                    else last_character
-                    for key in self.sort_keys
-                )
+                sort_string = create_sort_key(record, self.order_by)
 
                 # On startup, log PID collision errors and continue building the index
                 try:
@@ -219,6 +250,10 @@ class RecordDirStore(StorageBackend):
         # Ensure all intermediate directories exist and save the YAML document
         storage_path.parent.mkdir(parents=True, exist_ok=True)
 
+        # Remove `schema_type` from the JSON object
+        if 'schema_type' in json_object:
+            del json_object['schema_type']
+
         # Convert the record object into a YAML object
         data = yaml.dump(
             data=json_object,
@@ -229,30 +264,84 @@ class RecordDirStore(StorageBackend):
         storage_path.write_text(data, encoding='utf-8')
 
         # Add the IRI to the index
-        sort_string = '-'.join(
-            getattr(json_object, key) if hasattr(json_object, key) else last_character
-            for key in self.sort_keys
-        )
+        sort_string = create_sort_key(json_object, self.order_by)
         self._add_iri_to_index(iri, class_name, pid, storage_path, sort_string)
 
     def get_record_by_iri(
         self,
         iri: str,
     ) -> RecordInfo | None:
-        class_name, pid, path, sort_key = self.index.get(iri)
-        if path is None:
+        index_entry = self.index.get(iri)
+        if index_entry is None:
             return None
-        record = yaml.load(path.read_text(), Loader=yaml.SafeLoader)
-        return RecordInfo(iri=iri, class_name=class_name, json_object=record)
 
-    def get_records_of_class(self, class_name: str) -> RecordList:
-        return RecordList().add_info(
+        class_name, pid, path, sort_key = index_entry
+        json_object = yaml.load(path.read_text(), Loader=yaml.SafeLoader)
+        json_object['schema_type'] = _get_schema_type(class_name, self.schema_model)
+        return RecordInfo(
+            iri=iri,
+            class_name=class_name,
+            json_object=json_object,
+            sort_key=sort_key,
+        )
+
+    def get_records_of_classes(
+        self,
+        class_names: list[str]
+    ) -> RecordList:
+        return RecordList(self.schema_model).add_info(
             sorted(
                 (
-                    (iri, index_entry[0], index_entry[2])
-                    for iri, index_entry in self.index.items()
-                    if index_entry[0] == class_name
+                    (iri, class_name, path, sort_key)
+                    for iri, (class_name, pid, path, sort_key) in self.index.items()
+                    if class_name in class_names
                 ),
                 key=lambda index_entry: index_entry[3],
             )
         )
+
+
+# Ensure that there is only one store per root directory.
+_existing_stores = {}
+
+def RecordDirStore(
+        root: Path,
+        schema: str,
+        pid_mapping_function: Callable,
+        suffix: str,
+        order_by: Iterable[str] | None = None,
+) -> _RecordDirStore:
+    """Get a record directory store for the given root directory."""
+    global _existing_stores
+
+    existing_store = _existing_stores.get(root)
+    if not existing_store:
+        existing_store = _RecordDirStore(
+            root=root,
+            schema=schema,
+            pid_mapping_function=pid_mapping_function,
+            suffix=suffix,
+            order_by=order_by,
+        )
+        _existing_stores[root] = existing_store
+
+    if existing_store.schema != schema:
+        msg = f'Store at {root} already exists with different schema.'
+        raise ValueError(msg)
+
+    if existing_store.pid_mapping_function != pid_mapping_function:
+        msg = f'Store at {root} already exists with different PID mapping function.'
+        raise ValueError(msg)
+
+    if existing_store.suffix != suffix:
+        msg = f'Store at {root} already exists with different format.'
+        raise ValueError(msg)
+
+    return existing_store
+
+
+def _get_schema_type(
+    class_name: str,
+    schema_module: ModuleType,
+) -> str:
+    return getattr(schema_module, class_name).class_class_curie
