@@ -243,7 +243,8 @@ class _RecordDirStore(StorageBackend):
         storage_path.parent.mkdir(parents=True, exist_ok=True)
 
         # Remove `schema_type` from the JSON object
-        json_object['schema_type'] = None
+        if 'schema_type' in json_object:
+            del json_object['schema_type']
 
         # Convert the record object into a YAML object
         data = yaml.dump(

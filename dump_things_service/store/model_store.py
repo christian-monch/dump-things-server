@@ -37,7 +37,7 @@ class ModelStore:
         self,
         obj: BaseModel,
         submitter: str,
-    ) -> Iterable[dict]:
+    ) -> Iterable[tuple[str, dict]]:
 
         if obj.__class__.__name__ == 'Thing':
             msg = f'Cannot store `Thing` instance: {obj}.'
@@ -46,9 +46,12 @@ class ModelStore:
         # Extract inlined records from the object, store individual records
         # and return the list of stored records.
         return [
-            self._store_flat_object(
-                obj=obj,
-                submitter=submitter,
+            (
+                obj.__class__.__name__,
+                self._store_flat_object(
+                    obj=obj,
+                    submitter=submitter,
+                )
             )
             for obj in self.extract_inlined(obj)
         ]

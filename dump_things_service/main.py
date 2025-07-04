@@ -235,7 +235,6 @@ def store_record(
     stored_records = store.store_object(
         obj=record,
         submitter=g_instance_config.token_stores[token]['user_id'],
-        #model=model,
     )
 
     if input_format == Format.ttl:
@@ -245,26 +244,15 @@ def store_record(
                     convert_json_to_ttl(
                         g_instance_config,
                         collection,
-                        record.__class__.__name__,
-                        cleaned_json(
-                            record.model_dump(mode='json', exclude_none=True),
-                            remove_keys=('@type',),
-                        )
+                        class_name,
+                        record,
                     )
-                    for record in stored_records
+                    for class_name, record in stored_records
                 ]
             ),
             media_type='text/turtle',
         )
-    return JSONResponse(stored_records)
-    #return JSONResponse(
-    #    list(
-    #        map(
-    #            partial(cleaned_json),
-    #            map(jsonable_encoder, stored_records),
-    #        )
-    #    )
-    #)
+    return JSONResponse([record for _, record in stored_records])
 
 
 def _check_collection(

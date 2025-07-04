@@ -23,10 +23,13 @@ from rdflib.term import (
 from dump_things_service import Format
 from dump_things_service.backends import RecordInfo
 from dump_things_service.lazy_list import LazyList
-from dump_things_service.model import get_model_for_schema
+from dump_things_service.model import (
+    get_model_for_schema,
+    get_schema_model_for_schema,
+)
 
 
-_conversion_objects = {}
+_cached_conversion_objects = {}
 
 
 # Enable rdflib to parse date time literals with type ref:
@@ -34,6 +37,7 @@ _conversion_objects = {}
 # return the validated datetime string verbatim.
 
 _datetime_regex = re.compile(r'^([-+]\d+)|(\d{4})|(\d{4}-[01]\d)|(\d{4}-[01]\d-[0-3]\d)|(\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d:[0-5]\d\.\d+([+-][0-2]\d:[0-5]\d|Z))|(\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d:[0-5]\d([+-][0-2]\d:[0-5]\d|Z))|(\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d([+-][0-2]\d:[0-5]\d|Z))$')
+
 
 def _validate_datetime(value: str) -> str:
     match = _datetime_regex.match(value)
@@ -50,14 +54,14 @@ bind(
 
 
 def _get_conversion_objects(schema: str):
-    global _conversion_objects
+    global _cached_conversion_objects
 
-    if schema not in _conversion_objects:
-        _conversion_objects[schema] = {
-            'schema_module': PythonGenerator(schema).compile_module(),
+    if schema not in _cached_conversion_objects:
+        _cached_conversion_objects[schema] = {
+            'schema_module': get_schema_model_for_schema(schema),
             'schema_view': SchemaView(schema),
         }
-    return _conversion_objects[schema]
+    return _cached_conversion_objects[schema]
 
 
 class FormatConverter:
