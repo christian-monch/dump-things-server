@@ -15,6 +15,7 @@ import annotated_types  # noqa F401 -- used by generated code
 import pydantic  # noqa F401 -- used by generated code
 import pydantic_core  # noqa F401 -- used by generated code
 from linkml_runtime import SchemaView
+from linkml.generators import PythonGenerator
 from pydantic._internal._model_construction import ModelMetaclass
 
 from dump_things_service.utils import (
@@ -28,6 +29,7 @@ serial_number = count()
 _model_counter = count()
 
 _model_cache = {}
+_schema_model_cache = {}
 _schema_view_cache = {}
 
 
@@ -88,3 +90,13 @@ def get_schema_view(schema_location: str) -> SchemaView:
     if schema_location not in _schema_view_cache:
         _schema_view_cache[schema_location] = SchemaView(schema_location)
     return _schema_view_cache[schema_location]
+
+
+def get_schema_model_for_schema(
+    schema_location: str,
+) -> types.ModuleType:
+    global _schema_model_cache
+
+    if schema_location not in _schema_model_cache:
+        _schema_model_cache[schema_location] = PythonGenerator(schema_location).compile_module()
+    return _schema_model_cache[schema_location]

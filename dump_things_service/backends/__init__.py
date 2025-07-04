@@ -74,7 +74,7 @@ class StorageBackend(metaclass=ABCMeta):
     def get_records_of_classes(
         self,
         class_names: Iterable[str],
-    ) -> LazyList[dict]:
+    ) -> LazyList[RecordInfo]:
         raise NotImplementedError
 
 

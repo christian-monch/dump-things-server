@@ -1,3 +1,18 @@
+"""
+Backend that stores records in a directory structure
+
+The disk-layout is described in <https://concepts.datalad.org/dump-things/>.
+
+The backend has a special handling for `schema_type` attributes. Because the
+class of the record is encoded in the record-path, the `schema_type` attribute
+in the top level dictionary is redundant. Therefore, it is set to `None` in
+stored records, i.e., the top-level `schema_type` attribute is not stored in
+the YAML files.
+
+When a record is read from disk, the `schema_type` attribute is added in all
+cases (because we don't keep track of whether the initial record had a
+`schema_type`-attribute or not).
+"""
 from __future__ import annotations
 
 import logging
@@ -18,7 +33,7 @@ from dump_things_service.backends import (
 from dump_things_service.lazy_list import LazyList
 from dump_things_service.model import (
     get_model_for_schema,
-    get_schema_view,
+    get_schema_model_for_schema,
 )
 from dump_things_service.resolve_curie import resolve_curie
 
@@ -42,14 +57,14 @@ class RecordList(LazyList):
     mainly used as array argument for `fastapi_pagination.paginate` to load
     only the records that are needed for the current page.
     """
-    def __init__(self, model: ModuleType):
+    def __init__(self, schema_model: ModuleType):
         """
         Initialize the record list.
 
-        :param model: The model to use for schema type resolution.
+        :param model: The python schema module to use for schema type resolution.
         """
         super().__init__()
-        self.model = model
+        self.schema_model = schema_model
 
     def generate_element(self, _: int, info: Any) -> RecordInfo:
         """
@@ -62,7 +77,7 @@ class RecordList(LazyList):
         iri, class_name, path, sort_key = info
         with path.open('r') as f:
             json_object = yaml.load(f, Loader=yaml.SafeLoader)
-            _add_schema_type_to_json_object(json_object, class_name, self.model)
+            json_object['schema_type'] = _get_schema_type(class_name, self.schema_model)
             return RecordInfo(
                 iri=iri,
                 class_name=class_name,
@@ -92,6 +107,7 @@ class _RecordDirStore(StorageBackend):
         self.root = root
         self.schema = schema
         self.model = get_model_for_schema(self.schema)[0]
+        self.schema_model = get_schema_model_for_schema(self.schema)
         self.pid_mapping_function = pid_mapping_function
         self.suffix = suffix
         self.index = {}
@@ -239,10 +255,7 @@ class _RecordDirStore(StorageBackend):
         storage_path.write_text(data, encoding='utf-8')
 
         # Add the IRI to the index
-        sort_string = '-'.join(
-            getattr(json_object, key) if hasattr(json_object, key) else last_character
-            for key in self.order_by
-        )
+        sort_string = create_sort_key(json_object, self.order_by)
         self._add_iri_to_index(iri, class_name, pid, storage_path, sort_string)
 
     def get_record_by_iri(
@@ -255,14 +268,19 @@ class _RecordDirStore(StorageBackend):
 
         class_name, pid, path, sort_key = index_entry
         json_object = yaml.load(path.read_text(), Loader=yaml.SafeLoader)
-        _add_schema_type_to_json_object(json_object, class_name, self.model)
-        return RecordInfo(iri=iri, class_name=class_name, json_object=json_object)
+        json_object['schema_type'] = _get_schema_type(class_name, self.schema_model)
+        return RecordInfo(
+            iri=iri,
+            class_name=class_name,
+            json_object=json_object,
+            sort_key=sort_key,
+        )
 
     def get_records_of_classes(
         self,
         class_names: list[str]
     ) -> RecordList:
-        return RecordList(self.model).add_info(
+        return RecordList(self.schema_model).add_info(
             sorted(
                 (
                     (iri, class_name, path, sort_key)
@@ -313,10 +331,8 @@ def RecordDirStore(
     return existing_store
 
 
-def _add_schema_type_to_json_object(
-    json_object: dict,
+def _get_schema_type(
     class_name: str,
-    model: ModuleType,
-) -> None:
-    class_object = getattr(model, class_name)
-    json_object['schema_type'] = class_object.linkml_meta.root['class_uri']
+    schema_module: ModuleType,
+) -> str:
+    return getattr(schema_module, class_name).class_class_curie

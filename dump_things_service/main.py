@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import (
     Annotated,  # noqa F401 -- used by generated code
     Any,
+    TYPE_CHECKING,
 )
 
 from starlette.status import HTTP_413_REQUEST_ENTITY_TOO_LARGE
@@ -75,6 +76,9 @@ from dump_things_service.utils import (
     combine_ttl,
     get_schema_type_curie,
 )
+
+if TYPE_CHECKING:
+    from dump_things_service.lazy_list import LazyList
 
 
 class TokenCapabilityRequest(BaseModel):
@@ -228,21 +232,11 @@ def store_record(
     else:
         record = data
 
-    stored_records = tuple(
-        store.store_record(
-            record=record,
-            submitter_id=g_instance_config.token_stores[token]['user_id'],
-            model=model,
-        )
+    stored_records = store.store_object(
+        obj=record,
+        submitter=g_instance_config.token_stores[token]['user_id'],
+        #model=model,
     )
-
-    # Add `schema_type` to the records
-    for record in stored_records:
-        record.schema_type = get_schema_type_curie(
-            g_instance_config,
-            collection,
-            record.__class__.__name__,
-        )
 
     if input_format == Format.ttl:
         return PlainTextResponse(
@@ -262,14 +256,15 @@ def store_record(
             ),
             media_type='text/turtle',
         )
-    return JSONResponse(
-        list(
-            map(
-                partial(cleaned_json),
-                map(jsonable_encoder, stored_records),
-            )
-        )
-    )
+    return JSONResponse(stored_records)
+    #return JSONResponse(
+    #    list(
+    #        map(
+    #            partial(cleaned_json),
+    #            map(jsonable_encoder, stored_records),
+    #        )
+    #    )
+    #)
 
 
 def _check_collection(
@@ -354,7 +349,7 @@ async def read_records_of_type(
     )
     if format == Format.ttl:
         return tuple(map(PlainTextResponse, result_list))
-    return tuple(map(lambda v: v.json_object, result_list))
+    return result_list
 
 
 async def _read_records_of_type(

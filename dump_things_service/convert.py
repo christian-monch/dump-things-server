@@ -8,7 +8,6 @@ from json import (
 from typing import TYPE_CHECKING
 
 from fastapi import HTTPException
-from linkml.generators import PythonGenerator
 from linkml.utils.datautils import (
     get_dumper,
     get_loader,
@@ -24,6 +23,7 @@ from dump_things_service import (
     JSON,
     Format,
 )
+from dump_things_service.model import get_schema_model_for_schema
 from dump_things_service.utils import cleaned_json
 
 if TYPE_CHECKING:
@@ -174,6 +174,6 @@ def _convert_format(
 
 def get_conversion_objects(schema: str):
     return {
-        'schema_module': PythonGenerator(schema).compile_module(),
+        'schema_module': get_schema_model_for_schema(schema),
         'schema_view': SchemaView(schema),
     }
