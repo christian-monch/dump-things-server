@@ -67,7 +67,7 @@ class ModelStore:
 
         json_object = cleaned_json(
             obj.model_dump(exclude_none=True, mode='json'),
-            remove_keys=('@type',)
+            remove_keys=('@type',),
         )
 
         # Add the submitter id to the record annotations

@@ -7,7 +7,7 @@ import pytest
 from .. import HTTP_500_INTERNAL_SERVER_ERROR
 
 collection_names = ('collection_1', 'xasdasd', '../../../abc')
-class_names = ('Thing', 'Mosdlkjsdfnmxcfd', '../../../abc')
+class_names = ('Person', 'Mosdlkjsdfnmxcfd', '../../../abc')
 queries = ('format', 'somerslkhjsdfsdf')
 format_names = ('json', 'ttl', 'sdfsdfkjsdkfsd')
 pids = ('', '--------', '&&&&&', 'abc', 'abc&', 'abc&format=ttl')

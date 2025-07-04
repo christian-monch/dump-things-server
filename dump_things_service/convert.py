@@ -64,7 +64,7 @@ def convert_json_to_ttl(
     # we use pydantic's ability to infer the type from the data.
     pydantic_object = getattr(
         get_model_info_for_collection(instance_config, collection_name)[0],
-        target_class
+        target_class,
     )(**json)
 
     return convert_pydantic_to_ttl(
