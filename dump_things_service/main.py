@@ -3,7 +3,6 @@ from __future__ import annotations   # noqa: I001 -- the patches have to be impo
 import argparse
 import logging
 import sys
-from functools import partial
 from pathlib import Path
 from typing import (
     Annotated,  # noqa F401 -- used by generated code
@@ -25,7 +24,6 @@ from fastapi import (
     HTTPException,
     Request,
 )
-from fastapi.encoders import jsonable_encoder
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import APIKeyHeader
 from fastapi_pagination import (
@@ -69,13 +67,8 @@ from dump_things_service.model import (
     get_classes,
     get_subclasses,
 )
-from dump_things_service.record_list import RecordList
 from dump_things_service.store.model_store import ModelStore
-from dump_things_service.utils import (
-    cleaned_json,
-    combine_ttl,
-    get_schema_type_curie,
-)
+from dump_things_service.utils import combine_ttl
 
 if TYPE_CHECKING:
     from dump_things_service.lazy_list import LazyList
@@ -340,6 +333,24 @@ async def read_records_of_type(
     return result_list
 
 
+@app.get('/{collection}/records/p/{class_name}')
+async def read_records_of_type_paginated(
+        collection: str,
+        class_name: str,
+        format: Format = Format.json,  # noqa A002
+        api_key: str = Depends(api_key_header_scheme),
+) -> Page[dict | str]:
+
+    result_list = await _read_records_of_type(
+        collection=collection,
+        class_name=class_name,
+        format=format,
+        api_key=api_key,
+        bound=None,
+    )
+    return paginate(result_list)
+
+
 async def _read_records_of_type(
         collection: str,
         class_name: str,
@@ -379,17 +390,17 @@ async def _read_records_of_type(
             token_store_list = token_store.get_objects_of_class(search_class_name)
             if bound:
                 check_bounds(len(token_store_list), bound)
-            result_list.add_list(token_store_list, key=lambda x: x[0])
+            result_list.add_list(token_store_list)
 
     if final_permissions.curated_read:
         for search_class_name in get_subclasses(model, class_name):
-            token_store_list = g_instance_config.curated_stores[collection].get_objects_of_class(search_class_name)
+            curated_store_list = g_instance_config.curated_stores[collection].get_objects_of_class(search_class_name)
             if bound:
-                check_bounds(len(token_store_list), bound)
-            result_list.add_list(token_store_list, key=lambda x: x[0])
+                check_bounds(len(curated_store_list), bound)
+            result_list.add_list(curated_store_list)
 
     # Sort the result list.
-    result_list.sort(key=lambda record_info: record_info[0][3])
+    result_list.sort(key=result_list.sort_key)
 
     if format == Format.ttl:
         result_list = ConvertingList(
@@ -404,66 +415,6 @@ async def _read_records_of_type(
             lambda record_info: record_info.json_object,
         )
     return result_list
-
-
-@app.get('/{collection}/records/p/{class_name}')
-async def read_records_of_type_paginated(
-    collection: str,
-    class_name: str,
-    format: Format = Format.json,  # noqa A002
-    api_key: str = Depends(api_key_header_scheme),
-) -> Page[dict | str]:
-
-    result_list = await _read_records_of_type(
-        collection=collection,
-        class_name=class_name,
-        format=format,
-        api_key=api_key,
-        bound=None,
-    )
-    return paginate(result_list)
-
-
-async def a():
-    _check_collection(g_instance_config, collection)
-
-    model = g_instance_config.model_info[collection][0]
-    if class_name not in get_classes(model):
-        raise HTTPException(
-            status_code=HTTP_404_NOT_FOUND,
-            detail=f'No "{class_name}"-class in collection "{collection}".',
-        )
-
-    final_permissions, token_store = await process_token(g_instance_config, api_key, collection)
-
-    # We use a dictionary to implement prioritization of incoming records over curated records.
-    records = {}
-    if final_permissions.curated_read:
-        for search_class_name in get_subclasses(model, class_name):
-            for record_class_name, pid, path, sort_key in g_instance_config.curated_stores[collection].get_record_info_of_class(
-                search_class_name
-            ):
-                records[pid] = record_class_name, path, sort_key
-
-    if final_permissions.incoming_read:
-        for search_class_name in get_subclasses(model, class_name):
-            for record_class_name, pid, path, sort_key in token_store.get_record_info_of_class(search_class_name):
-                records[pid] = record_class_name, path, sort_key
-
-    # Create a sorted result list from the `records` dictionary.
-    sorted_results = sorted(
-        (((class_name, pid, path), sort_key) for pid, (class_name, path, sort_key) in records.items()),
-        key=lambda item: item[1],
-    )
-
-    # Generate a lazy result list from `sorted_results`.
-    result_list = RecordList(
-        instance_config=g_instance_config,
-        collection=collection,
-        convert_to_ttl=(format == Format.ttl),
-    )
-    result_list.add_info(map(lambda item: item[0], sorted_results))
-    return paginate(result_list)
 
 
 async def process_token(

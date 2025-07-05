@@ -26,6 +26,7 @@ from dump_things_service import (
     HTTP_404_NOT_FOUND,
 )
 from dump_things_service.backends.record_dir import RecordDirStore
+from dump_things_service.backends.sqlite import SQLiteBackend
 from dump_things_service.convert import get_conversion_objects
 from dump_things_service.model import get_model_for_schema
 from dump_things_service.store.model_store import ModelStore
@@ -263,13 +264,18 @@ def process_config_object(
         instance_config.model_info[collection_name] = model, classes, model_var_name
         globals_dict[model_var_name] = model
 
-        curated_store_backend = RecordDirStore(
-            root=store_path / collection_info.curated,
-            schema=collection_config.schema,
-            pid_mapping_function=get_mapping_function(collection_config),
-            suffix=collection_config.format,
-            order_by=order_by,
-        )
+        if False:
+            curated_store_backend = RecordDirStore(
+                root=store_path / collection_info.curated,
+                schema=collection_config.schema,
+                pid_mapping_function=get_mapping_function(collection_config),
+                suffix=collection_config.format,
+                order_by=order_by,
+            )
+        else:
+            curated_store_backend = SQLiteBackend(
+                db_path=store_path / collection_info.curated / 'records.db',
+            )
         curated_store = ModelStore(
             schema=collection_config.schema,
             backend=curated_store_backend,
@@ -309,7 +315,7 @@ def process_config_object(
                 if collection_name not in instance_config.zones:
                     instance_config.zones[collection_name] = {}
                 instance_config.zones[collection_name][token_name] = token_collection_info.incoming_label
-                mapping_function = instance_config.curated_stores[collection_name].backend.pid_mapping_function
+                #mapping_function = instance_config.curated_stores[collection_name].backend.pid_mapping_function
                 # Ensure that the store directory exists
                 store_dir = (
                         store_path
@@ -317,13 +323,18 @@ def process_config_object(
                         / token_collection_info.incoming_label
                 )
                 store_dir.mkdir(parents=True, exist_ok=True)
-                token_store_backend = RecordDirStore(
-                    root=store_dir,
-                    schema=instance_config.schemas[collection_name],
-                    pid_mapping_function=mapping_function,
-                    suffix=instance_config.curated_stores[collection_name].backend.suffix,
-                    order_by=order_by,
-                )
+                if False:
+                    token_store_backend = RecordDirStore(
+                        root=store_dir,
+                        schema=instance_config.schemas[collection_name],
+                        pid_mapping_function=mapping_function,
+                        suffix=instance_config.curated_stores[collection_name].backend.suffix,
+                        order_by=order_by,
+                    )
+                else:
+                    token_store_backend = SQLiteBackend(
+                        db_path=store_dir / 'records.db',
+                    )
                 token_store = ModelStore(
                     schema=instance_config.schemas[collection_name],
                     backend=token_store_backend,

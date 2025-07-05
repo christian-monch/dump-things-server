@@ -26,6 +26,7 @@ Presumably, 180 bytes + JSON string size per record.
 
 from __future__ import annotations
 
+from pathlib import Path
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -79,22 +80,37 @@ class LazySQLList(LazyList):
 
     def generate_element(self, _: int, info: Any) -> Any:
         with Session(self.engine) as session, session.begin():
-            thing = session.get(Thing, info)
+            iri, table_id, sort_key = info
+            thing = session.get(Thing, table_id)
+            #json_object = thing.object
+            #if 'schema_type' not in json_object:
+            #    json_object['schema_type'] = _get_schema_type(
+            #        thing.class_name,
+            #        self.schema_model
+            #    )
             return RecordInfo(
                 iri=thing.iri, class_name=thing.class_name, json_object=thing.object, sort_key=thing.sort_key
             )
+
+    def unique_identifier(self, info: Any) -> Any:
+        # Return the IRI as unique identifier
+        return info[0]
+
+    def sort_key(self, info: Any) -> str:
+        # Return the sort_key entry as sort key
+        return info[2]
 
 
 class SQLiteBackend(StorageBackend):
     def __init__(
         self,
-        db_path: str,
+        db_path: Path,
         *,
         order_by: Iterable[str] | None = None,
         echo: bool = False
     ) -> None:
         super().__init__(order_by=order_by)
-        self.engine = create_engine('sqlite:///' + db_path, echo=echo)
+        self.engine = create_engine('sqlite:///' + str(db_path), echo=echo)
         Base.metadata.create_all(self.engine)
 
     def add_record(
@@ -155,5 +171,6 @@ class SQLiteBackend(StorageBackend):
             )
         with Session(self.engine) as session, session.begin():
             return LazySQLList(self.engine).add_info(
-                thing.id for thing in session.scalars(statement).all()
+                (thing.iri, thing.id, thing.sort_key)
+                for thing in session.scalars(statement).all()
             )

@@ -18,7 +18,6 @@ from abc import (
 )
 from typing import TYPE_CHECKING
 
-
 if TYPE_CHECKING:
     from collections.abc import Iterable
     from typing import (
@@ -97,6 +96,32 @@ class LazyList(list, metaclass=ABCMeta):
         """
         raise NotImplementedError
 
+    def unique_identifier(self, info: Any) -> Any:
+        """
+        Return a unique identifier for the represented information
+
+        The unique identifier is used in priority lists to uniquely identify an
+        object across multiple lists.
+
+        This should be implemented if the list is supposed to be used in a
+        priority list.
+
+        :param info: The surrogate information.
+        :return: A unique identifier for the element represented by the surrogate.
+        """
+        raise NotImplementedError
+
+    def sort_key(self, info: Any) -> str:
+        """
+        Return a string that can be used for sorting the list.
+
+        This should be implemented if the list is supposed to be sorted.
+
+        :param info: The surrogate information.
+        :return: The string that should be used for sorting the list.
+        """
+        raise NotImplementedError
+
     def add_info(
         self,
         info: Iterable[Any],
@@ -122,6 +147,15 @@ class LazyList(list, metaclass=ABCMeta):
         self.list_info.sort(key=key, reverse=reverse)
         return self
 
+    def get_key_function(self) -> Callable:
+        """
+        Get the key function used to sort the list.
+
+        This method should be implemented by subclasses to return a function
+        that can be used to extract a key from the list info for sorting.
+        """
+        raise NotImplementedError("Subclasses must implement get_key_function")
+
 
 class PriorityList(LazyList):
     """
@@ -141,7 +175,6 @@ class PriorityList(LazyList):
     def add_list(
         self,
         input_list: LazyList,
-        key: Callable,
     ) -> PriorityList:
         # Check the type
         if self.type:
@@ -154,7 +187,7 @@ class PriorityList(LazyList):
             self.type = type(input_list)
 
         for info in input_list.list_info:
-            criteria = key(info)
+            criteria = input_list.unique_identifier(info)
             if criteria not in self.seen:
                 self.seen.add(criteria)
                 self.list_info.append((info, input_list))
@@ -163,6 +196,10 @@ class PriorityList(LazyList):
     def generate_element(self, index: int, info: Any) -> Any:
         # Delegate the generation to the input list
         return info[1].generate_element(index, info[0])
+
+    def sort_key(self, info: Any) -> str:
+        # Delegate the sort key to the input list
+        return info[1].sort_key(info[0])
 
 
 class ModifierList(LazyList):

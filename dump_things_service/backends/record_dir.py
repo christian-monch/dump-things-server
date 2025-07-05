@@ -85,6 +85,14 @@ class RecordList(LazyList):
                 sort_key=sort_key,
             )
 
+    def unique_identifier(self, info: Any) -> Any:
+        # Return the IRI as unique identifier
+        return info[0]
+
+    def sort_key(self, info: Any) -> str:
+        # Return the sort_key entry as sort key
+        return info[3]
+
 
 class _RecordDirStore(StorageBackend):
     """Store records in a directory structure"""

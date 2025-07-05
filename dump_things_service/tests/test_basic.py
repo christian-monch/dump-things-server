@@ -21,6 +21,7 @@ extra_record = {
 unicode_name = 'AlienÖÄÜ-ß👽'
 unicode_bytes = unicode_name.encode('utf-8')
 unicode_record = {
+    'schema_type': 'abc:Person',
     'pid': 'abc:unicode-test',
     'given_name': unicode_name,
 }
@@ -39,6 +40,44 @@ def test_search_by_pid(fastapi_client_simple):
             'pid': pid,
             'given_name': given_name,
         }
+
+
+def test_search_by_class(fastapi_client_simple):
+    test_client, _ = fastapi_client_simple
+    for i in range(1, 8):
+        response = test_client.get(
+            f'/collection_{i}/records/Thing',
+            headers={'x-dumpthings-token': 'basic_access'},
+        )
+        assert response.status_code == HTTP_200_OK
+        json_result = response.json()
+        if len(json_result) == 3:
+            assert response.json() == [
+                {
+                    'given_name': 'curated',
+                    'pid': 'abc:curated',
+                    'schema_type': 'abc:Person'
+                },
+                {
+                    'given_name': 'mode_curated',
+                    'pid': 'abc:mode_test',
+                    'schema_type': 'abc:Person'
+                },
+                {
+                    'given_name': 'WolfgangÖÄß',
+                    'pid': 'abc:some_timee@x.com',
+                    'schema_type': 'abc:Person'
+                },
+            ]
+        else:
+            # If only one record is present, it is the global test record
+            assert json_result == [
+                {
+                    'given_name': 'WolfgangÖÄß',
+                    'pid': 'abc:some_timee@x.com',
+                    'schema_type': 'abc:Person',
+                },
+            ]
 
 
 def test_search_by_pid_no_token(fastapi_client_simple):

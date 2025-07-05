@@ -15,7 +15,8 @@ xyz:HenryAdams a abc:Person ;
     abc:annotations [ a abc:Annotation ;
             abc:annotation_tag oxo:NCIT_C54269 ;
             abc:annotation_value "test_user_1" ] ;
-    abc:given_name "Henryöäß" .
+    abc:given_name "Henryöäß" ;
+    abc:schema_type "abc:Person" .
 """
 
 ttl_result_record = """@prefix abc: <http://example.org/person-schema/abc/> .
