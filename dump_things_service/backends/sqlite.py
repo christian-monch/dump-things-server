@@ -82,12 +82,6 @@ class LazySQLList(LazyList):
         with Session(self.engine) as session, session.begin():
             iri, table_id, sort_key = info
             thing = session.get(Thing, table_id)
-            #json_object = thing.object
-            #if 'schema_type' not in json_object:
-            #    json_object['schema_type'] = _get_schema_type(
-            #        thing.class_name,
-            #        self.schema_model
-            #    )
             return RecordInfo(
                 iri=thing.iri, class_name=thing.class_name, json_object=thing.object, sort_key=thing.sort_key
             )
@@ -120,13 +114,11 @@ class SQLiteBackend(StorageBackend):
         json_object: dict,
     ):
         with Session(self.engine) as session, session.begin():
-            session.add(
-                Thing(
-                    iri=iri,
-                    class_name=class_name,
-                    object=json_object,
-                    sort_key=create_sort_key(json_object, self.order_by),
-                )
+            self._add_record_with_session(
+                session=session,
+                iri=iri,
+                class_name=class_name,
+                json_object=json_object,
             )
 
     def add_records_bulk(
@@ -135,14 +127,35 @@ class SQLiteBackend(StorageBackend):
     ):
         with Session(self.engine) as session, session.begin():
             for record_info in record_infos:
-                session.add(
-                    Thing(
-                        iri=record_info.iri,
-                        class_name=record_info.class_name,
-                        object=record_info.json_object,
-                        sort_key=create_sort_key(record_info.json_object, self.order_by),
-                    )
+                self._add_record_with_session(
+                    session=session,
+                    iri=record_info.iri,
+                    class_name=record_info.class_name,
+                    json_object=record_info.json_object,
                 )
+
+    def _add_record_with_session(
+            self,
+            session: Session,
+            iri: str,
+            class_name: str,
+            json_object: dict,
+    ):
+        sort_key = create_sort_key(json_object, self.order_by)
+        existing_record = session.query(Thing).filter_by(iri=iri).first()
+        if existing_record:
+            existing_record.class_name = class_name
+            existing_record.object = json_object
+            existing_record.sort_key=sort_key
+        else:
+            session.add(
+                Thing(
+                    iri=iri,
+                    class_name=class_name,
+                    object=json_object,
+                    sort_key=sort_key,
+                )
+            )
 
     def get_record_by_iri(
         self,
