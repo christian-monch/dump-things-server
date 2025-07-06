@@ -5,13 +5,13 @@ The disk-layout is described in <https://concepts.datalad.org/dump-things/>.
 
 The backend has a special handling for `schema_type` attributes. Because the
 class of the record is encoded in the record-path, the `schema_type` attribute
-in the top level dictionary is redundant. Therefore, it is set to `None` in
-stored records, i.e., the top-level `schema_type` attribute is not stored in
-the YAML files.
+in the top level dictionary is redundant. Therefore, it is removed in
+stored records, i.e., it is not stored in the stored YAML files.
 
 When a record is read from disk, the `schema_type` attribute is added in all
 cases (because we don't keep track of whether the initial record had a
-`schema_type`-attribute or not).
+`schema_type`-attribute or not). So every record that is read from this backend
+will contain a `schema_type` attribute.
 """
 from __future__ import annotations
 
@@ -168,51 +168,19 @@ class _RecordDirStore(StorageBackend):
         #    be the same as the one already in the index (which means the classes
         #    are the same and the PIDs are the same). No need to replace the path
         #    since they are identical anyway.
-        # 2. The existing record is a `Thing` record, and the new record is not a
-        #    `Thing` record (visible by its `path`). The `Thing` record should
-        #    just be a placeholder. The final path component should be identical
-        #    (which means that both records have the same PID). In this case we
-        #    replace the existing record with the new one. If the PIDs are different,
-        #    we cannot be sure that the `Thing` record is just a placeholder, and
-        #    we raise an exception.
-        # 3. The existing record is not a `Thing` record, and the new record is a
-        #    `Thing` record. If both have identical PIDs (final path component),
-        #    we ignore the new record, since it is just a placeholder. If the PIDs
-        #    differ, we raise an exception, since it indicates that two unrelated
-        #    records have the same IRI, which is an error condition.
-        # 4. The existing record is a different class (not `Thing`) and probably
+        # 2. The existing record is a different class (not `Thing`) and probably
         #    a different PID. That indicates that two different records have the
         #    same IRI. This is an error condition, and we raise an exception
         existing_entry = self.index.get(iri)
         if existing_entry:
-            existing_class, existing_pid, existing_path, existing_sort_string = (
-                existing_entry
-            )
+            existing_class, existing_pid, existing_path, existing_sort_string = existing_entry
             # Case 1: existing record is updated
             if path == existing_path:
                 self.index[iri] = existing_class, pid, path, sort_string
                 return
-
-            # Case 2: `Thing` record is replaced with a non-`Thing` record.
-            if existing_class == 'Thing' and new_class != 'Thing':
-                if path.name == existing_path.name:
-                    self.index[iri] = new_class, pid, path, sort_string
-                    return
-                msg = f'IRI {iri} existing {existing_class}-instance at {existing_path} might not be a placeholder for {new_class}-instance at {path}, PIDs differ!'
-                raise ValueError(msg)
-
-            # Case 3: a placeholder `Thing` was handed in to be added.
-            if existing_class != 'Thing' and new_class == 'Thing':
-                if path.name == existing_path.name:
-                    # The `Thing` record is just a placeholder, we can ignore it
-                    return
-                msg = f'IRI {iri} existing {existing_class}-instance at {existing_path} must not be replace by {new_class}-instance at {path}. PIDs differ!'
-                raise ValueError(msg)
-
-            # Case 4:
+            # Case 2:
             msg = f'Duplicated IRI ({iri}): already indexed {existing_class}-instance at {existing_path} has the same IRI as new {new_class}-instance at {path}.'
             raise ValueError(msg)
-
         self.index[iri] = new_class, pid, path, sort_string
 
     def _get_class_name(self, path: Path) -> str:
@@ -250,7 +218,10 @@ class _RecordDirStore(StorageBackend):
         # Ensure all intermediate directories exist and save the YAML document
         storage_path.parent.mkdir(parents=True, exist_ok=True)
 
-        # Remove `schema_type` from the JSON object
+        # Remove the top level `schema_type` from the JSON object because we
+        # don't want to store it in the YAML file. We add `schema_type` after
+        # reading the record from disk. The value of `schema_type` is determined
+        # by the class name of the record, which is stored in the path.
         if 'schema_type' in json_object:
             del json_object['schema_type']
 
