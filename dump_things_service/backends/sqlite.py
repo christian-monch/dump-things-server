@@ -48,9 +48,11 @@ from sqlalchemy.orm import (
 
 from dump_things_service.backends import (
     RecordInfo,
-    StorageBackend, create_sort_key,
+    ResultListInfo,
+    StorageBackend,
+    create_sort_key,
+    BackendResultList,
 )
-from dump_things_service.lazy_list import LazyList
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
@@ -70,7 +72,7 @@ class Thing(Base):
     sort_key: Mapped[str] = mapped_column(nullable=False)
 
 
-class LazySQLList(LazyList):
+class SQLResultList(BackendResultList):
     def __init__(
         self,
         engine: Any,
@@ -78,21 +80,29 @@ class LazySQLList(LazyList):
         super().__init__()
         self.engine = engine
 
-    def generate_element(self, _: int, info: Any) -> Any:
+    def generate_result(
+            self,
+            _: int,
+            iri: str,
+            class_name: str,
+            sort_key: str,
+            db_id: int,
+    ) -> RecordInfo:
+        """
+        Generate a JSON representation of the record at index `index`.
+
+        :param _: The index of the record.
+        :param iri: The IRI of the record.
+        :param class_name: The class name of the record.
+        :param sort_key: The sort key for the record.
+        :param db_id: The id of the record in the database
+        :return: A RecordInfo object.
+        """
         with Session(self.engine) as session, session.begin():
-            iri, table_id, sort_key = info
-            thing = session.get(Thing, table_id)
+            thing = session.get(Thing, db_id)
             return RecordInfo(
-                iri=thing.iri, class_name=thing.class_name, json_object=thing.object, sort_key=thing.sort_key
+                iri=iri, class_name=class_name, json_object=thing.object, sort_key=sort_key
             )
-
-    def unique_identifier(self, info: Any) -> Any:
-        # Return the IRI as unique identifier
-        return info[0]
-
-    def sort_key(self, info: Any) -> str:
-        # Return the sort_key entry as sort key
-        return info[2]
 
 
 class SQLiteBackend(StorageBackend):
@@ -176,14 +186,19 @@ class SQLiteBackend(StorageBackend):
     def get_records_of_classes(
         self,
         class_names: Iterable[str],
-    ) -> LazySQLList[RecordInfo]:
+    ) -> SQLResultList:
         statement = select(Thing).where(Thing.class_name.in_(class_names))
         for attribute in self.order_by:
             statement = statement.order_by(Thing.object[attribute]).options(
                 load_only(Thing.id)
             )
         with Session(self.engine) as session, session.begin():
-            return LazySQLList(self.engine).add_info(
-                (thing.iri, thing.id, thing.sort_key)
+            return SQLResultList(self.engine).add_info(
+                ResultListInfo(
+                    iri=thing.iri,
+                    class_name=thing.class_name,
+                    sort_key=thing.sort_key,
+                    private=thing.id,
+                )
                 for thing in session.scalars(statement).all()
             )

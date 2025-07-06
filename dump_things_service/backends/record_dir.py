@@ -27,8 +27,11 @@ import yaml
 
 from dump_things_service import config_file_name
 from dump_things_service.backends import (
+    BackendResultList,
     RecordInfo,
-    StorageBackend, create_sort_key,
+    ResultListInfo,
+    StorageBackend,
+    create_sort_key,
 )
 from dump_things_service.lazy_list import LazyList
 from dump_things_service.model import (
@@ -51,30 +54,37 @@ ignored_files = {'.', '..', config_file_name}
 lgr = logging.getLogger('dump_things_service')
 
 
-class RecordList(LazyList):
+class RecordDirResultList(BackendResultList):
     """
-    Implementation of a lazy list that holds records stored on disk. This is
-    mainly used as array argument for `fastapi_pagination.paginate` to load
-    only the records that are needed for the current page.
+    The specific result list for record directory backends.
     """
     def __init__(self, schema_model: ModuleType):
         """
         Initialize the record list.
 
-        :param model: The python schema module to use for schema type resolution.
+        :param schema_model: The python schema module to use for schema type resolution.
         """
         super().__init__()
         self.schema_model = schema_model
 
-    def generate_element(self, _: int, info: Any) -> RecordInfo:
+    def generate_result(
+        self,
+        _: int,
+        iri: str,
+        class_name: str,
+        sort_key: str,
+        path: Path,
+    ) -> RecordInfo:
         """
         Generate a JSON representation of the record at index `index`.
 
-        :param _: The index of the record that should be retrieved (ignored).
-        :param info: The tuple (iri, record_class_name, record_path).
-        :return: A JSON object.
+        :param _: The index of the record.
+        :param iri: The IRI of the record.
+        :param class_name: The class name of the record.
+        :param sort_key: The sort key for the record.
+        :param path: The path where the record is stored
+        :return: A RecordInfo object.
         """
-        iri, class_name, path, sort_key = info
         with path.open('r') as f:
             json_object = yaml.load(f, Loader=yaml.SafeLoader)
             json_object['schema_type'] = _get_schema_type(class_name, self.schema_model)
@@ -84,14 +94,6 @@ class RecordList(LazyList):
                 json_object=json_object,
                 sort_key=sort_key,
             )
-
-    def unique_identifier(self, info: Any) -> Any:
-        # Return the IRI as unique identifier
-        return info[0]
-
-    def sort_key(self, info: Any) -> str:
-        # Return the sort_key entry as sort key
-        return info[3]
 
 
 class _RecordDirStore(StorageBackend):
@@ -259,11 +261,16 @@ class _RecordDirStore(StorageBackend):
     def get_records_of_classes(
         self,
         class_names: list[str]
-    ) -> RecordList:
-        return RecordList(self.schema_model).add_info(
+    ) -> RecordDirResultList:
+        return RecordDirResultList(self.schema_model).add_info(
             sorted(
                 (
-                    (iri, class_name, path, sort_key)
+                    ResultListInfo(
+                        iri=iri,
+                        class_name=class_name,
+                        sort_key=sort_key,
+                        private=path,
+                    )
                     for iri, (class_name, pid, path, sort_key) in self.index.items()
                     if class_name in class_names
                 ),
