@@ -1,15 +1,9 @@
 from __future__ import annotations
 
 from typing import Optional
-from sqlalchemy import ForeignKey
-from sqlalchemy import create_engine
-from sqlalchemy import String, Integer, Numeric
-from sqlalchemy.orm import Session
-from sqlalchemy.orm import DeclarativeBase
-from sqlalchemy.orm import Mapped
-from sqlalchemy.orm import mapped_column
-from sqlalchemy.orm import relationship
 
+from sqlalchemy import ForeignKey, Integer, String, create_engine
+from sqlalchemy.orm import DeclarativeBase, Mapped, Session, mapped_column
 
 TYPE_NONE = 0
 TYPE_INT = 1

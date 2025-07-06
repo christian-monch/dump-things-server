@@ -14,8 +14,8 @@ from typing import Any
 import annotated_types  # noqa F401 -- used by generated code
 import pydantic  # noqa F401 -- used by generated code
 import pydantic_core  # noqa F401 -- used by generated code
-from linkml_runtime import SchemaView
 from linkml.generators import PythonGenerator
+from linkml_runtime import SchemaView
 from pydantic._internal._model_construction import ModelMetaclass
 
 from dump_things_service.utils import (

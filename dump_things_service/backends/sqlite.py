@@ -47,11 +47,11 @@ from sqlalchemy.orm import (
 )
 
 from dump_things_service.backends import (
+    BackendResultList,
     RecordInfo,
     ResultListInfo,
     StorageBackend,
     create_sort_key,
-    BackendResultList,
 )
 
 if TYPE_CHECKING:

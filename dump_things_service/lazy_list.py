@@ -13,8 +13,8 @@ result pagination with `fastapi-pagination`.
 from __future__ import annotations
 
 from abc import (
-    abstractmethod,
     ABCMeta,
+    abstractmethod,
 )
 from typing import TYPE_CHECKING
 

@@ -1,8 +1,7 @@
 from __future__ import annotations
 
-import types
+from collections.abc import Iterable
 from itertools import chain
-from typing import Iterable
 
 from pydantic import BaseModel
 
@@ -12,12 +11,11 @@ from dump_things_service.backends import (
 )
 from dump_things_service.lazy_list import LazyList
 from dump_things_service.model import (
-    get_subclasses,
     get_model_for_schema,
+    get_subclasses,
 )
 from dump_things_service.resolve_curie import resolve_curie
 from dump_things_service.utils import cleaned_json
-
 
 submitter_class = 'NCIT_C54269'
 submitter_namespace = 'http://purl.obolibrary.org/obo/'

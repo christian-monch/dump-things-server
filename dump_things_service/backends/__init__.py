@@ -24,8 +24,6 @@ from dump_things_service.lazy_list import LazyList
 if TYPE_CHECKING:
     from collections.abc import Iterable
 
-    from dump_things_service.lazy_list import LazyList
-
 
 @dataclass
 class RecordInfo:

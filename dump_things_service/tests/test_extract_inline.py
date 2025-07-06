@@ -8,7 +8,9 @@ from typing import TYPE_CHECKING
 import pytest  # noqa F401
 
 from dump_things_service import HTTP_200_OK
-from dump_things_service.patches import enabled  # noqa: F401 -- tests need patching which is a side effect of the import
+from dump_things_service.patches import (
+    enabled,  # noqa: F401 -- tests need patching which is a side effect of the import
+)
 from dump_things_service.record import RecordDirStore
 from dump_things_service.utils import cleaned_json
 

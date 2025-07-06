@@ -8,7 +8,6 @@ from typing import (
     Callable,
 )
 
-from linkml.generators import PythonGenerator
 from linkml.utils.datautils import (
     get_dumper,
     get_loader,
@@ -27,7 +26,6 @@ from dump_things_service.model import (
     get_model_for_schema,
     get_schema_model_for_schema,
 )
-
 
 _cached_conversion_objects = {}
 

@@ -82,10 +82,10 @@ class RecordDirStore:
 
                 iri = resolve_curie(self.model, pid)
                 sort_string = '-'.join(
-                    (
+
                         str(record.get(key)) if record.get(key) is not None else last_character
                         for key in self.sort_keys
-                    )
+
                 )
 
                 # On startup, log PID collision errors and continue building the index
@@ -264,10 +264,10 @@ class RecordDirStore:
         # Add the resolved PID to the index
         iri = resolve_curie(self.model, record.pid)
         sort_string = '-'.join(
-            (
+
                 getattr(record, key) if hasattr(record, key) else last_character
                 for key in self.sort_keys
-            )
+
         )
         self._add_iri_to_index(iri, record.pid, storage_path, sort_string)
 

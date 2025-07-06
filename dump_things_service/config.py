@@ -247,7 +247,6 @@ def process_config_object(
     order_by: list[str],
     globals_dict: dict[str, Any],
 ):
-    from dump_things_service.record import get_record_dir_store
 
     instance_config = InstanceConfig(store_path=store_path)
     instance_config.collections = config_object.collections

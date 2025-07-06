@@ -16,11 +16,10 @@ will contain a `schema_type` attribute.
 from __future__ import annotations
 
 import logging
-from types import ModuleType
+from collections.abc import Iterable
 from typing import (
     TYPE_CHECKING,
     Callable,
-    Iterable,
 )
 
 import yaml
@@ -33,7 +32,6 @@ from dump_things_service.backends import (
     StorageBackend,
     create_sort_key,
 )
-from dump_things_service.lazy_list import LazyList
 from dump_things_service.model import (
     get_model_for_schema,
     get_schema_model_for_schema,
@@ -42,7 +40,7 @@ from dump_things_service.resolve_curie import resolve_curie
 
 if TYPE_CHECKING:
     from pathlib import Path
-    from typing import Any
+    from types import ModuleType
 
 
 __all__ = [
@@ -290,8 +288,6 @@ def RecordDirStore(
         order_by: Iterable[str] | None = None,
 ) -> _RecordDirStore:
     """Get a record directory store for the given root directory."""
-    global _existing_stores
-
     existing_store = _existing_stores.get(root)
     if not existing_store:
         existing_store = _RecordDirStore(
