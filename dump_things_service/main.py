@@ -135,9 +135,9 @@ try:
         order_by=arguments.sort_by,
         globals_dict=globals(),
     )
-except ConfigError:
+except ConfigError as e:
     logger.exception(
-        'ERROR: invalid configuration file at: `%s`',
+        f'ERROR: invalid configuration file at: `%s`: {e}',
         config_path,
     )
     g_error = 'Server runs in error mode due to an invalid configuration. See server error-log for details.'

@@ -95,42 +95,46 @@ def create_collection(
     else:
         curated_dir.mkdir(parents=True, exist_ok=True)
 
-    # Add the collection level config file
-    collection_config_file = curated_dir / config_file_name
-    collection_config_file.write_text(
-        collection_config_template.format(
-            schema=schema_url, mapping_function=mapping_function
-        )
-    )
+    if collection_config.backend == 'record_dir':
 
-    # Add default entries
-    mapper = mapping_functions[MappingMethod(mapping_function)]
-    for class_name, pid, record in default_entries or []:
-        record_path = (
-            curated_dir
-            / class_name
-            / mapper(
-                pid=pid,
-                suffix='yaml',
+        # Add the collection level config file
+        collection_config_file = curated_dir / config_file_name
+        collection_config_file.write_text(
+            collection_config_template.format(
+                schema=schema_url, mapping_function=mapping_function
             )
         )
-        record_path.parent.mkdir(parents=True, exist_ok=True)
-        record_path.write_text(record)
 
-    # Add some faulty entries to check error handling while reading collections
-    (curated_dir / 'faulty-file.yaml').write_text(faulty_yaml)
+        # Add default entries
+        mapper = mapping_functions[MappingMethod(mapping_function)]
+        for class_name, pid, record in default_entries or []:
+            record_path = (
+                curated_dir
+                / class_name
+                / mapper(
+                    pid=pid,
+                    suffix='yaml',
+                )
+            )
+            record_path.parent.mkdir(parents=True, exist_ok=True)
+            record_path.write_text(record)
 
-    # Add an erroneous yaml file with a non-yaml extension
-    (curated_dir / 'faulty-file.txt').write_text(faulty_yaml)
+        # Add some faulty entries to check error handling while reading collections
+        (curated_dir / 'faulty-file.yaml').write_text(faulty_yaml)
 
-    # Add SQL entries
-    db_path = curated_dir / 'records.db'
-    sql_backend = SQLiteBackend(db_path)
-    model = get_model_for_schema(schema_url)[0]
-    for class_name, pid, yaml_text in default_entries or []:
-        json_object = yaml.safe_load(yaml_text)
-        sql_backend.add_record(
-            iri=resolve_curie(model, json_object['pid']),
-            class_name=class_name,
-            json_object=json_object,
-        )
+        # Add an erroneous yaml file with a non-yaml extension
+        (curated_dir / 'faulty-file.txt').write_text(faulty_yaml)
+
+    else:
+
+        # Add SQL entries
+        db_path = curated_dir / 'records.db'
+        sql_backend = SQLiteBackend(db_path)
+        model = get_model_for_schema(schema_url)[0]
+        for class_name, pid, yaml_text in default_entries or []:
+            json_object = yaml.safe_load(yaml_text)
+            sql_backend.add_record(
+                iri=resolve_curie(model, json_object['pid']),
+                class_name=class_name,
+                json_object=json_object,
+            )

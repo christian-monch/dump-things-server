@@ -20,6 +20,9 @@ from dump_things_service.tests.create_store import (
 curated = 'curated'
 incoming = 'incoming'
 
+# Path to a local simple test schema
+schema_path = Path(__file__).parent / 'testschema.yaml'
+
 
 # The global configuration file, all collections and
 # staging areas share the same directories. All token
@@ -51,6 +54,11 @@ collections:
   collection_7:
     default_token: basic_access
     curated: {curated}/collection_7
+  collection_8:
+    default_token: basic_access
+    curated: {curated}/collection_8
+    backend: sql
+    schema: {schema_path}
   collection_trr379:
     default_token: basic_access
     curated: {curated}/collection_trr379
@@ -79,6 +87,9 @@ tokens:
         mode: READ_CURATED
         incoming_label: ''
       collection_7:
+        mode: READ_CURATED
+        incoming_label: ''
+      collection_8:
         mode: READ_CURATED
         incoming_label: ''
       collection_trr379:
@@ -153,17 +164,22 @@ tokens:
       collection_2:
         mode: WRITE_COLLECTION
         incoming_label: in_token_2
+  token_8:
+    user_id: test_user_8
+    collections:
+      collection_8:
+        mode: WRITE_COLLECTION
+        incoming_label: in_token_8
 """
 
 
 @pytest.fixture(scope='session')
 def dump_stores_simple(tmp_path_factory):
     tmp_path = tmp_path_factory.mktemp('dump_store')
-    schema_path = Path(__file__).parent / 'testschema.yaml'
     (tmp_path / config_file_name).write_text(global_config_text)
 
     default_entries = {
-        f'collection_{i}': [('Person', pid, test_record)] for i in range(1, 8)
+        f'collection_{i}': [('Person', pid, test_record)] for i in range(1, 9)
     }
     default_entries['collection_1'].extend(
         [
@@ -187,6 +203,7 @@ def dump_stores_simple(tmp_path_factory):
             'collection_5': (str(schema_path), 'after-last-colon'),
             'collection_6': (str(schema_path), 'digest-md5-p3-p3'),
             'collection_7': (str(schema_path), 'digest-sha1-p3-p3'),
+            'collection_8': (str(schema_path), 'digest-md5'),
             'collection_trr379': (
                 'https://concepts.trr379.de/s/base/unreleased.yaml',
                 'digest-md5',

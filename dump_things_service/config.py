@@ -93,6 +93,9 @@ class CollectionConfig(BaseModel):
     default_token: str
     curated: Path
     incoming: Path | None = None
+    backend: str = 'record_dir'
+    # Schema is only interpreted if the backend is `sql`
+    schema: str | None = None
 
 
 class GlobalConfig(BaseModel):
@@ -114,6 +117,7 @@ class InstanceConfig:
     token_stores: dict = dataclasses.field(default_factory=dict)
     schemas: dict = dataclasses.field(default_factory=dict)
     conversion_objects: dict = dataclasses.field(default_factory=dict)
+    backend: dict = dataclasses.field(default_factory=dict)
 
 
 mode_mapping = {
@@ -254,16 +258,26 @@ def process_config_object(
     # Create a `ModelStore` (with currently fixed backend `RecordDirStore`) for
     # the `curated`-dir in each collection.
     for collection_name, collection_info in config_object.collections.items():
-
-        # Get the config from the curated directory
-        collection_config = Config.get_collection_dir_config(store_path / collection_info.curated)
+        backend = collection_info.backend
+        instance_config.backend[collection_name] = backend
+        if backend == 'record_dir':
+            # Get the config from the curated directory
+            collection_config = Config.get_collection_dir_config(store_path / collection_info.curated)
+            schema = collection_config.schema
+        elif backend == 'sql':
+            if not collection_info.schema:
+                raise ConfigError(f'Collection `{collection_name}` has no schema defined for SQL backend.')
+            schema = collection_info.schema
+        else:
+            raise ConfigError(f'Unsupported backend `{collection_info.backend}` for collection `{collection_name}`.')
 
         # Generate the collection model
-        model, classes, model_var_name = get_model_for_schema(collection_config.schema)
+        model, classes, model_var_name = get_model_for_schema(schema)
         instance_config.model_info[collection_name] = model, classes, model_var_name
         globals_dict[model_var_name] = model
 
-        if False:
+        if backend == 'record_dir':
+            collection_config = Config.get_collection_dir_config(store_path / collection_info.curated)
             curated_store_backend = RecordDirStore(
                 root=store_path / collection_info.curated,
                 schema=collection_config.schema,
@@ -271,29 +285,33 @@ def process_config_object(
                 suffix=collection_config.format,
                 order_by=order_by,
             )
-        else:
+        elif backend == 'sql':
             curated_store_backend = SQLiteBackend(
                 db_path=store_path / collection_info.curated / 'records.db',
             )
+        else:
+            raise ConfigError(f'Unsupported backend `{collection_info.backend}` for collection `{collection_name}`.')
+
         curated_store = ModelStore(
-            schema=collection_config.schema,
+            schema=schema,
             backend=curated_store_backend,
         )
 
         instance_config.curated_stores[collection_name] = curated_store
+
         if collection_info.incoming:
             instance_config.incoming[collection_name] = collection_info.incoming
 
-        instance_config.schemas[collection_name] = collection_config.schema
-        if collection_config.schema not in instance_config.conversion_objects:
-            instance_config.conversion_objects[collection_config.schema] = get_conversion_objects(collection_config.schema)
+        instance_config.schemas[collection_name] = schema
+        if schema not in instance_config.conversion_objects:
+            instance_config.conversion_objects[schema] = get_conversion_objects(schema)
 
-    # Create a `ModelStore` (with currently fixed backend `RecordDirStore`) for
-    # each token dir and fetch the permissions
+    # Create a `ModelStore` for each token dir and fetch the permissions
     for token_name, token_info in config_object.tokens.items():
         entry = {'user_id': token_info.user_id, 'collections': {}}
         instance_config.token_stores[token_name] = entry
         for collection_name, token_collection_info in token_info.collections.items():
+            backend = instance_config.backend[collection_name]
             entry['collections'][collection_name] = {}
 
             # A token might be a pure curated read token, i.e., have the mode
@@ -314,7 +332,6 @@ def process_config_object(
                 if collection_name not in instance_config.zones:
                     instance_config.zones[collection_name] = {}
                 instance_config.zones[collection_name][token_name] = token_collection_info.incoming_label
-                #mapping_function = instance_config.curated_stores[collection_name].backend.pid_mapping_function
                 # Ensure that the store directory exists
                 store_dir = (
                         store_path
@@ -322,7 +339,8 @@ def process_config_object(
                         / token_collection_info.incoming_label
                 )
                 store_dir.mkdir(parents=True, exist_ok=True)
-                if False:
+                if backend == 'record_dir':
+                    mapping_function = instance_config.curated_stores[collection_name].backend.pid_mapping_function
                     token_store_backend = RecordDirStore(
                         root=store_dir,
                         schema=instance_config.schemas[collection_name],
@@ -330,9 +348,13 @@ def process_config_object(
                         suffix=instance_config.curated_stores[collection_name].backend.suffix,
                         order_by=order_by,
                     )
-                else:
+                elif backend == 'sql':
                     token_store_backend = SQLiteBackend(
                         db_path=store_dir / 'records.db',
+                    )
+                else:
+                    raise ConfigError(
+                        f'Unsupported backend `{collection_info.backend}` for collection `{collection_name}`.'
                     )
                 token_store = ModelStore(
                     schema=instance_config.schemas[collection_name],

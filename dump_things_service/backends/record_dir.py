@@ -272,7 +272,7 @@ class _RecordDirStore(StorageBackend):
                     for iri, (class_name, pid, path, sort_key) in self.index.items()
                     if class_name in class_names
                 ),
-                key=lambda index_entry: index_entry[3],
+                key=lambda result_list_info: result_list_info.sort_key,
             )
         )
 

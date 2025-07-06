@@ -79,7 +79,7 @@ class FormatConverter:
         output_format: Format,
     ) -> Callable:
         if input_format == output_format:
-            return lambda data, target_class: data
+            return lambda data, _: data
         if input_format == Format.ttl:
             return self._convert_ttl_to_json
         return self._convert_json_to_ttl
