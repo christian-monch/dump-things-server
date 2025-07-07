@@ -1,14 +1,21 @@
 """ Implementation of a lazy list
 
 The lazy list calls a subclass method to generate list elements on demand. The
-generation is based on the list index and information stored via
-`add_info`. The list has as many entries as information entries were added
-via `add_info`.
+generation is based on the list index and information stored by the user of the
+list via `add_info`. The list has as many entries as information entries were
+added via `add_info`.
 
-The lazy list is used to refer to large number of records with non-trivial
-storage and retrieval costs. It is mainly used to efficiently implement
-result pagination with `fastapi-pagination`.
+Lazy lists can be used to refer to large number of records with non-trivial
+storage and retrieval costs. It is mainly used to:
 
+ 1. implement priorities between results of different stores,
+ 2. implement result-sorting across different stores,
+ 3. efficiently implement result pagination with the simple `paginate`-interface
+    of `fastapi-pagination`, which requires a list-like object that holds all
+    results.
+
+ The memory footprint of a lazy list depends on the number of entries and the
+ size of the user-supplied `info`-object.
 """
 from __future__ import annotations
 
@@ -129,8 +136,10 @@ class LazyList(list, metaclass=ABCMeta):
         """
         Add list entry information to the list.
 
-        :param info: An iterable that contains information that `get_element`
-        can use to lazily generate a list element.
+        :param info: An iterable that contains opaque information that will be
+            given to `generate_element` in the `info`-argument and can be used
+            to generate a list element on demand. `info` could, for example, be
+            a database-ID or a file path.
         """
         self.list_info.extend(info)
         return self
@@ -161,9 +170,10 @@ class PriorityList(LazyList):
     """
     A lazy list that emits every item, identified by `key` only once.
 
-    All lists should be added before the first iteration. All lists should be
-    of the same type, i.e., they should all be `RecordDirList`s or all be
-    `SQLList`s.
+    Items from lists the were added earlier have a higher priority than items
+    from lists that were added later. Items are identified via the
+    `unique_identifier` method of the added lists.
+    All lists should be added before the first iteration.
     """
     def __init__(
         self,
@@ -204,7 +214,7 @@ class PriorityList(LazyList):
 
 class ModifierList(LazyList):
     """
-    A lazy list that modifies every item of inconing list by the `modifier`
+    A lazy list that modifies every item of `input_list` by the `modifier`
     """
     def __init__(
             self,
