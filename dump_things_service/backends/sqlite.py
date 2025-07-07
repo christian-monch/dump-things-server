@@ -105,7 +105,7 @@ class SQLResultList(BackendResultList):
             )
 
 
-class SQLiteBackend(StorageBackend):
+class _SQLiteBackend(StorageBackend):
     def __init__(
         self,
         db_path: Path,
@@ -202,3 +202,29 @@ class SQLiteBackend(StorageBackend):
                 )
                 for thing in session.scalars(statement).all()
             )
+
+
+# Ensure that there is only one SQL-backend per database file.
+_existing_sqlite_backends = {}
+
+
+def SQLiteBackend(
+        db_path: Path,
+        *,
+        order_by: Iterable[str] | None = None,
+        echo: bool = False
+) -> _SQLiteBackend:
+    existing_backend = _existing_sqlite_backends.get(db_path)
+    if not existing_backend:
+        existing_backend = _SQLiteBackend(
+            db_path=db_path,
+            order_by=order_by,
+            echo=echo,
+        )
+        _existing_sqlite_backends[db_path] = existing_backend
+
+    if existing_backend.order_by != (order_by or ['pid']):
+        msg = f'Store at {db_path} already exists with different order specification.'
+        raise ValueError(msg)
+
+    return existing_backend

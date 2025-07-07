@@ -311,6 +311,10 @@ def RecordDirStore(
         msg = f'Store at {root} already exists with different format.'
         raise ValueError(msg)
 
+    if existing_store.order_by != (order_by or ['pid']):
+        msg = f'Store at {root} already exists with different order specification.'
+        raise ValueError(msg)
+
     return existing_store
 
 
