@@ -3,6 +3,7 @@ from __future__ import annotations
 import dataclasses
 import sys
 from copy import copy
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 import pytest  # noqa F401
@@ -11,13 +12,17 @@ from dump_things_service import HTTP_200_OK
 from dump_things_service.patches import (
     enabled,  # noqa: F401 -- tests need patching which is a side effect of the import
 )
-from dump_things_service.record import RecordDirStore
+from dump_things_service.store.model_store import ModelStore
 from dump_things_service.utils import cleaned_json
 
 if TYPE_CHECKING:
     from pydantic import BaseModel
 
     from dump_things_service import JSON
+
+
+# Path to a local simple test schema
+schema_path = Path(__file__).parent / 'testschema.yaml'
 
 
 @dataclasses.dataclass
@@ -153,17 +158,14 @@ ttl_tree = (
 )
 
 
-def test_inline_extraction_locally(dump_stores_simple):
-    root = dump_stores_simple
+def test_inline_extraction_locally():
 
-    store = RecordDirStore(
-        root=root / 'collection_1' / 'token_1',
-        model=MockedModule(),
-        pid_mapping_function=None,
-        suffix='yaml',
-        sort_keys=[],
+    store = ModelStore(
+        schema=str(schema_path),
+        backend=None,
     )
-    records = store.extract_inlined(inlined_object, 'hans')
+    store.model = MockedModule()
+    records = store.extract_inlined(inlined_object)
     _check_result_objects(records, tree)
 
 
@@ -185,17 +187,13 @@ def _check_result_objects(
             assert record.relations[linked_pid].pid == linked_pid
 
 
-def test_dont_extract_empty_things_locally(dump_stores_simple):
-    root = dump_stores_simple
-
-    store = RecordDirStore(
-        root=root / 'collection_1' / 'token_1',
-        model=MockedModule(),
-        pid_mapping_function=None,
-        suffix='yaml',
-        sort_keys=[],
+def test_dont_extract_empty_things_locally():
+    store = ModelStore(
+        schema=str(schema_path),
+        backend=None,
     )
-    records = store.extract_inlined(empty_inlined_object, 'dieter')
+    store.model = MockedModule()
+    records = store.extract_inlined(empty_inlined_object)
     assert len(records) == 1
     assert records[0] == empty_inlined_object
 
