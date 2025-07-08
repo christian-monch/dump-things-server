@@ -15,7 +15,7 @@ A curation process, which is outside the scope of the service, moves data from t
 In order to submit a record to a collection, a token is required.
 The token defines read- and write- permissions for the incoming areas of collections and read-permissions for the curated area of a collection.
 A token can carry permissions for multiple collections.
-In addition the token carries a submitter ID.
+In addition, the token carries a submitter ID.
 It also defines a token specific **zone** in the incoming area.
 So any read- and write-operations on an incoming area are actually restricted to the token-specific zone in the incoming area.
 Multiple tokens can share the same zone.
@@ -177,7 +177,46 @@ tokens:
       incoming_label: new_rooms_and_buildings
 ```
 
-#### Command line parameters:
+#### Backends
+
+The service currently supports the following backends for storing records:
+- `record_dir`: this backend stores records as YAML-files in a directory structure that is defined [here](https://concepts.datalad.org/dump-things/). It reads the backend configuration from a "record collection configuration file" as described [here](https://concepts.datalad.org/dump-things/).
+
+- `sqlite`: this backend stores records in a SQLite database. There is an individual database file, named `records.db`, for each curated area and incoming area.
+
+Backends can be defined per collection in the configuration file.
+If no backend is defined for a collection, the `record_dir`-backend is used by default.
+The following configuration snippet shows how to define a backend for a collection:
+
+```yaml
+...
+collections:
+  collection_with_default_record_dir_backend:
+    default_token: anon_read
+    curated: collection_1/curated
+
+  collection_with_explicit_record_dir_backend:
+    default_token: anon_read
+    curated: collection_1/curated
+    backend:
+      # The record_dir-backend is identified by the
+      # type: "record_dir". No more attributes are
+      # defined for this backend.
+      type: record_dir
+
+  collection_with_sqlite_backend:
+    default_token: anon_read
+    curated: collection_2/curated
+    backend:
+      # The sqlite-backend is identified by the
+      # type: "sqlite". It requires a schema attribute
+      # that holds the URL of the schema that should
+      # be used in this backend.
+      type: sqlite
+      schema: https://concepts.inm7.de/s/flat-data/unreleased.yaml
+```
+
+### Command line parameters:
 
 The service supports the following command line parameters:
 
@@ -191,7 +230,18 @@ The service supports the following command line parameters:
 
 - `-c/--config`: if set, the service will read the configuration from the given path. Otherwise it will try to read the configuration from `<storage root>/.dumpthings.yaml`.
 
-- `--error-mode`: if set, the service will run even if an error prevents it from starting properly. It will report the error on every request. This can be useful if the service is deployed automatically and a no other monitoring method is available.
+
+- `--log-level`: set the log level for the service, allowed values are `ERROR`, `WARNING`, `INFO`, `DEBUG`. The default-level is `WARNING`.
+
+
+- `--sort-by`: sort results by the given fields. Multiple fields can be specified, e.g. `--sort-by pid --sort-by date` to define primary, secondary, etc. sorting fields. If a given field is not present in the record, the record will be sorted behind all records that possess the field.
+
+
+- `--error-mode`: if set, the service will run even if an error prevents it from starting properly. It will report that it executes in error mode on every request. This can be useful if the service is deployed automatically and no other monitoring method is available.
+
+
+- `--root-path`: set the ASGI `root_path` for applications sub-mounted below a given URL path.
+
 
 The service can be started with the following command:
 
@@ -260,9 +310,10 @@ The service provides the following endpoints:
 - `GET /docs`: provides information about the API of the service, i.e. about all endpoints.
 
 
-# Tips & Tricks
+### Tips & Tricks
 
-If incoming records should be immediately available in the curate area, the final path of the incoming area must be the same as the curated area, for example:
+The service can be configured in such a way that incoming records are immediately available in the curated area.
+To achieve this, the final path of the incoming zone must be the same as the curated area, for example:
 
 ```yaml
 type: collections
@@ -289,17 +340,17 @@ tokens:
         mode: WRITE_COLLECTION
         incoming_label: "curated"
 ```
-In this example the curated area is `datamgt/curated` and the incoming area for `trusted-submitter-token` is `datamgt` plus the incoming label `curated`, i.e., `datamgt/curated` which is exactly the curated area.
+In this example the curated area is `datamgt/curated` and the incoming area for the token `trusted-submitter-token` is `datamgt` plus the incoming zone `curated`, i.e., `datamgt/curated` which is exactly the curated area defined for `collection_1`.
 
 
-#### Restrictions
+### Restrictions
 
 The current implementation has the following restriction:
 
-- does not yet support any other data format than `yaml`
+- the `record_dir`-backend does not yet support any other data format than `yaml`.
 
 
-### Acknowledgements
+## Acknowledgements
 
 This work was funded, in part, by
 
