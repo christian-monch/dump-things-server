@@ -260,6 +260,38 @@ The service provides the following endpoints:
 - `GET /docs`: provides information about the API of the service, i.e. about all endpoints.
 
 
+# Tips & Tricks
+
+If incoming records should be immediately available in the curate area, the final path of the incoming area must be the same as the curated area, for example:
+
+```yaml
+type: collections
+version: 1
+
+collections:
+  collection_1:
+    default_token: anon_read
+    curated: datamgt/curated
+    incoming: datamgt
+
+tokens:
+  anon_read:
+    user_id: anonymous
+    collections:
+      datamgt:
+        mode: READ_CURATED
+        incoming_label: ""
+
+  trusted-submitter-token:
+    user_id: trusted_submitter
+    collections:
+      datamgt:
+        mode: WRITE_COLLECTION
+        incoming_label: "curated"
+```
+In this example the curated area is `datamgt/curated` and the incoming area for `trusted-submitter-token` is `datamgt` plus the incoming label `curated`, i.e., `datamgt/curated` which is exactly the curated area.
+
+
 #### Restrictions
 
 The current implementation has the following restriction:
