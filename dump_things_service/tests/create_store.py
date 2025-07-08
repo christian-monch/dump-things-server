@@ -10,7 +10,7 @@ from dump_things_service.config import (
     GlobalConfig,
     MappingMethod,
     config_file_name,
-    mapping_functions,
+    mapping_functions, BackendConfigRecordDir,
 )
 from dump_things_service.model import get_model_for_schema
 from dump_things_service.resolve_curie import resolve_curie
@@ -95,7 +95,10 @@ def create_collection(
     else:
         curated_dir.mkdir(parents=True, exist_ok=True)
 
-    if collection_config.backend == 'record_dir':
+    if collection_config.backend is None:
+        collection_config.backend = BackendConfigRecordDir(type='record_dir')
+
+    if collection_config.backend.type == 'record_dir':
 
         # Add the collection level config file
         collection_config_file = curated_dir / config_file_name

@@ -89,13 +89,20 @@ class TokenConfig(BaseModel):
     collections: dict[str, TokenCollectionConfig]
 
 
+class BackendConfigRecordDir(BaseModel):
+    type: Literal['record_dir']
+
+
+class BackendConfigSQLite(BaseModel):
+    type: Literal['sqlite']
+    schema: str
+
+
 class CollectionConfig(BaseModel):
     default_token: str
     curated: Path
     incoming: Path | None = None
-    backend: str = 'record_dir'
-    # Schema is only interpreted if the backend is `sql`
-    schema: str | None = None
+    backend: BackendConfigRecordDir | BackendConfigSQLite | None = None
 
 
 class GlobalConfig(BaseModel):
@@ -258,16 +265,14 @@ def process_config_object(
     # Create a `ModelStore` (with currently fixed backend `RecordDirStore`) for
     # the `curated`-dir in each collection.
     for collection_name, collection_info in config_object.collections.items():
-        backend = collection_info.backend
+        backend = collection_info.backend or BackendConfigRecordDir(type='record_dir')
         instance_config.backend[collection_name] = backend
-        if backend == 'record_dir':
+        if backend.type == 'record_dir':
             # Get the config from the curated directory
             collection_config = Config.get_collection_dir_config(store_path / collection_info.curated)
             schema = collection_config.schema
-        elif backend == 'sql':
-            if not collection_info.schema:
-                raise ConfigError(f'Collection `{collection_name}` has no schema defined for SQL backend.')
-            schema = collection_info.schema
+        elif backend.type == 'sqlite':
+            schema = backend.schema
         else:
             raise ConfigError(f'Unsupported backend `{collection_info.backend}` for collection `{collection_name}`.')
 
@@ -276,7 +281,7 @@ def process_config_object(
         instance_config.model_info[collection_name] = model, classes, model_var_name
         globals_dict[model_var_name] = model
 
-        if backend == 'record_dir':
+        if backend.type == 'record_dir':
             collection_config = Config.get_collection_dir_config(store_path / collection_info.curated)
             curated_store_backend = RecordDirStore(
                 root=store_path / collection_info.curated,
@@ -285,7 +290,7 @@ def process_config_object(
                 suffix=collection_config.format,
                 order_by=order_by,
             )
-        elif backend == 'sql':
+        elif backend.type == 'sqlite':
             curated_store_backend = SQLiteBackend(
                 db_path=store_path / collection_info.curated / 'records.db',
             )
@@ -339,7 +344,7 @@ def process_config_object(
                         / token_collection_info.incoming_label
                 )
                 store_dir.mkdir(parents=True, exist_ok=True)
-                if backend == 'record_dir':
+                if backend.type == 'record_dir':
                     mapping_function = instance_config.curated_stores[collection_name].backend.pid_mapping_function
                     token_store_backend = RecordDirStore(
                         root=store_dir,
@@ -348,13 +353,13 @@ def process_config_object(
                         suffix=instance_config.curated_stores[collection_name].backend.suffix,
                         order_by=order_by,
                     )
-                elif backend == 'sql':
+                elif backend.type == 'sqlite':
                     token_store_backend = SQLiteBackend(
                         db_path=store_dir / 'records.db',
                     )
                 else:
                     raise ConfigError(
-                        f'Unsupported backend `{collection_info.backend}` for collection `{collection_name}`.'
+                        f'Unsupported backend `{collection_info.backend.type}` for collection `{collection_name}`.'
                     )
                 token_store = ModelStore(
                     schema=instance_config.schemas[collection_name],

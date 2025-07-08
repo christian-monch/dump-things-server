@@ -57,8 +57,9 @@ collections:
   collection_8:
     default_token: basic_access
     curated: {curated}/collection_8
-    backend: sql
-    schema: {schema_path}
+    backend:
+      type: sqlite
+      schema: {schema_path}
   collection_trr379-1:
     default_token: basic_access
     curated: {curated}/collection_trr379-1
@@ -67,8 +68,9 @@ collections:
     default_token: basic_access
     curated: {curated}/collection_trr379-2
     incoming: {incoming}/collection_trr379-2
-    backend: sql
-    schema: https://concepts.trr379.de/s/base/unreleased.yaml
+    backend:
+      type: sqlite
+      schema: https://concepts.trr379.de/s/base/unreleased.yaml
 
 tokens:
   basic_access:
