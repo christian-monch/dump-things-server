@@ -150,6 +150,8 @@ class ModelStore:
     def get_objects_of_class(
         self,
         class_name: str,
+        *,
+        include_subclasses: bool = True,
     ) -> LazyList[RecordInfo]:
         """
         Get all objects of a specific class.
@@ -157,5 +159,8 @@ class ModelStore:
         :param class_name: The name of the class to filter by.
         :return: A lazy list of objects of the specified class and its subclasses.
         """
-        class_names = get_subclasses(self.model, class_name)
+        if include_subclasses:
+            class_names = get_subclasses(self.model, class_name)
+        else:
+            class_names = [class_name]
         return self.backend.get_records_of_classes(class_names)
