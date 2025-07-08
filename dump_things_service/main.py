@@ -326,10 +326,11 @@ async def read_records_of_type(
         class_name=class_name,
         format=format,
         api_key=api_key,
+        # Set an upper limit for the number of non-paginated result records to
+        # keep processing time for individual requests short and avoid
+        # overloading the server.
         bound=1000,
     )
-    if format == Format.ttl:
-        return tuple(map(PlainTextResponse, result_list))
     return result_list
 
 
@@ -378,11 +379,6 @@ async def _read_records_of_type(
         )
 
     final_permissions, token_store = await process_token(g_instance_config, api_key, collection)
-
-    # Set an upper limit for the number of result records to keep processing time for
-    # individual requests short and avoid overloading the server. The large difference
-    # between TTL and JSON is due to the fact that combining TTL results into a single
-    # TTL document has exponential complexity in the number of TTL documents.
 
     result_list = PriorityList()
     if final_permissions.incoming_read:
