@@ -116,7 +116,7 @@ parser.add_argument(
     '--export-to',
     default='',
     metavar='FILE_NAME',
-    help='Export the store to the file FILE_NAME and exit the process.',
+    help="Export the store to the file FILE_NAME and exit the process. If FILE_NAME is `-', the data is written to stdout.",
 )
 parser.add_argument(
     'store',

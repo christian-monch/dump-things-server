@@ -237,7 +237,7 @@ The service supports the following command line parameters:
 - `--sort-by`: sort results by the given fields. Multiple fields can be specified, e.g. `--sort-by pid --sort-by date` to define primary, secondary, etc. sorting fields. If a given field is not present in the record, the record will be sorted behind all records that possess the field.
 
 
-- `--export-to`: export all data in `<storage root>` to the given path and exit. The resulting file contains JSON object and might be large. The data in `<storage root>` will not be modified. This is useful to export the data for backup or migration purposes. The file will contain all records in all collections.
+- `--export-to`: export all data in `<storage root>` as JSON to the given path and exit. If the path is `-`, the data will be written to `stdout`. The data in `<storage root>` will not be modified. This is useful to export the data for backup or migration purposes. The file will contain all records in all collections. NOTE: the resulting file might be large.
 
 
 - `--error-mode`: if set, the service will run even if an error prevents it from starting properly. It will report that it executes in error mode on every request. This can be useful if the service is deployed automatically and no other monitoring method is available.
