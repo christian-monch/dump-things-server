@@ -52,7 +52,7 @@ def build_model(
 
 def get_classes(
     model: Any,
-) -> list:
+) -> list[str]:
     """get names of all subclasses of Thing"""
     return get_subclasses(model, 'Thing')
 
@@ -60,7 +60,7 @@ def get_classes(
 def get_subclasses(
     model: ModuleType,
     class_name: str,
-) -> list:
+) -> list[str]:
     """get names of all subclasses (includes class_name itself)"""
     super_class = getattr(model, class_name)
     return [
