@@ -67,11 +67,11 @@ from dump_things_service.model import (
     get_classes,
     get_subclasses,
 )
-from dump_things_service.store.model_store import ModelStore
 from dump_things_service.utils import combine_ttl
 
 if TYPE_CHECKING:
     from dump_things_service.lazy_list import LazyList
+    from dump_things_service.store.model_store import ModelStore
 
 
 class TokenCapabilityRequest(BaseModel):
@@ -144,11 +144,11 @@ try:
         config_file=config_path,
         order_by=arguments.sort_by,
         globals_dict=globals(),
-        create_models=False if arguments.export_to else True,
+        create_models=not arguments.export_to,
     )
-except ConfigError as e:
+except ConfigError:
     logger.exception(
-        f'ERROR: invalid configuration file at: `%s`: {e}',
+        'ERROR: invalid configuration file at: `%s`',
         config_path,
     )
     g_error = 'Server runs in error mode due to an invalid configuration. See server error-log for details.'
@@ -157,7 +157,7 @@ except ConfigError as e:
 
 if arguments.export_to:
     if g_error:
-        print('ERROR: Configuration errors detected, cannot export store.', file=sys.stderr)
+        sys.stderr.write('ERROR: Configuration errors detected, cannot export store.')
         sys.exit(1)
     export(g_instance_config, Path(arguments.export_to))
     sys.exit(0)
@@ -343,7 +343,7 @@ async def read_records_of_type(
     format: Format = Format.json,  # noqa A002
     api_key: str = Depends(api_key_header_scheme),
 ):
-    result_list = await _read_records_of_type(
+    return await _read_records_of_type(
         collection=collection,
         class_name=class_name,
         format=format,
@@ -353,7 +353,6 @@ async def read_records_of_type(
         # overloading the server.
         bound=1000,
     )
-    return result_list
 
 
 @app.get('/{collection}/records/p/{class_name}')

@@ -135,7 +135,7 @@ def create_collection(
         db_path = curated_dir / 'records.db'
         sql_backend = SQLiteBackend(db_path)
         model = get_model_for_schema(schema_url)[0]
-        for class_name, pid, yaml_text in default_entries or []:
+        for class_name, _, yaml_text in default_entries or []:
             json_object = yaml.safe_load(yaml_text)
             sql_backend.add_record(
                 iri=resolve_curie(model, json_object['pid']),

@@ -283,7 +283,8 @@ def process_config_object(
         elif backend.type == 'sqlite':
             schema = backend.schema
         else:
-            raise ConfigError(f'Unsupported backend `{collection_info.backend}` for collection `{collection_name}`.')
+            msg = f'Unsupported backend `{collection_info.backend}` for collection `{collection_name}`.'
+            raise ConfigError(msg)
 
         # Generate the collection model
         if create_models:
@@ -305,7 +306,8 @@ def process_config_object(
                 db_path=store_path / collection_info.curated / 'records.db',
             )
         else:
-            raise ConfigError(f'Unsupported backend `{collection_info.backend}` for collection `{collection_name}`.')
+            msg = f'Unsupported backend `{collection_info.backend}` for collection `{collection_name}`.'
+            raise ConfigError(msg)
 
         curated_store = ModelStore(
             schema=schema,
@@ -368,9 +370,8 @@ def process_config_object(
                         db_path=store_dir / 'records.db',
                     )
                 else:
-                    raise ConfigError(
-                        f'Unsupported backend `{collection_info.backend.type}` for collection `{collection_name}`.'
-                    )
+                    msg = f'Unsupported backend `{collection_info.backend.type}` for collection `{collection_name}`.'
+                    raise ConfigError(msg)
                 token_store = ModelStore(
                     schema=instance_config.schemas[collection_name],
                     backend=token_store_backend,

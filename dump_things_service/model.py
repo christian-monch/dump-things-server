@@ -5,11 +5,12 @@ import importlib
 import logging
 import subprocess
 import tempfile
-import types
 from itertools import count
 from pathlib import Path
-from types import ModuleType
-from typing import Any
+from typing import (
+    TYPE_CHECKING,
+    Any,
+)
 
 import annotated_types  # noqa F401 -- used by generated code
 import pydantic  # noqa F401 -- used by generated code
@@ -22,6 +23,10 @@ from dump_things_service.utils import (
     read_url,
     sys_path,
 )
+
+if TYPE_CHECKING:
+    from types import ModuleType
+
 
 lgr = logging.getLogger('uvicorn')
 
@@ -72,9 +77,7 @@ def get_subclasses(
 
 def get_model_for_schema(
     schema_location: str,
-) -> tuple[types.ModuleType, list[str], str]:
-    global _model_cache, _model_counter
-
+) -> tuple[ModuleType, list[str], str]:
     if schema_location not in _model_cache:
         lgr.info(f'Building model for schema {schema_location}.')
         model = build_model(schema_location)
@@ -85,8 +88,6 @@ def get_model_for_schema(
 
 
 def get_schema_view(schema_location: str) -> SchemaView:
-    global _schema_view_cache
-
     if schema_location not in _schema_view_cache:
         _schema_view_cache[schema_location] = SchemaView(schema_location)
     return _schema_view_cache[schema_location]
@@ -94,9 +95,7 @@ def get_schema_view(schema_location: str) -> SchemaView:
 
 def get_schema_model_for_schema(
     schema_location: str,
-) -> types.ModuleType:
-    global _schema_model_cache
-
+) -> ModuleType:
     if schema_location not in _schema_model_cache:
         _schema_model_cache[schema_location] = PythonGenerator(schema_location).compile_module()
     return _schema_model_cache[schema_location]

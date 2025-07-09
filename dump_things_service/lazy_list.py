@@ -163,7 +163,7 @@ class LazyList(list, metaclass=ABCMeta):
         This method should be implemented by subclasses to return a function
         that can be used to extract a key from the list info for sorting.
         """
-        raise NotImplementedError("Subclasses must implement get_key_function")
+        raise NotImplementedError
 
 
 class PriorityList(LazyList):
@@ -189,10 +189,8 @@ class PriorityList(LazyList):
         # Check the type
         if self.type:
             if not isinstance(input_list, self.type):
-                raise TypeError(
-                    f"Expected input_list of type {self.type}, "
-                    f"got {type(input_list)}"
-                )
+                msg = f'Expected input_list of type {self.type}, got {type(input_list)}'
+                raise TypeError(msg)
         else:
             self.type = type(input_list)
 

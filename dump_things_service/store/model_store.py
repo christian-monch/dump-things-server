@@ -1,21 +1,27 @@
 from __future__ import annotations
 
-from collections.abc import Iterable
 from itertools import chain
+from typing import TYPE_CHECKING
 
-from pydantic import BaseModel
-
-from dump_things_service.backends import (
-    RecordInfo,
-    StorageBackend,
-)
-from dump_things_service.lazy_list import LazyList
 from dump_things_service.model import (
     get_model_for_schema,
     get_subclasses,
 )
 from dump_things_service.resolve_curie import resolve_curie
 from dump_things_service.utils import cleaned_json
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
+
+    from pydantic import BaseModel
+
+    from dump_things_service.backends import (
+        RecordInfo,
+        StorageBackend,
+    )
+    from dump_things_service.lazy_list import LazyList
+
+
 
 submitter_class = 'NCIT_C54269'
 submitter_namespace = 'http://purl.obolibrary.org/obo/'

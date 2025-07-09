@@ -26,7 +26,6 @@ Presumably, 180 bytes + JSON string size per record.
 
 from __future__ import annotations
 
-from pathlib import Path
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -56,6 +55,7 @@ from dump_things_service.backends import (
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
+    from pathlib import Path
 
 
 class Base(DeclarativeBase):
@@ -208,7 +208,7 @@ class _SQLiteBackend(StorageBackend):
 _existing_sqlite_backends = {}
 
 
-def SQLiteBackend(
+def SQLiteBackend(  # noqa: N802
         db_path: Path,
         *,
         order_by: Iterable[str] | None = None,

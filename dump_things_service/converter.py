@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import re
 from json import loads as json_loads
-from types import ModuleType
 from typing import (
+    TYPE_CHECKING,
     Any,
     Callable,
 )
@@ -13,20 +13,26 @@ from linkml.utils.datautils import (
     get_loader,
 )
 from linkml_runtime import SchemaView
-from pydantic import BaseModel
 from rdflib.term import (
     URIRef,
     bind,
 )
 
 from dump_things_service import Format
-from dump_things_service.backends import RecordInfo
 from dump_things_service.lazy_list import LazyList
 from dump_things_service.model import (
     get_model_for_schema,
     get_schema_model_for_schema,
 )
 from dump_things_service.utils import cleaned_json
+
+if TYPE_CHECKING:
+    from types import ModuleType
+
+    from pydantic import BaseModel
+
+    from dump_things_service.backends import RecordInfo
+
 
 _cached_conversion_objects = {}
 
@@ -53,8 +59,6 @@ bind(
 
 
 def get_conversion_objects(schema: str):
-    global _cached_conversion_objects
-
     if schema not in _cached_conversion_objects:
         _cached_conversion_objects[schema] = {
             'schema_module': get_schema_model_for_schema(schema),
@@ -144,7 +148,7 @@ class ConvertingList(LazyList):
         self.list_info = input_list.list_info
         self.converter = FormatConverter(schema, input_format, output_format)
 
-    def generate_element(self, index: int, info: Any) -> Any:
+    def generate_element(self, index: int, _: Any) -> Any:
         record_info: RecordInfo = self.input_list[index]
         record_info.json_object = self.converter.convert(
             data=record_info.json_object,

@@ -16,7 +16,6 @@ will contain a `schema_type` attribute.
 from __future__ import annotations
 
 import logging
-from collections.abc import Iterable
 from typing import (
     TYPE_CHECKING,
     Callable,
@@ -39,6 +38,7 @@ from dump_things_service.model import (
 from dump_things_service.resolve_curie import resolve_curie
 
 if TYPE_CHECKING:
+    from collections.abc import Iterable
     from pathlib import Path
     from types import ModuleType
 
@@ -280,7 +280,7 @@ class _RecordDirStore(StorageBackend):
 # Ensure that there is only one store per root directory.
 _existing_stores = {}
 
-def RecordDirStore(
+def RecordDirStore(  # noqa: N802
         root: Path,
         schema: str,
         pid_mapping_function: Callable,
