@@ -15,7 +15,8 @@ xyz:HenryAdams a abc:Person ;
     abc:annotations [ a abc:Annotation ;
             abc:annotation_tag oxo:NCIT_C54269 ;
             abc:annotation_value "test_user_1" ] ;
-    abc:given_name "Henryöäß" .
+    abc:given_name "Henryöäß" ;
+    abc:schema_type "abc:Person" .
 """
 
 ttl_result_record = """@prefix abc: <http://example.org/person-schema/abc/> .
@@ -27,7 +28,7 @@ xyz:HenryAdams a abc:Person ;
             abc:annotation_tag oxo:NCIT_C54269 ;
             abc:annotation_value "test_user_1" ] ;
     abc:given_name "Henryöäß" ;
-    abc:schema_type "Person" .
+    abc:schema_type "abc:Person" .
 """
 
 new_json_pid = 'xyz:HenryBaites'
@@ -114,5 +115,5 @@ def test_ttl_json_ttl(fastapi_client_simple):
     assert response.status_code == HTTP_200_OK
     assert (
         response.text.strip()
-        == ttl_record.replace('xyz:HenryAdams', new_json_pid).strip()
+        == ttl_result_record.replace('xyz:HenryAdams', new_json_pid).strip()
     )

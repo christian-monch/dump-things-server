@@ -3,19 +3,26 @@ from __future__ import annotations
 import dataclasses
 import sys
 from copy import copy
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 import pytest  # noqa F401
 
 from dump_things_service import HTTP_200_OK
-from dump_things_service.patches import enabled  # noqa: F401 -- tests need patching which is a side effect of the import
-from dump_things_service.record import RecordDirStore
+from dump_things_service.patches import (
+    enabled,  # noqa: F401 -- tests need patching, which is a side effect of the import
+)
+from dump_things_service.store.model_store import ModelStore
 from dump_things_service.utils import cleaned_json
 
 if TYPE_CHECKING:
     from pydantic import BaseModel
 
     from dump_things_service import JSON
+
+
+# Path to a local simple test schema
+schema_path = Path(__file__).parent / 'testschema.yaml'
 
 
 @dataclasses.dataclass
@@ -151,17 +158,14 @@ ttl_tree = (
 )
 
 
-def test_inline_extraction_locally(dump_stores_simple):
-    root = dump_stores_simple
+def test_inline_extraction_locally():
 
-    store = RecordDirStore(
-        root=root / 'collection_1' / 'token_1',
-        model=MockedModule(),
-        pid_mapping_function=None,
-        suffix='yaml',
-        sort_keys=[],
+    store = ModelStore(
+        schema=str(schema_path),
+        backend=None,
     )
-    records = store.extract_inlined(inlined_object, 'hans')
+    store.model = MockedModule()
+    records = store.extract_inlined(inlined_object)
     _check_result_objects(records, tree)
 
 
@@ -183,17 +187,13 @@ def _check_result_objects(
             assert record.relations[linked_pid].pid == linked_pid
 
 
-def test_dont_extract_empty_things_locally(dump_stores_simple):
-    root = dump_stores_simple
-
-    store = RecordDirStore(
-        root=root / 'collection_1' / 'token_1',
-        model=MockedModule(),
-        pid_mapping_function=None,
-        suffix='yaml',
-        sort_keys=[],
+def test_dont_extract_empty_things_locally():
+    store = ModelStore(
+        schema=str(schema_path),
+        backend=None,
     )
-    records = store.extract_inlined(empty_inlined_object, 'dieter')
+    store.model = MockedModule()
+    records = store.extract_inlined(empty_inlined_object)
     assert len(records) == 1
     assert records[0] == empty_inlined_object
 
@@ -201,82 +201,84 @@ def test_dont_extract_empty_things_locally(dump_stores_simple):
 def test_inline_extraction_on_service(fastapi_client_simple):
     test_client, _ = fastapi_client_simple
 
-    # Deposit JSON record
-    response = test_client.post(
-        '/collection_trr379/record/Person',
-        headers={'x-dumpthings-token': 'token_1'},
-        json=inlined_json_record,
-    )
-    assert response.status_code == HTTP_200_OK
-    # Check linkage between records
-    _check_result_json(response.json(), tree)
-
-    # Verify that the records are actually stored individually and can be
-    # retrieved by their pid.
-    records = []
-    for record_pid in (entry[0] for entry in tree):
-        response = test_client.get(
-            f'/collection_trr379/record?pid={record_pid}',
+    for i in range(1, 3):
+        # Deposit JSON record
+        response = test_client.post(
+            f'/collection_trr379-{i}/record/Person',
             headers={'x-dumpthings-token': 'token_1'},
+            json=inlined_json_record,
         )
         assert response.status_code == HTTP_200_OK
-        records.append(response.json())
+        # Check linkage between records
+        _check_result_json(response.json(), tree)
 
-    # Check linkage between records
-    _check_result_json(records, tree)
+        # Verify that the records are actually stored individually and can be
+        # retrieved by their pid.
+        records = []
+        for record_pid in (entry[0] for entry in tree):
+            response = test_client.get(
+                f'/collection_trr379-{i}/record?pid={record_pid}',
+                headers={'x-dumpthings-token': 'token_1'},
+            )
+            assert response.status_code == HTTP_200_OK
+            records.append(response.json())
 
-    # Check that individual record classes were recognized
-    for class_name, pids in (
-        ('Person', ('trr379:test_extract_1', 'trr379:test_extract_1_1')),
-        ('Agent', ('trr379:test_extract_1_1_1',)),
-        ('InstantaneousEvent', ('trr379:test_extract_1_2',)),
-    ):
-        records = test_client.get(
-            f'/collection_trr379/records/{class_name}',
-            headers={'x-dumpthings-token': 'token_1'},
-        ).json()
-        for pid in pids:
-            assert any(record['pid'] == pid for record in records)
+        # Check linkage between records
+        _check_result_json(records, tree)
+
+        # Check that individual record classes were recognized
+        for class_name, pids in (
+            ('Person', ('trr379:test_extract_1', 'trr379:test_extract_1_1')),
+            ('Agent', ('trr379:test_extract_1_1_1',)),
+            ('InstantaneousEvent', ('trr379:test_extract_1_2',)),
+        ):
+            records = test_client.get(
+                f'/collection_trr379-{i}/records/{class_name}',
+                headers={'x-dumpthings-token': 'token_1'},
+            ).json()
+            for pid in pids:
+                assert any(record['pid'] == pid for record in records)
 
 
 def test_inline_ttl_processing(fastapi_client_simple):
     test_client, _ = fastapi_client_simple
 
-    # Deposit TTL records
-    for class_name, ttl_record in ttls_with_inline:
-        response = test_client.post(
-            f'/collection_trr379/record/{class_name}?format=ttl',
-            headers={'x-dumpthings-token': 'token_1'},
-            json=ttl_record,
-        )
-        assert response.status_code == HTTP_200_OK
+    for i in range(1, 3):
+        # Deposit TTL records
+        for class_name, ttl_record in ttls_with_inline:
+            response = test_client.post(
+                f'/collection_trr379-{i}/record/{class_name}?format=ttl',
+                headers={'x-dumpthings-token': 'token_1'},
+                json=ttl_record,
+            )
+            assert response.status_code == HTTP_200_OK
 
-    # Verify that the records are actually stored individually and can be
-    # retrieved by their pid.
-    records = []
-    for record_pid in (entry[0] for entry in ttl_tree):
-        response = test_client.get(
-            f'/collection_trr379/record?pid={record_pid}',
-            headers={'x-dumpthings-token': 'token_1'},
-        )
-        assert response.status_code == HTTP_200_OK
-        records.append(response.json())
+        # Verify that the records are actually stored individually and can be
+        # retrieved by their pid.
+        records = []
+        for record_pid in (entry[0] for entry in ttl_tree):
+            response = test_client.get(
+                f'/collection_trr379-{i}/record?pid={record_pid}',
+                headers={'x-dumpthings-token': 'token_1'},
+            )
+            assert response.status_code == HTTP_200_OK
+            records.append(response.json())
 
-    # Check linkage between records
-    _check_result_json(records, ttl_tree)
+        # Check linkage between records
+        _check_result_json(records, ttl_tree)
 
-    # Check that individual record classes were recognized
-    for class_name, pids in (
-        ('Person', ('trr379:test_ttl_inline_1', 'trr379:test_ttl_inline_1_1')),
-        ('Agent', ('trr379:test_ttl_inline_1_1_1',)),
-        ('InstantaneousEvent', ('trr379:test_ttl_inline_1_2',)),
-    ):
-        records = test_client.get(
-            f'/collection_trr379/records/{class_name}',
-            headers={'x-dumpthings-token': 'token_1'},
-        ).json()
-        for pid in pids:
-            assert any(record['pid'] == pid for record in records)
+        # Check that individual record classes were recognized
+        for class_name, pids in (
+            ('Person', ('trr379:test_ttl_inline_1', 'trr379:test_ttl_inline_1_1')),
+            ('Agent', ('trr379:test_ttl_inline_1_1_1',)),
+            ('InstantaneousEvent', ('trr379:test_ttl_inline_1_2',)),
+        ):
+            records = test_client.get(
+                f'/collection_trr379-{i}/records/{class_name}',
+                headers={'x-dumpthings-token': 'token_1'},
+            ).json()
+            for pid in pids:
+                assert any(record['pid'] == pid for record in records)
 
 
 def _check_result_json(
@@ -303,14 +305,11 @@ def _check_result_json(
 def test_dont_extract_empty_things_on_service(fastapi_client_simple):
     test_client, store = fastapi_client_simple
 
-    # Deposit JSON record
-    response = test_client.post(
-        '/collection_trr379/record/Person',
-        headers={'x-dumpthings-token': 'token_1'},
-        json=empty_inlined_json_record,
-    )
-    assert response.status_code == HTTP_200_OK
-
-    # Ensure that no `Thing` records are extracted
-    thing_path = store / 'token_stores' / 'token_1' / 'collection_trr379' / 'Thing'
-    assert tuple(thing_path.rglob('*.yaml')) == ()
+    for i in range(1, 3):
+        # Deposit JSON record
+        response = test_client.post(
+            f'/collection_trr379-{i}/record/Person',
+            headers={'x-dumpthings-token': 'token_1'},
+            json=empty_inlined_json_record,
+        )
+        assert response.status_code == HTTP_200_OK

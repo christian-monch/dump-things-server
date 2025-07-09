@@ -4,13 +4,17 @@ from typing import TYPE_CHECKING
 
 import yaml
 
+from dump_things_service.backends.sqlite import SQLiteBackend
 from dump_things_service.config import (
+    BackendConfigRecordDir,
     CollectionConfig,
     GlobalConfig,
     MappingMethod,
     config_file_name,
     mapping_functions,
 )
+from dump_things_service.model import get_model_for_schema
+from dump_things_service.resolve_curie import resolve_curie
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -27,18 +31,21 @@ pid = 'abc:some_timee@x.com'
 given_name = 'WolfgangÖÄß'
 test_record = f"""pid: {pid}
 given_name: {given_name}
+schema_type: abc:Person
 """
 
 pid_trr = 'trr379:amadeus'
 given_name_trr = 'AmadeusÜÄß'
 test_record_trr = f"""pid: {pid_trr}
 given_name: {given_name_trr}
+schema_type: abc:Person
 """
 
 pid_curated = 'abc:curated'
 given_name_curated = 'curated'
 test_record_curated = f"""pid: {pid_curated}
 given_name: {given_name_curated}
+schema_type: abc:Person
 """
 
 faulty_yaml = ': : -: : :'
@@ -89,30 +96,49 @@ def create_collection(
     else:
         curated_dir.mkdir(parents=True, exist_ok=True)
 
-    # Add the collection level config file
-    collection_config_file = curated_dir / config_file_name
-    collection_config_file.write_text(
-        collection_config_template.format(
-            schema=schema_url, mapping_function=mapping_function
-        )
-    )
+    if collection_config.backend is None:
+        collection_config.backend = BackendConfigRecordDir(type='record_dir')
 
-    # Add default entries
-    mapper = mapping_functions[MappingMethod(mapping_function)]
-    for class_name, pid, record in default_entries or []:
-        record_path = (
-            curated_dir
-            / class_name
-            / mapper(
-                pid=pid,
-                suffix='yaml',
+    if collection_config.backend.type == 'record_dir':
+
+        # Add the collection level config file
+        collection_config_file = curated_dir / config_file_name
+        collection_config_file.write_text(
+            collection_config_template.format(
+                schema=schema_url, mapping_function=mapping_function
             )
         )
-        record_path.parent.mkdir(parents=True, exist_ok=True)
-        record_path.write_text(record)
 
-    # Add some faulty entries to check error handling while reading collections
-    (curated_dir / 'faulty-file.yaml').write_text(faulty_yaml)
+        # Add default entries
+        mapper = mapping_functions[MappingMethod(mapping_function)]
+        for class_name, pid, record in default_entries or []:
+            record_path = (
+                curated_dir
+                / class_name
+                / mapper(
+                    pid=pid,
+                    suffix='yaml',
+                )
+            )
+            record_path.parent.mkdir(parents=True, exist_ok=True)
+            record_path.write_text(record)
 
-    # Add an erroneous yaml file with a non-yaml extension
-    (curated_dir / 'faulty-file.txt').write_text(faulty_yaml)
+        # Add some faulty entries to check error handling while reading collections
+        (curated_dir / 'faulty-file.yaml').write_text(faulty_yaml)
+
+        # Add an erroneous yaml file with a non-yaml extension
+        (curated_dir / 'faulty-file.txt').write_text(faulty_yaml)
+
+    else:
+
+        # Add SQL entries
+        db_path = curated_dir / 'records.db'
+        sql_backend = SQLiteBackend(db_path)
+        model = get_model_for_schema(schema_url)[0]
+        for class_name, _, yaml_text in default_entries or []:
+            json_object = yaml.safe_load(yaml_text)
+            sql_backend.add_record(
+                iri=resolve_curie(model, json_object['pid']),
+                class_name=class_name,
+                json_object=json_object,
+            )

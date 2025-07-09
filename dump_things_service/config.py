@@ -25,13 +25,14 @@ from dump_things_service import (
     HTTP_401_UNAUTHORIZED,
     HTTP_404_NOT_FOUND,
 )
-from dump_things_service.convert import get_conversion_objects
+from dump_things_service.backends.record_dir import RecordDirStore
+from dump_things_service.backends.sqlite import SQLiteBackend
+from dump_things_service.converter import get_conversion_objects
 from dump_things_service.model import get_model_for_schema
+from dump_things_service.store.model_store import ModelStore
 
 if TYPE_CHECKING:
     import types
-
-    from dump_things_service.record import RecordDirStore
 
 
 config_file_name = '.dumpthings.yaml'
@@ -88,10 +89,20 @@ class TokenConfig(BaseModel):
     collections: dict[str, TokenCollectionConfig]
 
 
+class BackendConfigRecordDir(BaseModel):
+    type: Literal['record_dir']
+
+
+class BackendConfigSQLite(BaseModel):
+    type: Literal['sqlite']
+    schema: str
+
+
 class CollectionConfig(BaseModel):
     default_token: str
     curated: Path
     incoming: Path | None = None
+    backend: BackendConfigRecordDir | BackendConfigSQLite | None = None
 
 
 class GlobalConfig(BaseModel):
@@ -113,6 +124,7 @@ class InstanceConfig:
     token_stores: dict = dataclasses.field(default_factory=dict)
     schemas: dict = dataclasses.field(default_factory=dict)
     conversion_objects: dict = dataclasses.field(default_factory=dict)
+    backend: dict = dataclasses.field(default_factory=dict)
 
 
 mode_mapping = {
@@ -179,6 +191,10 @@ mapping_functions = {
 }
 
 
+def get_mapping_function_by_name(mapping_function_name: str) -> Callable:
+    return mapping_functions[MappingMethod(mapping_function_name)]
+
+
 def get_mapping_function(collection_config: CollectionDirConfig):
     return mapping_functions[collection_config.idfx]
 
@@ -225,65 +241,94 @@ class Config:
 
 
 def process_config(
-        store_path: Path,
-        config_file: Path,
-        sort_keys: list[str],
-        globals_dict: dict[str, Any],
+    store_path: Path,
+    config_file: Path,
+    order_by: list[str],
+    globals_dict: dict[str, Any],
+    *,
+    create_models: bool = True,
 ) -> InstanceConfig:
 
     config_object = Config.get_config_from_file(config_file)
     return process_config_object(
         store_path=store_path,
         config_object=config_object,
-        sort_keys=sort_keys,
+        order_by=order_by,
         globals_dict=globals_dict,
+        create_models=create_models,
     )
 
 
 def process_config_object(
     store_path: Path,
     config_object: GlobalConfig,
-    sort_keys: list[str],
+    order_by: list[str],
     globals_dict: dict[str, Any],
+    *,
+    create_models: bool = True,
 ):
-    from dump_things_service.record import get_record_dir_store
 
     instance_config = InstanceConfig(store_path=store_path)
     instance_config.collections = config_object.collections
 
-    # Create a model for each collection, store it in `globals_dict`, and create
-    # a `RecordDirStore` for the `curated`-dir in each collection.
+    # Create a `ModelStore` (with currently fixed backend `RecordDirStore`) for
+    # the `curated`-dir in each collection.
     for collection_name, collection_info in config_object.collections.items():
-
-        # Get the config from the curated directory
-        collection_config = Config.get_collection_dir_config(store_path / collection_info.curated)
+        backend = collection_info.backend or BackendConfigRecordDir(type='record_dir')
+        instance_config.backend[collection_name] = backend
+        if backend.type == 'record_dir':
+            # Get the config from the curated directory
+            collection_config = Config.get_collection_dir_config(store_path / collection_info.curated)
+            schema = collection_config.schema
+        elif backend.type == 'sqlite':
+            schema = backend.schema
+        else:
+            msg = f'Unsupported backend `{collection_info.backend}` for collection `{collection_name}`.'
+            raise ConfigError(msg)
 
         # Generate the collection model
-        model, classes, model_var_name = get_model_for_schema(collection_config.schema)
-        instance_config.model_info[collection_name] = model, classes, model_var_name
-        globals_dict[model_var_name] = model
+        if create_models:
+            model, classes, model_var_name = get_model_for_schema(schema)
+            instance_config.model_info[collection_name] = model, classes, model_var_name
+            globals_dict[model_var_name] = model
 
-        curated_store = get_record_dir_store(
-            instance_config=instance_config,
-            root=store_path / collection_info.curated,
-            model=model,
-            pid_mapping_function=get_mapping_function(collection_config),
-            suffix=collection_config.format,
-            sort_keys=sort_keys,
+        if backend.type == 'record_dir':
+            collection_config = Config.get_collection_dir_config(store_path / collection_info.curated)
+            curated_store_backend = RecordDirStore(
+                root=store_path / collection_info.curated,
+                schema=schema,
+                pid_mapping_function=get_mapping_function(collection_config),
+                suffix=collection_config.format,
+                order_by=order_by,
+            )
+        elif backend.type == 'sqlite':
+            curated_store_backend = SQLiteBackend(
+                db_path=store_path / collection_info.curated / 'records.db',
+            )
+        else:
+            msg = f'Unsupported backend `{collection_info.backend}` for collection `{collection_name}`.'
+            raise ConfigError(msg)
+
+        curated_store = ModelStore(
+            schema=schema,
+            backend=curated_store_backend,
         )
+
         instance_config.curated_stores[collection_name] = curated_store
+
         if collection_info.incoming:
             instance_config.incoming[collection_name] = collection_info.incoming
 
-        instance_config.schemas[collection_name] = collection_config.schema
-        if collection_config.schema not in instance_config.conversion_objects:
-            instance_config.conversion_objects[collection_config.schema] = get_conversion_objects(collection_config.schema)
+        instance_config.schemas[collection_name] = schema
+        if create_models and schema not in instance_config.conversion_objects:
+            instance_config.conversion_objects[schema] = get_conversion_objects(schema)
 
-    # Create a `RecordDirStore` for each token dir and fetch the permissions
+    # Create a `ModelStore` for each token dir and fetch the permissions
     for token_name, token_info in config_object.tokens.items():
         entry = {'user_id': token_info.user_id, 'collections': {}}
         instance_config.token_stores[token_name] = entry
         for collection_name, token_collection_info in token_info.collections.items():
+            backend = instance_config.backend[collection_name]
             entry['collections'][collection_name] = {}
 
             # A token might be a pure curated read token, i.e., have the mode
@@ -304,8 +349,6 @@ def process_config_object(
                 if collection_name not in instance_config.zones:
                     instance_config.zones[collection_name] = {}
                 instance_config.zones[collection_name][token_name] = token_collection_info.incoming_label
-                model = instance_config.curated_stores[collection_name].model
-                mapping_function = instance_config.curated_stores[collection_name].pid_mapping_function
                 # Ensure that the store directory exists
                 store_dir = (
                         store_path
@@ -313,15 +356,28 @@ def process_config_object(
                         / token_collection_info.incoming_label
                 )
                 store_dir.mkdir(parents=True, exist_ok=True)
-                token_store = get_record_dir_store(
-                    instance_config=instance_config,
-                    root=store_dir,
-                    model=model,
-                    pid_mapping_function=mapping_function,
-                    suffix=instance_config.curated_stores[collection_name].suffix,
-                    sort_keys=sort_keys,
+                if backend.type == 'record_dir':
+                    mapping_function = instance_config.curated_stores[collection_name].backend.pid_mapping_function
+                    token_store_backend = RecordDirStore(
+                        root=store_dir,
+                        schema=instance_config.schemas[collection_name],
+                        pid_mapping_function=mapping_function,
+                        suffix=instance_config.curated_stores[collection_name].backend.suffix,
+                        order_by=order_by,
+                    )
+                elif backend.type == 'sqlite':
+                    token_store_backend = SQLiteBackend(
+                        db_path=store_dir / 'records.db',
+                    )
+                else:
+                    msg = f'Unsupported backend `{collection_info.backend.type}` for collection `{collection_name}`.'
+                    raise ConfigError(msg)
+                token_store = ModelStore(
+                    schema=instance_config.schemas[collection_name],
+                    backend=token_store_backend,
                 )
                 entry['collections'][collection_name]['store'] = token_store
+
             entry['collections'][collection_name]['permissions'] = get_permissions(
                 token_collection_info.mode
             )
@@ -331,7 +387,7 @@ def process_config_object(
 def get_token_store(
         instance_config: InstanceConfig,
         collection_name: str, token: str
-) -> tuple[RecordDirStore, TokenPermission] | tuple[None, None]:
+) -> tuple[ModelStore, TokenPermission] | tuple[None, None]:
     if collection_name not in instance_config.curated_stores:
         raise HTTPException(
             status_code=HTTP_404_NOT_FOUND,

@@ -3,15 +3,16 @@ from __future__ import annotations   # noqa: I001 -- the patches have to be impo
 import argparse
 import logging
 import sys
-from functools import partial
 from pathlib import Path
 from typing import (
     Annotated,  # noqa F401 -- used by generated code
     Any,
+    TYPE_CHECKING,
 )
 
 from starlette.status import HTTP_413_REQUEST_ENTITY_TOO_LARGE
 
+from dump_things_service.lazy_list import PriorityList, ModifierList
 # Perform the patching before importing any third-party libraries
 from dump_things_service.patches import enabled  # noqa: F401
 
@@ -23,7 +24,6 @@ from fastapi import (
     HTTPException,
     Request,
 )
-from fastapi.encoders import jsonable_encoder
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import APIKeyHeader
 from fastapi_pagination import (
@@ -49,30 +49,29 @@ from dump_things_service import (
 )
 from dump_things_service.config import (
     ConfigError,
+    TokenPermission,
     InstanceConfig,
     get_default_token_name,
-    get_model_info_for_collection,
     get_token_store,
     get_zone,
     join_default_token_permissions,
     process_config,
 )
-from dump_things_service.convert import (
-    convert_json_to_ttl,
-    convert_ttl_to_json,
+from dump_things_service.converter import (
+    FormatConverter,
+    ConvertingList,
 )
 from dump_things_service.dynamic_endpoints import create_endpoints
+from dump_things_service.export import export
 from dump_things_service.model import (
     get_classes,
     get_subclasses,
 )
-from dump_things_service.record_list import RecordList
-from dump_things_service.resolve_curie import resolve_curie
-from dump_things_service.utils import (
-    cleaned_json,
-    combine_ttl,
-    get_schema_type_curie,
-)
+from dump_things_service.utils import combine_ttl
+
+if TYPE_CHECKING:
+    from dump_things_service.lazy_list import LazyList
+    from dump_things_service.store.model_store import ModelStore
 
 
 class TokenCapabilityRequest(BaseModel):
@@ -87,7 +86,11 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--host', default='0.0.0.0')  # noqa S104
 parser.add_argument('--port', default=8000, type=int)
 parser.add_argument('--origins', action='append', default=[])
-parser.add_argument('-c', '--config')
+parser.add_argument(
+    '-c', '--config',
+    metavar='CONFIG_FILE',
+    help="Read the configuration from 'CONFIG_FILE' instead of looking for it in the data store root directory. "
+)
 parser.add_argument(
     '--root-path',
     default='',
@@ -108,6 +111,12 @@ parser.add_argument(
     action='append',
     default=[],
     help='Sort results by the given fields. Multiple fields can be specified, e.g. `--sort-by pid --sort-by date`.',
+)
+parser.add_argument(
+    '--export-to',
+    default='',
+    metavar='FILE_NAME',
+    help="Export the store to the file FILE_NAME and exit the process. If FILE_NAME is `-', the data is written to stdout.",
 )
 parser.add_argument(
     'store',
@@ -133,8 +142,9 @@ try:
     g_instance_config = process_config(
         store_path=store_path,
         config_file=config_path,
-        sort_keys=arguments.sort_by,
+        order_by=arguments.sort_by,
         globals_dict=globals(),
+        create_models=not arguments.export_to,
     )
 except ConfigError:
     logger.exception(
@@ -142,6 +152,15 @@ except ConfigError:
         config_path,
     )
     g_error = 'Server runs in error mode due to an invalid configuration. See server error-log for details.'
+    g_instance_config = None
+
+
+if arguments.export_to:
+    if g_error:
+        sys.stderr.write('ERROR: Configuration errors detected, cannot export store.')
+        sys.exit(1)
+    export(g_instance_config, Path(arguments.export_to))
+    sys.exit(0)
 
 
 app = FastAPI()
@@ -216,58 +235,39 @@ def store_record(
         )
 
     if input_format == Format.ttl:
-        json_object = convert_ttl_to_json(
-            g_instance_config,
-            collection,
-            class_name,
-            data,
-        )
+        json_object = FormatConverter(
+            g_instance_config.schemas[collection],
+            input_format=Format.ttl,
+            output_format=Format.json,
+        ).convert(data, class_name)
         record = TypeAdapter(getattr(model, class_name)).validate_python(json_object)
     else:
         record = data
 
-    stored_records = tuple(
-        store.store_record(
-            record=record,
-            submitter_id=g_instance_config.token_stores[token]['user_id'],
-            model=model,
-        )
+    stored_records = store.store_object(
+        obj=record,
+        submitter=g_instance_config.token_stores[token]['user_id'],
     )
 
-    # Add `schema_type` to the records
-    for record in stored_records:
-        record.schema_type = get_schema_type_curie(
-            g_instance_config,
-            collection,
-            record.__class__.__name__,
-        )
-
     if input_format == Format.ttl:
+        format_converter = FormatConverter(
+            g_instance_config.schemas[collection],
+            input_format=Format.json,
+            output_format=Format.ttl,
+        )
         return PlainTextResponse(
             combine_ttl(
                 [
-                    convert_json_to_ttl(
-                        g_instance_config,
-                        collection,
-                        record.__class__.__name__,
-                        cleaned_json(
-                            record.model_dump(mode='json', exclude_none=True),
-                            remove_keys=('@type',),
-                        )
+                    format_converter.convert(
+                        record,
+                        class_name,
                     )
-                    for record in stored_records
+                    for class_name, record in stored_records
                 ]
             ),
             media_type='text/turtle',
         )
-    return JSONResponse(
-        list(
-            map(
-                partial(cleaned_json),
-                map(jsonable_encoder, stored_records),
-            )
-        )
-    )
+    return JSONResponse([record for _, record in stored_records])
 
 
 def _check_collection(
@@ -315,32 +315,25 @@ async def read_record_with_pid(
 
     final_permissions, token_store = await process_token(g_instance_config, api_key, collection)
 
-    iri = resolve_curie(
-        get_model_info_for_collection(g_instance_config, collection)[0],
-        pid,
-    )
-    record = None
+    class_name, json_object = None, None
     if final_permissions.incoming_read:
-        class_name, record, _ = token_store.get_record_by_iri(iri)
+        class_name, json_object = token_store.get_object_by_pid(pid)
 
-    if not record and final_permissions.curated_read:
-        class_name, record, _ = g_instance_config.curated_stores[collection].get_record_by_iri(iri)
+    if not json_object and final_permissions.curated_read:
+        class_name, json_object = g_instance_config.curated_stores[collection].get_object_by_pid(pid)
 
-    if record:
-        if format == Format.ttl:
-            ttl_record = convert_json_to_ttl(
-                g_instance_config,
-                collection,
-                class_name,
-                record,
-            )
-            return PlainTextResponse(ttl_record, media_type='text/turtle')
-        record['schema_type'] = get_schema_type_curie(
-            g_instance_config,
-            collection,
-            class_name,
+    if not json_object:
+        return None
+
+    if format == Format.ttl:
+        converter = FormatConverter(
+            schema=g_instance_config.schemas[collection],
+            input_format=Format.json,
+            output_format=format,
         )
-    return record
+        ttl_record = converter.convert(json_object, class_name)
+        return PlainTextResponse(ttl_record, media_type='text/turtle')
+    return json_object
 
 
 @app.get('/{collection}/records/{class_name}')
@@ -350,8 +343,46 @@ async def read_records_of_type(
     format: Format = Format.json,  # noqa A002
     api_key: str = Depends(api_key_header_scheme),
 ):
-    def check_bounds(records: dict, max_length: int):
-        if len(records) > max_length:
+    return await _read_records_of_type(
+        collection=collection,
+        class_name=class_name,
+        format=format,
+        api_key=api_key,
+        # Set an upper limit for the number of non-paginated result records to
+        # keep processing time for individual requests short and avoid
+        # overloading the server.
+        bound=1000,
+    )
+
+
+@app.get('/{collection}/records/p/{class_name}')
+async def read_records_of_type_paginated(
+        collection: str,
+        class_name: str,
+        format: Format = Format.json,  # noqa A002
+        api_key: str = Depends(api_key_header_scheme),
+) -> Page[dict | str]:
+
+    result_list = await _read_records_of_type(
+        collection=collection,
+        class_name=class_name,
+        format=format,
+        api_key=api_key,
+        bound=None,
+    )
+    return paginate(result_list)
+
+
+async def _read_records_of_type(
+        collection: str,
+        class_name: str,
+        format: Format = Format.json,  # noqa A002
+        api_key: str = Depends(api_key_header_scheme),
+        bound: int | None = None,
+) -> LazyList:
+
+    def check_bounds(length: int, max_length: int):
+        if length > max_length:
             raise HTTPException(
                 status_code=HTTP_413_REQUEST_ENTITY_TOO_LARGE,
                 detail=f'Too many records found for class "{class_name}" in '
@@ -369,104 +400,45 @@ async def read_records_of_type(
         )
 
     final_permissions, token_store = await process_token(g_instance_config, api_key, collection)
-    if not final_permissions.incoming_read and not final_permissions.curated_read:
-        raise HTTPException(
-            status_code=HTTP_403_FORBIDDEN,
-            detail=f'No read access to curated or incoming data in collection "{collection}".',
-        )
 
-    # Set an upper limit for the number of result records to keep processing time for
-    # individual requests short and avoid overloading the server. The large difference
-    # between TTL and JSON is due to the fact that combining TTL results into a single
-    # TTL document has exponential complexity in the number of TTL documents.
-    max_records = 60 if format == Format.ttl else 1200
-
-    records = {}
-    if final_permissions.curated_read:
-        for search_class_name in get_subclasses(model, class_name):
-            for record_class_name, record, sort_key in g_instance_config.curated_stores[collection].get_records_of_class(
-                search_class_name
-            ):
-                check_bounds(records, max_records)
-                record['schema_type'] = get_schema_type_curie(g_instance_config, collection, record_class_name)
-                records[record['pid']] = record_class_name, record, sort_key
-
-
+    result_list = PriorityList()
     if final_permissions.incoming_read:
         for search_class_name in get_subclasses(model, class_name):
-            for record_class_name, record, sort_key in token_store.get_records_of_class(search_class_name):
-                check_bounds(records, max_records)
-                record['schema_type'] = get_schema_type_curie(g_instance_config, collection, record_class_name)
-                records[record['pid']] = record_class_name, record, sort_key
+            token_store_list = token_store.get_objects_of_class(search_class_name)
+            if bound:
+                check_bounds(len(token_store_list), bound)
+            result_list.add_list(token_store_list)
 
-    # Create a sorted result list from the records dictionary.
-    sorted_results = sorted(records.values(), key=lambda value: value[2])
+    if final_permissions.curated_read:
+        for search_class_name in get_subclasses(model, class_name):
+            curated_store_list = g_instance_config.curated_stores[collection].get_objects_of_class(search_class_name)
+            if bound:
+                check_bounds(len(curated_store_list), bound)
+            result_list.add_list(curated_store_list)
+
+    # Sort the result list.
+    result_list.sort(key=result_list.sort_key)
 
     if format == Format.ttl:
-        ttls = [
-            convert_json_to_ttl(
-                g_instance_config,
-                collection,
-                target_class=record_class_name,
-                json=cleaned_json(record),
-            )
-            for record_class_name, record, _ in sorted_results
-        ]
-        if ttls:
-            return PlainTextResponse(combine_ttl(ttls), media_type='text/turtle')
-        return PlainTextResponse('', media_type='text/turtle')
-    return tuple(map(lambda v: v[1], sorted_results))
-
-
-@app.get('/{collection}/records/p/{class_name}')
-async def read_records_of_type_paginated(
-    collection: str,
-    class_name: str,
-    format: Format = Format.json,  # noqa A002
-    api_key: str = Depends(api_key_header_scheme),
-) -> Page[dict | str]:
-    _check_collection(g_instance_config, collection)
-
-    model = g_instance_config.model_info[collection][0]
-    if class_name not in get_classes(model):
-        raise HTTPException(
-            status_code=HTTP_404_NOT_FOUND,
-            detail=f'No "{class_name}"-class in collection "{collection}".',
+        result_list = ConvertingList(
+            result_list,
+            g_instance_config.schemas[collection],
+            input_format=Format.json,
+            output_format=format,
         )
-
-    final_permissions, token_store = await process_token(g_instance_config, api_key, collection)
-
-    # We use a dictionary to implement prioritization of incoming records over curated records.
-    records = {}
-    if final_permissions.curated_read:
-        for search_class_name in get_subclasses(model, class_name):
-            for record_class_name, pid, path, sort_key in g_instance_config.curated_stores[collection].get_record_info_of_class(
-                search_class_name
-            ):
-                records[pid] = record_class_name, path, sort_key
-
-    if final_permissions.incoming_read:
-        for search_class_name in get_subclasses(model, class_name):
-            for record_class_name, pid, path, sort_key in token_store.get_record_info_of_class(search_class_name):
-                records[pid] = record_class_name, path, sort_key
-
-    # Create a sorted result list from the `records` dictionary.
-    sorted_results = sorted(
-        (((class_name, pid, path), sort_key) for pid, (class_name, path, sort_key) in records.items()),
-        key=lambda item: item[1],
-    )
-
-    # Generate a lazy result list from `sorted_results`.
-    result_list = RecordList(
-        instance_config=g_instance_config,
-        collection=collection,
-        convert_to_ttl=(format == Format.ttl),
-    )
-    result_list.add_info(map(lambda item: item[0], sorted_results))
-    return paginate(result_list)
+    else:
+        result_list = ModifierList(
+            result_list,
+            lambda record_info: record_info.json_object,
+        )
+    return result_list
 
 
-async def process_token(instance_config, api_key, collection):
+async def process_token(
+    instance_config: InstanceConfig,
+    api_key: str,
+    collection: str,
+) -> tuple[TokenPermission, ModelStore]:
     token = get_default_token_name(instance_config, collection) if api_key is None else api_key
     token_store, token_permissions = get_token_store(instance_config, collection, token)
     final_permissions = join_default_token_permissions(instance_config, token_permissions, collection)
@@ -478,11 +450,12 @@ async def process_token(instance_config, api_key, collection):
     return final_permissions, token_store
 
 
-# Create dynamic endpoints and rebuild the app to include all dynamically
-# created endpoints.
-create_endpoints(app, g_instance_config, globals())
-app.openapi_schema = None
-app.setup()
+# If we have a valid configuration, create dynamic endpoints and rebuild the
+# app to include all dynamically created endpoints.
+if g_instance_config:
+    create_endpoints(app, g_instance_config, globals())
+    app.openapi_schema = None
+    app.setup()
 
 # Add CORS origins
 app.add_middleware(

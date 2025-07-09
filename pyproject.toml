@@ -35,6 +35,7 @@ dependencies = [
     "PyYAML",
     "rdflib",
     "requests",
+    "sqlalchemy",
     "uvicorn",
 ]
 
