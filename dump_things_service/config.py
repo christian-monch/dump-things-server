@@ -191,6 +191,10 @@ mapping_functions = {
 }
 
 
+def get_mapping_function_by_name(mapping_function_name: str) -> Callable:
+    return mapping_functions[MappingMethod(mapping_function_name)]
+
+
 def get_mapping_function(collection_config: CollectionDirConfig):
     return mapping_functions[collection_config.idfx]
 
