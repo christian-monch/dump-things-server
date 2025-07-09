@@ -34,7 +34,7 @@ def _lookahead(iterable):
     yield last, True
 
 
-def export(
+def export_json(
     instance_config: InstanceConfig,
     destination: Path,
 ):
