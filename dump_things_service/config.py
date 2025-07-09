@@ -245,6 +245,8 @@ def process_config(
     config_file: Path,
     order_by: list[str],
     globals_dict: dict[str, Any],
+    *,
+    create_models: bool = True,
 ) -> InstanceConfig:
 
     config_object = Config.get_config_from_file(config_file)
@@ -253,6 +255,7 @@ def process_config(
         config_object=config_object,
         order_by=order_by,
         globals_dict=globals_dict,
+        create_models=create_models,
     )
 
 
@@ -261,6 +264,8 @@ def process_config_object(
     config_object: GlobalConfig,
     order_by: list[str],
     globals_dict: dict[str, Any],
+    *,
+    create_models: bool = True,
 ):
 
     instance_config = InstanceConfig(store_path=store_path)
@@ -281,9 +286,10 @@ def process_config_object(
             raise ConfigError(f'Unsupported backend `{collection_info.backend}` for collection `{collection_name}`.')
 
         # Generate the collection model
-        model, classes, model_var_name = get_model_for_schema(schema)
-        instance_config.model_info[collection_name] = model, classes, model_var_name
-        globals_dict[model_var_name] = model
+        if create_models:
+            model, classes, model_var_name = get_model_for_schema(schema)
+            instance_config.model_info[collection_name] = model, classes, model_var_name
+            globals_dict[model_var_name] = model
 
         if backend.type == 'record_dir':
             collection_config = Config.get_collection_dir_config(store_path / collection_info.curated)

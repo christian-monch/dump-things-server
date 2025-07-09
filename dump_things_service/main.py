@@ -140,6 +140,7 @@ try:
         config_file=config_path,
         order_by=arguments.sort_by,
         globals_dict=globals(),
+        create_models=False if arguments.export_to else True,
     )
 except ConfigError as e:
     logger.exception(
@@ -151,8 +152,12 @@ except ConfigError as e:
 
 
 if arguments.export_to:
+    if g_error:
+        print('ERROR: Configuration errors detected, cannot export store.', file=sys.stderr)
+        sys.exit(1)
     export(g_instance_config, Path(arguments.export_to))
     sys.exit(0)
+
 
 app = FastAPI()
 
