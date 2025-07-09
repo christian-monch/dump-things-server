@@ -27,7 +27,7 @@ from dump_things_service import (
 )
 from dump_things_service.backends.record_dir import RecordDirStore
 from dump_things_service.backends.sqlite import SQLiteBackend
-from dump_things_service.convert import get_conversion_objects
+from dump_things_service.converter import get_conversion_objects
 from dump_things_service.model import get_model_for_schema
 from dump_things_service.store.model_store import ModelStore
 

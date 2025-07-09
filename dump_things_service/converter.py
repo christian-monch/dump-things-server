@@ -26,6 +26,8 @@ from dump_things_service.model import (
     get_model_for_schema,
     get_schema_model_for_schema,
 )
+from dump_things_service.utils import cleaned_json
+
 
 _cached_conversion_objects = {}
 
@@ -51,7 +53,7 @@ bind(
 )
 
 
-def _get_conversion_objects(schema: str):
+def get_conversion_objects(schema: str):
     global _cached_conversion_objects
 
     if schema not in _cached_conversion_objects:
@@ -71,7 +73,7 @@ class FormatConverter:
     ):
         self.converter = self._check_formats(input_format, output_format)
         self.model = get_model_for_schema(schema)[0]
-        self.conversion_objects = _get_conversion_objects(schema)
+        self.conversion_objects = get_conversion_objects(schema)
 
     def _check_formats(
         self,
@@ -123,7 +125,7 @@ class FormatConverter:
             output_format=Format.json,
             **self.conversion_objects
         )
-        return json_loads(json_string)
+        return cleaned_json(json_loads(json_string))
 
 
 class ConvertingList(LazyList):

@@ -57,12 +57,12 @@ from dump_things_service.config import (
     join_default_token_permissions,
     process_config,
 )
-from dump_things_service.convert import (
-    convert_json_to_ttl,
-    convert_ttl_to_json,
+from dump_things_service.converter import (
+    FormatConverter,
+    ConvertingList,
 )
-from dump_things_service.converter import FormatConverter, ConvertingList
 from dump_things_service.dynamic_endpoints import create_endpoints
+from dump_things_service.export import export
 from dump_things_service.model import (
     get_classes,
     get_subclasses,
@@ -109,6 +109,12 @@ parser.add_argument(
     help='Sort results by the given fields. Multiple fields can be specified, e.g. `--sort-by pid --sort-by date`.',
 )
 parser.add_argument(
+    '--export-to',
+    default='',
+    metavar='FILE_NAME',
+    help='Export the store to the file FILE_NAME and exit the process.',
+)
+parser.add_argument(
     'store',
     help='The root of the data stores, it should contain a global_store and token_stores.',
 )
@@ -142,6 +148,11 @@ except ConfigError as e:
     )
     g_error = 'Server runs in error mode due to an invalid configuration. See server error-log for details.'
     g_instance_config = None
+
+
+if arguments.export_to:
+    export(g_instance_config, Path(arguments.export_to))
+    sys.exit(0)
 
 app = FastAPI()
 
@@ -215,12 +226,11 @@ def store_record(
         )
 
     if input_format == Format.ttl:
-        json_object = convert_ttl_to_json(
-            g_instance_config,
-            collection,
-            class_name,
-            data,
-        )
+        json_object = FormatConverter(
+            g_instance_config.schemas[collection],
+            input_format=Format.ttl,
+            output_format=Format.json,
+        ).convert(data, class_name)
         record = TypeAdapter(getattr(model, class_name)).validate_python(json_object)
     else:
         record = data
@@ -231,14 +241,17 @@ def store_record(
     )
 
     if input_format == Format.ttl:
+        format_converter = FormatConverter(
+            g_instance_config.schemas[collection],
+            input_format=Format.json,
+            output_format=Format.ttl,
+        )
         return PlainTextResponse(
             combine_ttl(
                 [
-                    convert_json_to_ttl(
-                        g_instance_config,
-                        collection,
-                        class_name,
+                    format_converter.convert(
                         record,
+                        class_name,
                     )
                     for class_name, record in stored_records
                 ]
