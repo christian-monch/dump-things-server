@@ -86,7 +86,11 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--host', default='0.0.0.0')  # noqa S104
 parser.add_argument('--port', default=8000, type=int)
 parser.add_argument('--origins', action='append', default=[])
-parser.add_argument('-c', '--config')
+parser.add_argument(
+    '-c', '--config',
+    metavar='CONFIG_FILE',
+    help="Read the configuration from 'CONFIG_FILE' instead of looking for it in the data store root directory. "
+)
 parser.add_argument(
     '--root-path',
     default='',
