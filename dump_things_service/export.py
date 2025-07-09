@@ -7,7 +7,6 @@ from dump_things_service.lazy_list import LazyList
 from dump_things_service.model import get_classes
 from dump_things_service.store.model_store import ModelStore
 
-
 level_width = 2
 
 

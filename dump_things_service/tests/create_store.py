@@ -6,11 +6,12 @@ import yaml
 
 from dump_things_service.backends.sqlite import SQLiteBackend
 from dump_things_service.config import (
+    BackendConfigRecordDir,
     CollectionConfig,
     GlobalConfig,
     MappingMethod,
     config_file_name,
-    mapping_functions, BackendConfigRecordDir,
+    mapping_functions,
 )
 from dump_things_service.model import get_model_for_schema
 from dump_things_service.resolve_curie import resolve_curie
