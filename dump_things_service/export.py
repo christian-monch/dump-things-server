@@ -57,6 +57,7 @@ def export_collection(
     indent: int,
     output: TextIO,
 ):
+    output.write(f'{indent * " "}"schema": "{instance_config.schemas[collection]}",\n')
     output.write(f'{indent * " "}"curated": {{\n')
     append_classes(instance_config.curated_stores[collection], indent + level_width, output)
     output.write(f'\n{indent * " "}}}')

@@ -295,7 +295,7 @@ def process_config_object(
             collection_config = Config.get_collection_dir_config(store_path / collection_info.curated)
             curated_store_backend = RecordDirStore(
                 root=store_path / collection_info.curated,
-                schema=collection_config.schema,
+                schema=schema,
                 pid_mapping_function=get_mapping_function(collection_config),
                 suffix=collection_config.format,
                 order_by=order_by,
@@ -318,7 +318,7 @@ def process_config_object(
             instance_config.incoming[collection_name] = collection_info.incoming
 
         instance_config.schemas[collection_name] = schema
-        if schema not in instance_config.conversion_objects:
+        if create_models and schema not in instance_config.conversion_objects:
             instance_config.conversion_objects[schema] = get_conversion_objects(schema)
 
     # Create a `ModelStore` for each token dir and fetch the permissions
