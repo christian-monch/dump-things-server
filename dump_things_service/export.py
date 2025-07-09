@@ -59,6 +59,7 @@ def export_collection(
 ):
     output.write(f'{indent * " "}"curated": {{\n')
     append_classes(instance_config.curated_stores[collection], indent + level_width, output)
+    output.write(f'\n{indent * " "}}}')
 
     # Determine stores for incoming zones
     zones = {
@@ -68,10 +69,8 @@ def export_collection(
     }
 
     if zones:
-        # End the "curated" dictionary with a comma
-        output.write(f'\n{indent * " "}}},\n')
-
-        output.write(f'{indent * " "}"incoming": {{\n')
+        # Put a comma between "curated" and "incoming".
+        output.write(f',\n{indent * " "}"incoming": {{\n')
         indent_zone = indent + level_width
         indent_classes = indent_zone + level_width
         for (zone, store), is_last in _lookahead(zones.items()):
@@ -84,9 +83,6 @@ def export_collection(
 
         # End the "incoming" dictionary
         output.write(f'\n{indent * " "}}}')
-    else:
-        # End the "curated" dictionary without a comma
-        output.write(f'\n{indent * " "}}}')
 
 
 def append_classes(
@@ -97,7 +93,8 @@ def append_classes(
     """Append instances of all classes to the file"""
     class_names = get_classes(store.model)
 
-    for class_name, is_last in _lookahead(class_names):
+    first = True
+    for class_name in class_names:
 
         # We know that pure `Thing` instances are not stored in the store.
         if class_name == 'Thing':
@@ -105,17 +102,16 @@ def append_classes(
 
         class_instances = store.get_objects_of_class(class_name, include_subclasses=False)
         if class_instances:
+            if not first:
+                output.write(',\n')
+            first = False
             output.write(f'{indent * " "}"{class_name}": [\n')
             append_instances(
                 class_instances,
                 output,
                 indent + level_width,
             )
-            output.write('\n')
-            if is_last:
-                output.write(f'{indent * " "}]')
-            else:
-                output.write(f'{indent * " "}],\n')
+            output.write(f'\n{indent * " "}]')
 
 
 def append_instances(
@@ -124,6 +120,7 @@ def append_instances(
     indent: int,
 ):
     for instance, is_last in _lookahead(instances):
-        output.write(f'{(indent + level_width) * " "}{json.dumps(instance.json_object)}')
+        json_string = json.dumps(instance.json_object, ensure_ascii=False)
+        output.write(f'{(indent + level_width) * " "}{json_string}')
         if not is_last:
             output.write(',\n')
