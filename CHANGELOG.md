@@ -1,3 +1,29 @@
+# 1.0.0 (2025-07-09)
+
+## Breaking changes
+
+- The result of `/<collection>/records/<class>`-endpoint for the output format
+  TTL has changed its structure. It is now a JSON array where the individual
+  entries are strings. Each entry is a TTL document that describes a single record.
+  Earlier versions would return a single TTL document that contained all records.
+  Due to the high computational cost of combining multiple TTL documents into a
+  single document, this change was made. In addition, this change unified the
+  code used in the paginated and the non-paginated endpoints.
+
+## New features
+
+- support for multiple backends. The default backend is `record_dir`, which is the
+  backend used in the previous versions. It is fully compatible with existing stores.
+  This version adds a new backend, `sqllite`, which uses a SQLite database. More
+  SQL backends will be added in the future. SQL backends should be able to support
+  far bigger record numbers than the `record_dir` backend (hundreds of thousands)
+  without performance degradation.
+
+- an export method has been added. With the command line parameter `--export`,
+  the service exports all records of a data store and the schema information of
+  collections to a JSON file or to stdout.
+
+
 # 0.5.0 (2025-06-27)
 
 ## New features
@@ -13,7 +39,7 @@
 
 - limit the number of records that are returned via the `/<collection>/records/<class>`-endpoint.
  The maximum number of JSON-records is 1200, the maximum number of TTL-records is 60 (due to the high cost of combining TTL-records).
- An HTTP 413 error is returned if the number of records is execeeded.
+ An HTTP 413 error is returned if the number of records is exceeded.
  This limits backward compatibility, as the previous behavior was to return all records.
 
 ## Bugfixes
@@ -28,7 +54,7 @@
 - pagination support for class instance retrieval. To keep backward-compatibility  a new endpoint is added, i.e., `/<collection>/records/p/<class>`.
 
 ## Cleanup
-- 
+
 - the datalad-concepts submodule was removed
 - any calls to patch via post-install script were removed
 
