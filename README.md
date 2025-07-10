@@ -240,6 +240,12 @@ The service supports the following command line parameters:
 - `--export-to`: export all data in `<storage root>` as JSON to the given path and exit. If the path is `-`, the data will be written to `stdout`. The data in `<storage root>` will not be modified. This is useful to export the data for backup or migration purposes. The file will contain all records in all collections. NOTE: the resulting file might be large.
 
 
+- `--export-json`: an alias for `export-to`.
+
+
+- `--export-tree`: export all data in `<storage root>` as file tree at the given path. The tree confirms to the [dumpthings-specification](https://concepts.datalad.org/dump-things/).
+
+
 - `--error-mode`: if set, the service will run even if an error prevents it from starting properly. It will report that it executes in error mode on every request. This can be useful if the service is deployed automatically and no other monitoring method is available.
 
 
@@ -323,7 +329,7 @@ type: collections
 version: 1
 
 collections:
-  collection_1:
+  datamgt:
     default_token: anon_read
     curated: datamgt/curated
     incoming: datamgt

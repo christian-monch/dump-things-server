@@ -62,7 +62,7 @@ from dump_things_service.converter import (
     ConvertingList,
 )
 from dump_things_service.dynamic_endpoints import create_endpoints
-from dump_things_service.export import export
+from dump_things_service.export import exporter_info
 from dump_things_service.model import (
     get_classes,
     get_subclasses,
@@ -119,6 +119,18 @@ parser.add_argument(
     help="Export the store to the file FILE_NAME and exit the process. If FILE_NAME is `-', the data is written to stdout.",
 )
 parser.add_argument(
+    '--export-json',
+    default='',
+    metavar='FILE_NAME',
+    help="Export the store to the file FILE_NAME and exit the process. If FILE_NAME is `-', the data is written to stdout.",
+)
+parser.add_argument(
+    '--export-tree',
+    default='',
+    metavar='DIRECTORY_NAME',
+    help="Export the store to a dumpthings-conformant tree at DIRECTORY_NAME and exit the process. If DIRECTORY_NAME does not exist, the service will try to create it.",
+)
+parser.add_argument(
     'store',
     help='The root of the data stores, it should contain a global_store and token_stores.',
 )
@@ -144,7 +156,6 @@ try:
         config_file=config_path,
         order_by=arguments.sort_by,
         globals_dict=globals(),
-        create_models=not arguments.export_to,
     )
 except ConfigError:
     logger.exception(
@@ -155,12 +166,14 @@ except ConfigError:
     g_instance_config = None
 
 
-if arguments.export_to:
-    if g_error:
-        sys.stderr.write('ERROR: Configuration errors detected, cannot export store.')
-        sys.exit(1)
-    export(g_instance_config, Path(arguments.export_to))
-    sys.exit(0)
+for switch in ('to', 'json', 'tree'):
+    argument = getattr(arguments, 'export_' + switch)
+    if argument:
+        if g_error:
+            sys.stderr.write('ERROR: Configuration errors detected, cannot export store.')
+            sys.exit(1)
+        exporter_info[switch](g_instance_config, argument)
+        sys.exit(0)
 
 
 app = FastAPI()
