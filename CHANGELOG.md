@@ -1,3 +1,16 @@
+# 1.1.0 (2025-07-10)
+
+## New features
+
+- Add a `--export-tree` command line parameter to the `dump-things-service` command.
+  This parameter allows to export a data store to tree structure as described
+  [here](https://concepts.datalad.org/dump-things/).
+
+## Bugfixes
+
+- Fix a typo in the "tips and tricks" section of the README.md file.
+
+
 # 1.0.0 (2025-07-09)
 
 ## Breaking changes
