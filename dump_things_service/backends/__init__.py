@@ -106,6 +106,7 @@ class BackendResultList(LazyList):
         """
         raise NotImplementedError
 
+
 class StorageBackend(metaclass=ABCMeta):
     def __init__(
         self,
