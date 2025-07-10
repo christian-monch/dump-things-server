@@ -323,7 +323,7 @@ type: collections
 version: 1
 
 collections:
-  collection_1:
+  datamgt:
     default_token: anon_read
     curated: datamgt/curated
     incoming: datamgt
