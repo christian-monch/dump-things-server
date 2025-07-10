@@ -36,12 +36,12 @@ def _lookahead(iterable):
 
 def export_json(
     instance_config: InstanceConfig,
-    destination: Path,
+    destination: str,
 ):
-    if destination == Path('-'):
+    if destination == '-':
         output = sys.stdout
     else:
-        output = destination.open('wt', encoding='utf-8')
+        output = Path(destination).open('wt', encoding='utf-8')
 
     output.write('{\n')
     for collection, is_last in _lookahead(instance_config.collections):

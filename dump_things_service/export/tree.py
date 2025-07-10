@@ -15,8 +15,9 @@ idfx = get_mapping_function_by_name('digest-md5-p3-p3')
 
 def export_tree(
     instance_config: InstanceConfig,
-    destination: Path,
+    destination: str,
 ):
+    destination = Path(destination)
     if destination.exists() and not destination.is_dir():
         msg = 'The export_tree destination path must be a directory.'
         raise ValueError(msg)
@@ -31,9 +32,9 @@ def export_tree(
 
 
 def export_collection(
-        instance_config: InstanceConfig,
-        collection: str,
-        destination: Path,
+    instance_config: InstanceConfig,
+    collection: str,
+    destination: Path,
 ):
     collection_destination = destination / collection
     collection_destination.mkdir(parents=True, exist_ok=True)
@@ -43,12 +44,15 @@ def export_collection(
         "version: 1\n"
         f"schema: {instance_config.schemas[collection]}\n"
         "format: yaml\n"
-        "idfx: digest-sha256-p3-p3\n"
+        "idfx: digest-md5-p3-p3\n"
     )
 
     curated_destination = collection_destination / 'curated'
     curated_destination.mkdir(parents=True, exist_ok=True)
     (curated_destination / '.dumpthings.yaml').write_text(config_content)
+    exported_stores = {
+        id(instance_config.curated_stores[collection]): curated_destination
+    }
     export_classes(instance_config.curated_stores[collection], curated_destination)
 
     # Determine stores for incoming zones
@@ -62,6 +66,13 @@ def export_collection(
         incoming_destination = collection_destination / 'incoming'
         for zone, store in zones.items():
             zone_destination = incoming_destination / zone
+            if id(store) in exported_stores:
+                # Already exported this store, make `zone_destination` a link
+                # to the existing export.
+                zone_destination.parent.mkdir(parents=True, exist_ok=True)
+                zone_destination.symlink_to(exported_stores[id(store)])
+                continue
+            exported_stores[id(store)] = zone_destination = collection_destination / 'incoming' / zone
             zone_destination.mkdir(parents=True, exist_ok=True)
             (zone_destination / '.dumpthings.yaml').write_text(config_content)
             export_classes(store, zone_destination)

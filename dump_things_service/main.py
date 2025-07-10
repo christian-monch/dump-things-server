@@ -172,8 +172,7 @@ for switch in ('to', 'json', 'tree'):
         if g_error:
             sys.stderr.write('ERROR: Configuration errors detected, cannot export store.')
             sys.exit(1)
-        exporter, argument_converter = exporter_info[switch]
-        exporter(g_instance_config, argument_converter(argument))
+        exporter_info[switch](g_instance_config, argument)
         sys.exit(0)
 
 

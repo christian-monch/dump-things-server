@@ -27,7 +27,7 @@ submitter_class = 'NCIT_C54269'
 submitter_namespace = 'http://purl.obolibrary.org/obo/'
 
 
-class ModelStore:
+class _ModelStore:
     def __init__(
         self,
         schema: str,
@@ -170,3 +170,26 @@ class ModelStore:
         else:
             class_names = [class_name]
         return self.backend.get_records_of_classes(class_names)
+
+
+_existing_model_stores = {}
+
+
+def ModelStore(  # noqa: N802
+    schema: str,
+    backend: StorageBackend,
+) -> _ModelStore:
+    """
+    Create a unique model store for the given schema and backend.
+
+    :param schema: The schema to use for the model store.
+    :param backend: The storage backend to use.
+    :return: An instance of _ModelStore.
+    """
+    existing_model_store, _ = _existing_model_stores.get(id(backend), (None, None))
+    if not existing_model_store:
+        existing_model_store = _ModelStore(schema, backend)
+        # We store a pointer to the backend in the value to ensure that the
+        # backend object exists while we use its `id` as a key.
+        _existing_model_stores[id(backend)] = existing_model_store, backend
+    return existing_model_store
