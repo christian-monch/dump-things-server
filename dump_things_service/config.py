@@ -346,6 +346,10 @@ def process_config_object(
                     msg = f'Token `{token_name}` with mode {token_collection_info.mode} must not have an empty `incoming_label`'
                     raise ConfigError(msg)
 
+                if any(c in token_collection_info.incoming_label for c in ('\\', '/')):
+                    msg = f'Incoming label for token `{token_name}` must not contain slashes or backslashes: `{token_collection_info.incoming_label}`'
+                    raise ConfigError(msg)
+
                 if collection_name not in instance_config.zones:
                     instance_config.zones[collection_name] = {}
                 instance_config.zones[collection_name][token_name] = token_collection_info.incoming_label
