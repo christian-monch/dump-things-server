@@ -26,6 +26,7 @@ from dump_things_service import (
     HTTP_404_NOT_FOUND,
 )
 from dump_things_service.backends.record_dir import RecordDirStore
+from dump_things_service.backends.schema_type_layer import SchemaTypeLayer
 from dump_things_service.backends.sqlite import SQLiteBackend
 from dump_things_service.converter import get_conversion_objects
 from dump_things_service.model import get_model_for_schema
@@ -245,8 +246,6 @@ def process_config(
     config_file: Path,
     order_by: list[str],
     globals_dict: dict[str, Any],
-    *,
-    create_models: bool = True,
 ) -> InstanceConfig:
 
     config_object = Config.get_config_from_file(config_file)
@@ -255,7 +254,6 @@ def process_config(
         config_object=config_object,
         order_by=order_by,
         globals_dict=globals_dict,
-        create_models=create_models,
     )
 
 
@@ -264,8 +262,6 @@ def process_config_object(
     config_object: GlobalConfig,
     order_by: list[str],
     globals_dict: dict[str, Any],
-    *,
-    create_models: bool = True,
 ):
 
     instance_config = InstanceConfig(store_path=store_path)
@@ -287,19 +283,22 @@ def process_config_object(
             raise ConfigError(msg)
 
         # Generate the collection model
-        if create_models:
-            model, classes, model_var_name = get_model_for_schema(schema)
-            instance_config.model_info[collection_name] = model, classes, model_var_name
-            globals_dict[model_var_name] = model
+        model, classes, model_var_name = get_model_for_schema(schema)
+        instance_config.model_info[collection_name] = model, classes, model_var_name
+        globals_dict[model_var_name] = model
 
         if backend.type == 'record_dir':
-            collection_config = Config.get_collection_dir_config(store_path / collection_info.curated)
-            curated_store_backend = RecordDirStore(
+            #collection_config = Config.get_collection_dir_config(store_path / collection_info.curated)
+            plain_curated_store_backend = RecordDirStore(
                 root=store_path / collection_info.curated,
-                schema=schema,
                 pid_mapping_function=get_mapping_function(collection_config),
                 suffix=collection_config.format,
                 order_by=order_by,
+            )
+            plain_curated_store_backend.build_index(schema=schema)
+            curated_store_backend = SchemaTypeLayer(
+                backend=plain_curated_store_backend,
+                schema=schema,
             )
         elif backend.type == 'sqlite':
             curated_store_backend = SQLiteBackend(
@@ -320,7 +319,7 @@ def process_config_object(
             instance_config.incoming[collection_name] = collection_info.incoming
 
         instance_config.schemas[collection_name] = schema
-        if create_models and schema not in instance_config.conversion_objects:
+        if schema not in instance_config.conversion_objects:
             instance_config.conversion_objects[schema] = get_conversion_objects(schema)
 
     # Create a `ModelStore` for each token dir and fetch the permissions
@@ -362,12 +361,16 @@ def process_config_object(
                 store_dir.mkdir(parents=True, exist_ok=True)
                 if backend.type == 'record_dir':
                     mapping_function = instance_config.curated_stores[collection_name].backend.pid_mapping_function
-                    token_store_backend = RecordDirStore(
+                    plain_token_store_backend = RecordDirStore(
                         root=store_dir,
-                        schema=instance_config.schemas[collection_name],
                         pid_mapping_function=mapping_function,
                         suffix=instance_config.curated_stores[collection_name].backend.suffix,
                         order_by=order_by,
+                    )
+                    plain_token_store_backend.build_index(schema=instance_config.schemas[collection_name])
+                    token_store_backend = SchemaTypeLayer(
+                        backend=plain_token_store_backend,
+                        schema=instance_config.schemas[collection_name],
                     )
                 elif backend.type == 'sqlite':
                     token_store_backend = SQLiteBackend(
