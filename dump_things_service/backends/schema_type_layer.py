@@ -90,6 +90,10 @@ class _SchemaTypeLayer(StorageBackend):
             class_name: str,
             json_object: dict,
     ):
+        # Remove the top level `schema_type` from the JSON object because we
+        # don't want to store it in the files. We add `schema_type` after
+        # reading the record from disk. The value of `schema_type` is determined
+        # by the class name of the record, which is stored in the path.
         if 'schema_type' in json_object:
             del json_object['schema_type']
         self.backend.add_record(

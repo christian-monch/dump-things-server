@@ -1,4 +1,4 @@
-from __future__ import annotations   # noqa: I001 -- the patches have to be imported early
+from __future__ import annotations
 
 import argparse
 import logging
@@ -22,10 +22,12 @@ parser.add_argument(
 )
 parser.add_argument(
     '--rebuild-source-index',
-    help='rebuild the index of a `record_dir`-source, using the specified SCHEMA.',
+    help='rebuild the index of a `record_dir`-source, using the specified SCHEMA. '
+    'This is required if the source has no persistent index, i.e., if the source '
+    'is a `record_dir`-backend. It is useful, if files have been added or removed '
+    'manually from a `record_dir`-backend.',
     metavar='SCHEMA',
-)  # noqa S104
-
+)
 
 
 arguments = parser.parse_args()
@@ -33,6 +35,7 @@ arguments = parser.parse_args()
 
 def main():
     pass
+
 
 if __name__ == '__main__':
     main()
