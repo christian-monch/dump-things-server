@@ -23,12 +23,9 @@ from dump_things_service.backends import (
     create_sort_key,
 )
 from dump_things_service.backends.record_dir_index import RecordDirIndex
-from dump_things_service.model import get_model_for_schema
-from dump_things_service.resolve_curie import resolve_curie
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
-    from pathlib import Path
     from types import ModuleType
 
 

@@ -51,7 +51,7 @@ def test_search_by_class(fastapi_client_simple):
         )
         assert response.status_code == HTTP_200_OK
         json_result = response.json()
-        if len(json_result) == 3:
+        if len(json_result) == 3:  # noqa: PLR2004
             assert response.json() == [
                 {
                     'given_name': 'curated',

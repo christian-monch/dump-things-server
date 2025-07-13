@@ -3,7 +3,6 @@ from __future__ import annotations
 import argparse
 import logging
 
-
 logger = logging.getLogger('dump_things_copy')
 
 

@@ -41,7 +41,7 @@ def export_json(
     if destination == '-':
         output = sys.stdout
     else:
-        output = Path(destination).open('wt', encoding='utf-8')
+        output = Path(destination).open('wt', encoding='utf-8')  # noqa: SIM115
 
     output.write('{\n')
     for collection, is_last in _lookahead(instance_config.collections):

@@ -17,17 +17,15 @@ will contain a `schema_type` attribute.
 from __future__ import annotations
 
 from typing import (
-    Any,
     TYPE_CHECKING,
+    Any,
 )
 
 from dump_things_service.backends import (
     BackendResultList,
     RecordInfo,
-    ResultListInfo,
     StorageBackend,
 )
-from dump_things_service.lazy_list import LazyList
 from dump_things_service.model import get_schema_model_for_schema
 
 if TYPE_CHECKING:

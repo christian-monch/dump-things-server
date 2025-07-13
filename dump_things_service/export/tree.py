@@ -9,7 +9,6 @@ from dump_things_service.config import (
 from dump_things_service.model import get_classes
 from dump_things_service.store.model_store import ModelStore
 
-
 idfx = get_mapping_function_by_name('digest-md5-p3-p3')
 
 
