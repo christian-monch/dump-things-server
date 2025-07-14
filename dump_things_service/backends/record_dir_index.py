@@ -43,7 +43,7 @@ __all__ = [
     'RecordDirIndex',
 ]
 
-index_file_name = '.index.db'
+index_file_name = '.directory_dir_index.db'
 ignored_files = {'.', '..', config_file_name, index_file_name}
 
 lgr = logging.getLogger('dump_things_service')
@@ -147,9 +147,18 @@ class RecordDirIndex:
     ) -> Generator[IndexEntry]:
         with Session(self.engine) as session, session.begin():
             statement = select(IndexEntry).filter_by(class_name=class_name)
-            result = session.scalars(statement)
-            if result:
-                yield from result
+            result = session.execute(statement)
+            for row in result:
+                yield row[0]
+
+    def get_info_for_all_classes(
+        self,
+    ) -> Generator[IndexEntry]:
+        with Session(self.engine) as session, session.begin():
+            statement = select(IndexEntry)
+            result = session.execute(statement)
+            for row in result:
+                yield row[0]
 
     def rebuild_index(
         self,

@@ -4,7 +4,10 @@ from typing import TYPE_CHECKING
 
 import yaml
 
-from dump_things_service.backends.sqlite import SQLiteBackend
+from dump_things_service.backends.sqlite import (
+    SQLiteBackend,
+    record_file_name as sqlite_record_file_name,
+)
 from dump_things_service.config import (
     BackendConfigRecordDir,
     CollectionConfig,
@@ -132,7 +135,7 @@ def create_collection(
     else:
 
         # Add SQL entries
-        db_path = curated_dir / 'records.db'
+        db_path = curated_dir / sqlite_record_file_name
         sql_backend = SQLiteBackend(db_path)
         model = get_model_for_schema(schema_url)[0]
         for class_name, _, yaml_text in default_entries or []:

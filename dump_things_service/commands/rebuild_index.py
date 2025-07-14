@@ -75,7 +75,7 @@ def rebuild_index(
     order_by: list[str] | None = None
 ):
     index = RecordDirIndex(
-        store_dir=store,
+        store_dir=store.absolute(),
         suffix=suffix,
     )
     index.rebuild_index(schema=schema, order_by=order_by)

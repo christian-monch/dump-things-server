@@ -149,6 +149,12 @@ class StorageBackend(metaclass=ABCMeta):
     ) -> BackendResultList:
         raise NotImplementedError
 
+    @abstractmethod
+    def get_all_records(
+        self,
+    ) -> BackendResultList:
+        raise NotImplementedError
+
 
 def create_sort_key(
     json_object: dict[str, Any],

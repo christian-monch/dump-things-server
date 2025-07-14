@@ -315,6 +315,9 @@ The service provides the following endpoints:
 
 ### Tips & Tricks
 
+
+#### Using the same backend for incoming and curated areas
+
 The service can be configured in such a way that incoming records are immediately available in the curated area.
 To achieve this, the final path of the incoming zone must be the same as the curated area, for example:
 
@@ -344,6 +347,10 @@ tokens:
         incoming_label: "curated"
 ```
 In this example the curated area is `datamgt/curated` and the incoming area for the token `trusted-submitter-token` is `datamgt` plus the incoming zone `curated`, i.e., `datamgt/curated` which is exactly the curated area defined for `collection_1`.
+
+#### Migrating from `record_dir` to `sqlite`
+
+The command `dump-things-copy-store` can be used to copy a collection from a `record_dir` store to a `sqlite` store. If the source collection was manually modified outside of the service, it is recommended to run the command `dump-things-rebuild-index` on the source store before copying. This ensures that the index is up-to-date and all records are copied correctly.
 
 
 ### Maintenance commands

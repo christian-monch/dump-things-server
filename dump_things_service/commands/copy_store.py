@@ -6,7 +6,11 @@ from pathlib import Path
 
 from dump_things_service.backends import StorageBackend
 from dump_things_service.backends.record_dir import RecordDirStore, _RecordDirStore
-from dump_things_service.backends.sqlite import SQLiteBackend, _SQLiteBackend
+from dump_things_service.backends.sqlite import (
+    SQLiteBackend,
+    _SQLiteBackend,
+    record_file_name as sqlite_record_file_name,
+)
 
 
 parser = ArgumentParser(
@@ -47,13 +51,13 @@ def get_backend(backend_spec: str) -> StorageBackend:
     backend_type, location = backend_spec.split(':', 1)
     if backend_type == 'record_dir':
         return RecordDirStore(
-            root=Path(location),
+            root=Path(location).absolute(),
             pid_mapping_function=lambda x: x,
             suffix='',
         )
     elif backend_type == 'sqlite':
         return SQLiteBackend(
-            db_path=Path(location) / '.records.db',
+            db_path=Path(location).absolute() / sqlite_record_file_name,
         )
     else:
         msg = (
@@ -67,8 +71,7 @@ def copy_records(
     source: StorageBackend,
     destination: StorageBackend,
 ):
-    source_records = source.get_records_of_classes(['Thing'])
-    destination.add_records_bulk(source_records)
+    destination.add_records_bulk(source.get_all_records())
 
 
 def needs_copy(

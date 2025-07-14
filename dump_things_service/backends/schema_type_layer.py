@@ -121,6 +121,14 @@ class _SchemaTypeLayer(StorageBackend):
             schema_model=self.schema_model,
         )
 
+    def get_all_records(
+        self,
+    ) -> BackendResultList:
+        return SchemaTypeLayerResultList(
+            origin_list=self.backend.get_all_records(),
+            schema_model=self.schema_model,
+        )
+
     def __getattr__(self, name: str) -> Any:
         """Delegate all other attributes to the underlying backend."""
         return getattr(self.backend, name)

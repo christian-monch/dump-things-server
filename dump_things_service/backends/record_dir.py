@@ -173,6 +173,25 @@ class _RecordDirStore(StorageBackend):
             )
         )
 
+    def get_all_records(
+        self,
+    ) -> RecordDirResultList:
+
+        return RecordDirResultList().add_info(
+            sorted(
+                (
+                    ResultListInfo(
+                        iri=index_entry.iri,
+                        class_name=index_entry.class_name,
+                        sort_key=index_entry.sort_key,
+                        private=Path(index_entry.path),
+                    )
+                    for index_entry in self.index.get_info_for_all_classes()
+                ),
+                key=lambda result_list_info: result_list_info.sort_key,
+            )
+        )
+
 
 # Ensure that there is only one store per root directory.
 _existing_stores = {}

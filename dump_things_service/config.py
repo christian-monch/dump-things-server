@@ -27,7 +27,10 @@ from dump_things_service import (
 )
 from dump_things_service.backends.record_dir import RecordDirStore
 from dump_things_service.backends.schema_type_layer import SchemaTypeLayer
-from dump_things_service.backends.sqlite import SQLiteBackend
+from dump_things_service.backends.sqlite import (
+    SQLiteBackend,
+    record_file_name as sqlite_record_file_name,
+)
 from dump_things_service.converter import get_conversion_objects
 from dump_things_service.model import get_model_for_schema
 from dump_things_service.store.model_store import ModelStore
@@ -302,7 +305,7 @@ def process_config_object(
             )
         elif backend.type == 'sqlite':
             curated_store_backend = SQLiteBackend(
-                db_path=store_path / collection_info.curated / 'records.db',
+                db_path=store_path / collection_info.curated / sqlite_record_file_name,
             )
         else:
             msg = f'Unsupported backend `{collection_info.backend}` for collection `{collection_name}`.'
@@ -374,7 +377,7 @@ def process_config_object(
                     )
                 elif backend.type == 'sqlite':
                     token_store_backend = SQLiteBackend(
-                        db_path=store_dir / 'records.db',
+                        db_path=store_dir / sqlite_record_file_name,
                     )
                 else:
                     msg = f'Unsupported backend `{collection_info.backend.type}` for collection `{collection_name}`.'
