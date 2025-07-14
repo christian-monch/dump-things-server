@@ -107,12 +107,6 @@ parser.add_argument(
     help="Set the log level for the service, allowed values are 'ERROR', 'WARNING', 'INFO', 'DEBUG'. Default is 'warning'.",
 )
 parser.add_argument(
-    '--export-to',
-    default='',
-    metavar='FILE_NAME',
-    help="Export the store to the file FILE_NAME and exit the process. If FILE_NAME is `-', the data is written to stdout.",
-)
-parser.add_argument(
     '--export-json',
     default='',
     metavar='FILE_NAME',
@@ -160,7 +154,7 @@ except ConfigError:
     g_instance_config = None
 
 
-for switch in ('to', 'json', 'tree'):
+for switch in ('json', 'tree'):
     argument = getattr(arguments, 'export_' + switch)
     if argument:
         if g_error:
