@@ -234,13 +234,7 @@ The service supports the following command line parameters:
 - `--log-level`: set the log level for the service, allowed values are `ERROR`, `WARNING`, `INFO`, `DEBUG`. The default-level is `WARNING`.
 
 
-- `--sort-by`: sort results by the given fields. Multiple fields can be specified, e.g. `--sort-by pid --sort-by date` to define primary, secondary, etc. sorting fields. If a given field is not present in the record, the record will be sorted behind all records that possess the field.
-
-
-- `--export-to`: export all data in `<storage root>` as JSON to the given path and exit. If the path is `-`, the data will be written to `stdout`. The data in `<storage root>` will not be modified. This is useful to export the data for backup or migration purposes. The file will contain all records in all collections. NOTE: the resulting file might be large.
-
-
-- `--export-json`: an alias for `export-to`.
+- `--export-json`: export all data in `<storage root>` as JSON to the given path and exit. If the path is `-`, the data will be written to `stdout`. The data in `<storage root>` will not be modified. This is useful to export the data for backup or migration purposes. The file will contain all records in all collections. NOTE: the resulting file might be large.
 
 
 - `--export-tree`: export all data in `<storage root>` as file tree at the given path. The tree confirms to the [dumpthings-specification](https://concepts.datalad.org/dump-things/).
@@ -350,6 +344,19 @@ tokens:
         incoming_label: "curated"
 ```
 In this example the curated area is `datamgt/curated` and the incoming area for the token `trusted-submitter-token` is `datamgt` plus the incoming zone `curated`, i.e., `datamgt/curated` which is exactly the curated area defined for `collection_1`.
+
+
+### Maintenance commands
+
+- `dump-things-rebuild-index`: this command rebuilds the persistent index of a `record-dir`store. This should be done after the `record-dir` store was modified outside the service, for example, by manually adding or removing files in the directory structure of the store.
+
+- `dump-things-copy-store`: this command copies a collection that is stored in a source store to a destination store. For example, to copy a collection from a `record-dir` store at the directory `<path-to-data>/penguis/curated` to a `sqlite` store in the same directory, the following command can be used:
+  ```bash
+  > dump-things-copy-store \
+      directory_dir:<path-to-data>/penguis/curated  \
+      sqlite:<path-to-data>/penguis/curated
+  ```
+  Note: when records are copied from a `record-dir` store, the index is used to locate the records in the source store. If the index is not up-to-date, the copied records might not be complete. In this case, it is recommended to run `dump-things-rebuild-index` on the source store before copying.
 
 
 ### Restrictions
