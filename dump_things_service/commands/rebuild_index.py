@@ -42,15 +42,6 @@ parser.add_argument(
     help='The format (and suffix) of records in the `record_dir`-store. This '
          'overrides the format defined in a configuration file.',
 )
-parser.add_argument(
-    '--sort-by',
-    action='append',
-    help='Perform result sorting by the given fields. Multiple fields can be '
-         'specified, e.g. `--sort-by pid --sort-by date`. The default is to '
-         'sort by `pid`. Explanation: result sorting of `record_dir`-stores'
-         'requires that sorting information is backed into the indices. This '
-         'is done during the index rebuild.',
-)
 
 
 def process_config(arguments) -> tuple[Path, str, str]:
@@ -94,7 +85,7 @@ def main():
     arguments = parser.parse_args()
 
     store, schema, suffix = process_config(arguments)
-    rebuild_index(store, schema, suffix, arguments.sort_by)
+    rebuild_index(store, schema, suffix, ['pid'])
     return 0
 
 

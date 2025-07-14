@@ -107,12 +107,6 @@ parser.add_argument(
     help="Set the log level for the service, allowed values are 'ERROR', 'WARNING', 'INFO', 'DEBUG'. Default is 'warning'.",
 )
 parser.add_argument(
-    '--sort-by',
-    action='append',
-    default=[],
-    help='Sort results by the given fields. Multiple fields can be specified, e.g. `--sort-by pid --sort-by date`.',
-)
-parser.add_argument(
     '--export-to',
     default='',
     metavar='FILE_NAME',
@@ -154,7 +148,7 @@ try:
     g_instance_config = process_config(
         store_path=store_path,
         config_file=config_path,
-        order_by=arguments.sort_by,
+        order_by=['pid'],
         globals_dict=globals(),
     )
 except ConfigError:
