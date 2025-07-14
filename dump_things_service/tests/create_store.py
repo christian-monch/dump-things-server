@@ -100,9 +100,9 @@ def create_collection(
         curated_dir.mkdir(parents=True, exist_ok=True)
 
     if collection_config.backend is None:
-        collection_config.backend = BackendConfigRecordDir(type='record_dir')
+        collection_config.backend = BackendConfigRecordDir(type='record_dir+stl')
 
-    if collection_config.backend.type == 'record_dir':
+    if collection_config.backend.type == 'record_dir+stl':
 
         # Add the collection level config file
         collection_config_file = curated_dir / config_file_name

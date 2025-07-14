@@ -214,6 +214,15 @@ class RecordDirIndex:
         lgr.info('Index built')
         self.needs_rebuild = False
 
+    def rebuild_if_needed(
+        self,
+        schema: str,
+        order_by: Iterable[str] | None = None,
+    ):
+        if self.needs_rebuild:
+            self.rebuild_index(schema=schema, order_by=order_by)
+            self.needs_rebuild = False
+
     def _get_class_name(self, path: Path) -> str:
         """Get the class name from the path."""
         rel_path = path.absolute().relative_to(self.store_dir)

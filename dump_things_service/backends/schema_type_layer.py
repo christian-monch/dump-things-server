@@ -63,10 +63,11 @@ class SchemaTypeLayerResultList(BackendResultList):
             sort_key,
             private
         )
-        origin_element.json_object['schema_type'] = _get_schema_type(
-            class_name,
-            self.schema_model,
-        )
+        if 'schema_type' not in origin_element.json_object:
+            origin_element.json_object['schema_type'] = _get_schema_type(
+                class_name,
+                self.schema_model,
+            )
         return origin_element
 
 
@@ -106,10 +107,11 @@ class _SchemaTypeLayer(StorageBackend):
     ) -> RecordInfo | None:
         origin_result = self.backend.get_record_by_iri(iri)
         if origin_result:
-            origin_result.json_object['schema_type'] = _get_schema_type(
-                origin_result.class_name,
-                self.schema_model,
-            )
+            if 'schema_type' not in origin_result.json_object:
+                origin_result.json_object['schema_type'] = _get_schema_type(
+                    origin_result.class_name,
+                    self.schema_model,
+                )
         return origin_result
 
     def get_records_of_classes(

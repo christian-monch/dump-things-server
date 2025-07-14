@@ -90,10 +90,16 @@ class _RecordDirStore(StorageBackend):
         self.index = RecordDirIndex(root, suffix)
 
     def build_index(
-            self,
-            schema: str,
+        self,
+        schema: str,
     ):
         self.index.rebuild_index(schema, self.order_by)
+
+    def build_index_if_needed(
+        self,
+        schema: str,
+    ):
+        self.index.rebuild_if_needed(schema, self.order_by)
 
     def add_record(
         self,
