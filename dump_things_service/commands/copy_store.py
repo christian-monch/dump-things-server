@@ -5,8 +5,8 @@ from argparse import ArgumentParser
 from pathlib import Path
 
 from dump_things_service.backends import StorageBackend
-from dump_things_service.backends.record_dir import RecordDirStore
-from dump_things_service.backends.sqlite import SQLiteBackend
+from dump_things_service.backends.record_dir import RecordDirStore, _RecordDirStore
+from dump_things_service.backends.sqlite import SQLiteBackend, _SQLiteBackend
 
 
 parser = ArgumentParser(
@@ -71,12 +71,25 @@ def copy_records(
     destination.add_records_bulk(source_records)
 
 
+def needs_copy(
+    source: StorageBackend,
+    destination: StorageBackend,
+) -> bool:
+    if isinstance(source, _RecordDirStore) and isinstance(destination, _RecordDirStore):
+        return source.root != destination.root
+    elif isinstance(source, _SQLiteBackend) and isinstance(destination, _SQLiteBackend):
+        return source.db_path != destination.db_path
+    else:
+        return True  # Different backend types always require a copy.
+
+
 def main():
     arguments = parser.parse_args()
 
     source = get_backend(arguments.source)
     destination = get_backend(arguments.destination)
-    copy_records(source, destination)
+    if needs_copy(source, destination):
+        copy_records(source, destination)
     return 0
 
 

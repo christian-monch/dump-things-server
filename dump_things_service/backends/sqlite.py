@@ -114,6 +114,7 @@ class _SQLiteBackend(StorageBackend):
         echo: bool = False
     ) -> None:
         super().__init__(order_by=order_by)
+        self.db_path = db_path
         self.engine = create_engine('sqlite:///' + str(db_path), echo=echo)
         Base.metadata.create_all(self.engine)
 
