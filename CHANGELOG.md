@@ -1,3 +1,45 @@
+# 2.0.0 (2025-07-15)
+
+## Breaking changes
+
+- The `--export-to` command line parameter was removed from
+  `dump-things-service`. It is replaced with the functionally identical command
+  line parameter `--export-json`.
+
+- The `--sort-by` command line parameter was removed from `dump-things-service`.
+  The reason is that sorting key modification requires rebuilding of the
+  `record_dir` indices. That would defeat the purpose of the persistent
+  `record_dir` index, which is fast startup. All results are now sorted by the
+  `pid` field by default.
+
+- The backend that was previously called `record_dir` is now called
+  `record_dir+stl`.
+  `record_dir+stl` is now the default backend. It is functionally identical to
+  the previous `record_dir`-backend. Changes in configuration files are only
+  required if the `record_dir` backend was explicitly defined in the
+  configuration file.
+
+## New features
+
+- Factor out a Schema Type Layer (STL) from the `record_dir` backend." The STL
+  can be used with every backend. It removes top-level `schema_type`-entries
+  from records before they are stored. It also adds the correct top-level
+  `schema_type`-entry to records that are read from a store. This functionality 
+  was previously built into the `record_dir` backend. Now it can be combined
+  with `record_dir` and `sqlite` backends.
+
+- Add the backend extension `stl` which specifies that a backend should be used
+  with the STL. For example `record_dir+stl` defines a backend that uses
+  `record_dir` with the STL on top.
+
+- The command `dump-things-copy-store` was added. It copies a data store from 
+  one backend to another. This is useful for migrating to a different backend,
+  for example, from the `record_dir` backend to the `sqlite` backend.
+
+- The command `dump-things-rebuild-index` was added. It allows rebuilding the
+  index of a `record_dir` data store, after the store was modified externally.
+
+
 # 1.1.0 (2025-07-10)
 
 ## New features
@@ -79,6 +121,7 @@
 - monkeypatching was not triggered earlier, this is fixed now.
 
 ## Cleanup
+
 - the datalad-concepts submodule was removed
 - any calls to patch via post-install script were removed
 
