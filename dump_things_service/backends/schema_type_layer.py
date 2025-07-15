@@ -14,6 +14,7 @@ all cases (because we don't keep track of whether the initial record had a
 `schema_type`-attribute or not). So every record read from this backend
 will contain a `schema_type` attribute.
 """
+
 from __future__ import annotations
 
 from typing import (
@@ -49,19 +50,15 @@ class SchemaTypeLayerResultList(BackendResultList):
         self.list_info = self.origin_list.list_info
 
     def generate_result(
-            self,
-            index: int,
-            iri: str,
-            class_name: str,
-            sort_key: str,
-            private: Any,
+        self,
+        index: int,
+        iri: str,
+        class_name: str,
+        sort_key: str,
+        private: Any,
     ) -> RecordInfo:
         origin_element = self.origin_list.generate_result(
-            index,
-            iri,
-            class_name,
-            sort_key,
-            private
+            index, iri, class_name, sort_key, private
         )
         if 'schema_type' not in origin_element.json_object:
             origin_element.json_object['schema_type'] = _get_schema_type(
@@ -84,10 +81,10 @@ class _SchemaTypeLayer(StorageBackend):
         self.schema_model = get_schema_model_for_schema(schema)
 
     def add_record(
-            self,
-            iri: str,
-            class_name: str,
-            json_object: dict,
+        self,
+        iri: str,
+        class_name: str,
+        json_object: dict,
     ):
         # Remove the top level `schema_type` from the JSON object because we
         # don't want to store it in the files. We add `schema_type` after
@@ -102,22 +99,18 @@ class _SchemaTypeLayer(StorageBackend):
         )
 
     def get_record_by_iri(
-            self,
-            iri: str,
+        self,
+        iri: str,
     ) -> RecordInfo | None:
         origin_result = self.backend.get_record_by_iri(iri)
-        if origin_result:
-            if 'schema_type' not in origin_result.json_object:
-                origin_result.json_object['schema_type'] = _get_schema_type(
-                    origin_result.class_name,
-                    self.schema_model,
-                )
+        if origin_result and 'schema_type' not in origin_result.json_object:
+            origin_result.json_object['schema_type'] = _get_schema_type(
+                origin_result.class_name,
+                self.schema_model,
+            )
         return origin_result
 
-    def get_records_of_classes(
-            self,
-            class_names: list[str]
-    ) -> BackendResultList:
+    def get_records_of_classes(self, class_names: list[str]) -> BackendResultList:
         return SchemaTypeLayerResultList(
             origin_list=self.backend.get_records_of_classes(class_names),
             schema_model=self.schema_model,
@@ -145,6 +138,7 @@ def _get_schema_type(
 
 # Ensure that there is only one store per root directory.
 _existing_layers = {}
+
 
 def SchemaTypeLayer(  # noqa: N802
     backend: StorageBackend,

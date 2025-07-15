@@ -59,7 +59,7 @@ class BackendResultList(LazyList):
        integrated result. The `sort_key` supports this by providing a
        backend-independent, record-specific key that can be used to sort the
        records.
-        """
+    """
 
     def generate_element(self, index: int, info: ResultListInfo) -> RecordInfo:
         """
@@ -70,11 +70,7 @@ class BackendResultList(LazyList):
         :return: A JSON object.
         """
         return self.generate_result(
-            index,
-            info.iri,
-            info.class_name,
-            info.sort_key,
-            info.private
+            index, info.iri, info.class_name, info.sort_key, info.private
         )
 
     def unique_identifier(self, info: ResultListInfo) -> Any:
@@ -161,8 +157,6 @@ def create_sort_key(
     order_by: Iterable[str],
 ) -> str:
     return '-'.join(
-        str(json_object.get(key))
-        if json_object.get(key) is not None
-        else chr(0x10FFFF)
+        str(json_object.get(key)) if json_object.get(key) is not None else chr(0x10FFFF)
         for key in order_by
     )

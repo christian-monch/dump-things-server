@@ -107,19 +107,19 @@ class RecordDirIndex:
             )
 
     def add_iri_info_with_session(
-            self,
-            session: Session,
-            iri: str,
-            class_name: str,
-            path: str,
-            sort_key: str,
+        self,
+        session: Session,
+        iri: str,
+        class_name: str,
+        path: str,
+        sort_key: str,
     ):
         existing_record = session.query(IndexEntry).filter_by(iri=iri).first()
         if existing_record:
             if existing_record.path != path:
                 msg = f'Duplicated IRI ({iri}): already indexed record {existing_record.path} has the same IRI as new record at {path}.'
                 raise ValueError(msg)
-            existing_record.sort_key=sort_key
+            existing_record.sort_key = sort_key
         else:
             session.add(
                 IndexEntry(
@@ -142,8 +142,8 @@ class RecordDirIndex:
             return None
 
     def get_info_for_class(
-            self,
-            class_name: str,
+        self,
+        class_name: str,
     ) -> Generator[IndexEntry]:
         with Session(self.engine) as session, session.begin():
             statement = select(IndexEntry).filter_by(class_name=class_name)
@@ -172,7 +172,6 @@ class RecordDirIndex:
 
         model = get_model_for_schema(schema)[0]
         with Session(self.engine) as session, session.begin():
-
             statement = delete(IndexEntry)
             session.execute(statement)
 

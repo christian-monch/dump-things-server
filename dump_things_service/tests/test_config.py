@@ -37,7 +37,9 @@ def test_structure_error_detection(tmp_path):
 
 def test_missing_incoming_detection(tmp_path):
     schema_path = Path(__file__).parent / 'testschema.yaml'
-    config_object = GlobalConfig(**yaml.load("""
+    config_object = GlobalConfig(
+        **yaml.load(
+            """
 type: collections
 version: 1
 collections:
@@ -52,7 +54,10 @@ tokens:
       collection_1:
         mode: WRITE_COLLECTION
         incoming_label: incoming_anonymous
-    """, Loader=yaml.SafeLoader))
+    """,
+            Loader=yaml.SafeLoader,
+        )
+    )
 
     create_store(
         root_dir=tmp_path,

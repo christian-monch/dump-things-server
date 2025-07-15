@@ -56,17 +56,17 @@ def test_search_by_class(fastapi_client_simple):
                 {
                     'given_name': 'curated',
                     'pid': 'abc:curated',
-                    'schema_type': 'abc:Person'
+                    'schema_type': 'abc:Person',
                 },
                 {
                     'given_name': 'mode_curated',
                     'pid': 'abc:mode_test',
-                    'schema_type': 'abc:Person'
+                    'schema_type': 'abc:Person',
                 },
                 {
                     'given_name': 'WolfgangÖÄß',
                     'pid': 'abc:some_timee@x.com',
-                    'schema_type': 'abc:Person'
+                    'schema_type': 'abc:Person',
                 },
             ]
         else:
@@ -114,10 +114,9 @@ def test_store_record(fastapi_client_simple):
             headers={'x-dumpthings-token': token},
         )
         assert response.status_code == HTTP_200_OK
-        assert cleaned_json(
-            response.json(),
-            remove_keys=('annotations',)
-        ) == extra_record
+        assert (
+            cleaned_json(response.json(), remove_keys=('annotations',)) == extra_record
+        )
 
     # Check that other collections do not report the new record
     for i in range(3, 6):
@@ -125,11 +124,13 @@ def test_store_record(fastapi_client_simple):
             f'/collection_{i}/records/Person',
             headers={'x-dumpthings-token': 'basic_access'},
         )
-        assert response.json() == [{
-            'schema_type': 'abc:Person',
-            'pid': pid,
-            'given_name': given_name,
-        }]
+        assert response.json() == [
+            {
+                'schema_type': 'abc:Person',
+                'pid': pid,
+                'given_name': given_name,
+            }
+        ]
 
     # Check that subclasses are retrieved
     for i, token in basic_write_locations:
@@ -140,9 +141,9 @@ def test_store_record(fastapi_client_simple):
         cleaned_response = cleaned_json(response.json(), remove_keys=('annotations',))
         assert extra_record in cleaned_response
         assert {
-           'schema_type': 'abc:Person',
+            'schema_type': 'abc:Person',
             'pid': pid,
-            'given_name': given_name
+            'given_name': given_name,
         } in cleaned_response
 
     # Check pagination
@@ -158,11 +159,10 @@ def test_store_record(fastapi_client_simple):
         cleaned_response = cleaned_json(records, remove_keys=('annotations',))
         assert extra_record in cleaned_response
         assert {
-           'schema_type': 'abc:Person',
-           'pid': pid,
-           'given_name': given_name
+            'schema_type': 'abc:Person',
+            'pid': pid,
+            'given_name': given_name,
         } in cleaned_response
-
 
 
 def test_encoding(fastapi_client_simple):

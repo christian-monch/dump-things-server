@@ -41,7 +41,9 @@ _cached_conversion_objects = {}
 # `https://www.w3.org/TR/NOTE-datetime`. We add a regex-based validation and
 # return the validated datetime string verbatim.
 
-_datetime_regex = re.compile(r'^([-+]\d+)|(\d{4})|(\d{4}-[01]\d)|(\d{4}-[01]\d-[0-3]\d)|(\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d:[0-5]\d\.\d+([+-][0-2]\d:[0-5]\d|Z))|(\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d:[0-5]\d([+-][0-2]\d:[0-5]\d|Z))|(\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d([+-][0-2]\d:[0-5]\d|Z))$')
+_datetime_regex = re.compile(
+    r'^([-+]\d+)|(\d{4})|(\d{4}-[01]\d)|(\d{4}-[01]\d-[0-3]\d)|(\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d:[0-5]\d\.\d+([+-][0-2]\d:[0-5]\d|Z))|(\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d:[0-5]\d([+-][0-2]\d:[0-5]\d|Z))|(\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d([+-][0-2]\d:[0-5]\d|Z))$'
+)
 
 
 def _validate_datetime(value: str) -> str:
@@ -50,6 +52,7 @@ def _validate_datetime(value: str) -> str:
         msg = 'Invalid datetime format: {value}'
         raise ValueError(msg)
     return value
+
 
 bind(
     datatype=URIRef('https://www.w3.org/TR/NOTE-datetime'),
@@ -89,11 +92,7 @@ class FormatConverter:
             return self._convert_ttl_to_json
         return self._convert_json_to_ttl
 
-    def convert(
-        self,
-        data: str | dict,
-        target_class: str
-    ) -> str | dict:
+    def convert(self, data: str | dict, target_class: str) -> str | dict:
         return self.converter(data, target_class)
 
     def _convert_json_to_ttl(
@@ -126,7 +125,7 @@ class FormatConverter:
             data=data,
             input_format=Format.ttl,
             output_format=Format.json,
-            **self.conversion_objects
+            **self.conversion_objects,
         )
         return cleaned_json(json_loads(json_string))
 
@@ -136,7 +135,9 @@ class ConvertingList(LazyList):
     A lazy list that converts records stored in an "input" lazy list. The
     input lazy list must return `RecordInfo`-objects.
     """
-    def __init__(self,
+
+    def __init__(
+        self,
         input_list: LazyList,
         schema: str,
         input_format: Format,

@@ -3,9 +3,8 @@ from __future__ import annotations
 import sys
 from argparse import ArgumentParser
 from pathlib import Path
+from typing import TYPE_CHECKING
 
-from dump_things_service.backends import StorageBackend
-from dump_things_service.config import get_backend_and_extension
 from dump_things_service.backends.record_dir import (
     RecordDirStore,
     _RecordDirStore,
@@ -14,41 +13,49 @@ from dump_things_service.backends.schema_type_layer import SchemaTypeLayer
 from dump_things_service.backends.sqlite import (
     SQLiteBackend,
     _SQLiteBackend,
+)
+from dump_things_service.backends.sqlite import (
     record_file_name as sqlite_record_file_name,
 )
+from dump_things_service.config import get_backend_and_extension
+
+if TYPE_CHECKING:
+    from dump_things_service.backends import StorageBackend
 
 
 parser = ArgumentParser(
     prog='Copy collection content from source store to destination store',
     description='Copy the records of a collection that is stored in the '
-                'source-store to the destination-store. This command copies '
-                'records without validation of their content.',
+    'source-store to the destination-store. This command copies '
+    'records without validation of their content.',
 )
 parser.add_argument(
     'source',
     help='The source store. The format is: `<backend>:<directory-path>. '
-         'Supported backends are: "record_dir", "record_dir_stl", and '
-         '"sqlite". If the source store is a "record_dir"-store or a '
-         '"record_dir_stl"-store, its index is used to locate the source '
-         'records.',
+    'Supported backends are: "record_dir", "record_dir_stl", and '
+    '"sqlite". If the source store is a "record_dir"-store or a '
+    '"record_dir_stl"-store, its index is used to locate the source '
+    'records.',
 )
 parser.add_argument(
     'destination',
     help='The destination store. The format is: `<backend>:<directory-path>. '
-         'Supported backends are: "record_dir", "record_dir_stl", and "sqlite".'
+    'Supported backends are: "record_dir", "record_dir_stl", and "sqlite".',
 )
 parser.add_argument(
-    '-c', '--config',
+    '-c',
+    '--config',
     metavar='CONFIG_FILE',
-    help='Read the configuration from \'CONFIG_FILE\' instead of looking for '
-         'it in the directory of the `record_dir`-store.',
+    help="Read the configuration from 'CONFIG_FILE' instead of looking for "
+    'it in the directory of the `record_dir`-store.',
 )
 parser.add_argument(
-    '-s', '--schema',
+    '-s',
+    '--schema',
     metavar='SCHEMA',
     help='If any of the stores uses a `record_dir_stl`-backend, use the given '
-         '`SCHEMA` to determine the correct class-URI for added '
-         '`schema_type`-attributes.',
+    '`SCHEMA` to determine the correct class-URI for added '
+    '`schema_type`-attributes.',
 )
 
 
@@ -115,10 +122,9 @@ def needs_copy(
 ) -> bool:
     if isinstance(source, _RecordDirStore) and isinstance(destination, _RecordDirStore):
         return source.root != destination.root
-    elif isinstance(source, _SQLiteBackend) and isinstance(destination, _SQLiteBackend):
+    if isinstance(source, _SQLiteBackend) and isinstance(destination, _SQLiteBackend):
         return source.db_path != destination.db_path
-    else:
-        return True
+    return True
 
 
 def main():
@@ -139,5 +145,5 @@ def main():
     return 0
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     sys.exit(main())

@@ -1,4 +1,4 @@
-from __future__ import annotations   # noqa: I001 -- the patches have to be imported early
+from __future__ import annotations  # noqa: I001 -- the patches have to be imported early
 
 import argparse
 import logging
@@ -13,6 +13,7 @@ from typing import (
 from starlette.status import HTTP_413_REQUEST_ENTITY_TOO_LARGE
 
 from dump_things_service.lazy_list import PriorityList, ModifierList
+
 # Perform the patching before importing any third-party libraries
 from dump_things_service.patches import enabled  # noqa: F401
 
@@ -87,9 +88,10 @@ parser.add_argument('--host', default='0.0.0.0')  # noqa S104
 parser.add_argument('--port', default=8000, type=int)
 parser.add_argument('--origins', action='append', default=[])
 parser.add_argument(
-    '-c', '--config',
+    '-c',
+    '--config',
     metavar='CONFIG_FILE',
-    help="Read the configuration from 'CONFIG_FILE' instead of looking for it in the data store root directory. "
+    help="Read the configuration from 'CONFIG_FILE' instead of looking for it in the data store root directory. ",
 )
 parser.add_argument(
     '--root-path',
@@ -116,7 +118,7 @@ parser.add_argument(
     '--export-tree',
     default='',
     metavar='DIRECTORY_NAME',
-    help="Export the store to a dumpthings-conformant tree at DIRECTORY_NAME and exit the process. If DIRECTORY_NAME does not exist, the service will try to create it.",
+    help='Export the store to a dumpthings-conformant tree at DIRECTORY_NAME and exit the process. If DIRECTORY_NAME does not exist, the service will try to create it.',
 )
 parser.add_argument(
     'store',
@@ -129,7 +131,9 @@ arguments = parser.parse_args()
 # Set the log level
 numeric_level = getattr(logging, arguments.log_level.upper(), None)
 if not isinstance(numeric_level, int):
-    logger.error('Invalid log level: %s, defaulting to level "WARNING"', arguments.log_level)
+    logger.error(
+        'Invalid log level: %s, defaulting to level "WARNING"', arguments.log_level
+    )
 else:
     logging.basicConfig(level=numeric_level)
 
@@ -137,7 +141,9 @@ store_path = Path(arguments.store)
 
 g_error = None
 
-config_path = Path(arguments.config) if arguments.config else store_path / config_file_name
+config_path = (
+    Path(arguments.config) if arguments.config else store_path / config_file_name
+)
 try:
     g_instance_config = process_config(
         store_path=store_path,
@@ -158,7 +164,9 @@ for switch in ('json', 'tree'):
     argument = getattr(arguments, 'export_' + switch)
     if argument:
         if g_error:
-            sys.stderr.write('ERROR: Configuration errors detected, cannot export store.')
+            sys.stderr.write(
+                'ERROR: Configuration errors detected, cannot export store.'
+            )
             sys.exit(1)
         exporter_info[switch](g_instance_config, argument)
         sys.exit(0)
@@ -177,7 +185,9 @@ def handle_global_error():
 # the error to any request that is made to the server.
 if g_error:
     if __name__ == '__main__' and arguments.error_mode:
-        logger.warning('Server runs in error mode, all endpoints will return error information.')
+        logger.warning(
+            'Server runs in error mode, all endpoints will return error information.'
+        )
 
         @app.post('/{full_path:path}')
         def post_global_error(request: Request, full_path: str):  # noqa: ARG001
@@ -225,10 +235,16 @@ def store_record(
 
     _check_collection(g_instance_config, collection)
 
-    token = get_default_token_name(g_instance_config, collection) if api_key is None else api_key
+    token = (
+        get_default_token_name(g_instance_config, collection)
+        if api_key is None
+        else api_key
+    )
     # Get the token permissions and extend them by the default permissions
     store, token_permissions = get_token_store(g_instance_config, collection, token)
-    final_permissions = join_default_token_permissions(g_instance_config, token_permissions, collection)
+    final_permissions = join_default_token_permissions(
+        g_instance_config, token_permissions, collection
+    )
     if not final_permissions.incoming_write:
         raise HTTPException(
             status_code=HTTP_403_FORBIDDEN,
@@ -288,9 +304,17 @@ async def fetch_token_permissions(
     body: TokenCapabilityRequest,
 ):
     _check_collection(g_instance_config, collection)
-    token = get_default_token_name(g_instance_config, collection) if body.token is None else body.token
-    token_store, token_permissions = get_token_store(g_instance_config, collection, token)
-    final_permissions = join_default_token_permissions(g_instance_config, token_permissions, collection)
+    token = (
+        get_default_token_name(g_instance_config, collection)
+        if body.token is None
+        else body.token
+    )
+    token_store, token_permissions = get_token_store(
+        g_instance_config, collection, token
+    )
+    final_permissions = join_default_token_permissions(
+        g_instance_config, token_permissions, collection
+    )
     return JSONResponse(
         {
             'read_curated': final_permissions.curated_read,
@@ -314,14 +338,18 @@ async def read_record_with_pid(
 ):
     _check_collection(g_instance_config, collection)
 
-    final_permissions, token_store = await process_token(g_instance_config, api_key, collection)
+    final_permissions, token_store = await process_token(
+        g_instance_config, api_key, collection
+    )
 
     class_name, json_object = None, None
     if final_permissions.incoming_read:
         class_name, json_object = token_store.get_object_by_pid(pid)
 
     if not json_object and final_permissions.curated_read:
-        class_name, json_object = g_instance_config.curated_stores[collection].get_object_by_pid(pid)
+        class_name, json_object = g_instance_config.curated_stores[
+            collection
+        ].get_object_by_pid(pid)
 
     if not json_object:
         return None
@@ -358,12 +386,11 @@ async def read_records_of_type(
 
 @app.get('/{collection}/records/p/{class_name}')
 async def read_records_of_type_paginated(
-        collection: str,
-        class_name: str,
-        format: Format = Format.json,  # noqa A002
-        api_key: str = Depends(api_key_header_scheme),
+    collection: str,
+    class_name: str,
+    format: Format = Format.json,  # noqa A002
+    api_key: str = Depends(api_key_header_scheme),
 ) -> Page[dict | str]:
-
     result_list = await _read_records_of_type(
         collection=collection,
         class_name=class_name,
@@ -375,20 +402,19 @@ async def read_records_of_type_paginated(
 
 
 async def _read_records_of_type(
-        collection: str,
-        class_name: str,
-        format: Format = Format.json,  # noqa A002
-        api_key: str = Depends(api_key_header_scheme),
-        bound: int | None = None,
+    collection: str,
+    class_name: str,
+    format: Format = Format.json,  # noqa A002
+    api_key: str = Depends(api_key_header_scheme),
+    bound: int | None = None,
 ) -> LazyList:
-
     def check_bounds(length: int, max_length: int):
         if length > max_length:
             raise HTTPException(
                 status_code=HTTP_413_REQUEST_ENTITY_TOO_LARGE,
                 detail=f'Too many records found for class "{class_name}" in '
-                       f'collection "{collection}". Please use pagination '
-                       f'(/{collection}/records/p/{class_name}).',
+                f'collection "{collection}". Please use pagination '
+                f'(/{collection}/records/p/{class_name}).',
             )
 
     _check_collection(g_instance_config, collection)
@@ -400,7 +426,9 @@ async def _read_records_of_type(
             detail=f'No "{class_name}"-class in collection "{collection}".',
         )
 
-    final_permissions, token_store = await process_token(g_instance_config, api_key, collection)
+    final_permissions, token_store = await process_token(
+        g_instance_config, api_key, collection
+    )
 
     result_list = PriorityList()
     if final_permissions.incoming_read:
@@ -412,7 +440,9 @@ async def _read_records_of_type(
 
     if final_permissions.curated_read:
         for search_class_name in get_subclasses(model, class_name):
-            curated_store_list = g_instance_config.curated_stores[collection].get_objects_of_class(search_class_name)
+            curated_store_list = g_instance_config.curated_stores[
+                collection
+            ].get_objects_of_class(search_class_name)
             if bound:
                 check_bounds(len(curated_store_list), bound)
             result_list.add_list(curated_store_list)
@@ -440,9 +470,15 @@ async def process_token(
     api_key: str,
     collection: str,
 ) -> tuple[TokenPermission, ModelStore]:
-    token = get_default_token_name(instance_config, collection) if api_key is None else api_key
+    token = (
+        get_default_token_name(instance_config, collection)
+        if api_key is None
+        else api_key
+    )
     token_store, token_permissions = get_token_store(instance_config, collection, token)
-    final_permissions = join_default_token_permissions(instance_config, token_permissions, collection)
+    final_permissions = join_default_token_permissions(
+        instance_config, token_permissions, collection
+    )
     if not final_permissions.incoming_read and not final_permissions.curated_read:
         raise HTTPException(
             status_code=HTTP_403_FORBIDDEN,

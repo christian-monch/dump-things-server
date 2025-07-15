@@ -84,12 +84,12 @@ class SQLResultList(BackendResultList):
         self.engine = engine
 
     def generate_result(
-            self,
-            _: int,
-            iri: str,
-            class_name: str,
-            sort_key: str,
-            db_id: int,
+        self,
+        _: int,
+        iri: str,
+        class_name: str,
+        sort_key: str,
+        db_id: int,
     ) -> RecordInfo:
         """
         Generate a JSON representation of the record at index `index`.
@@ -104,7 +104,10 @@ class SQLResultList(BackendResultList):
         with Session(self.engine) as session, session.begin():
             thing = session.get(Thing, db_id)
             return RecordInfo(
-                iri=iri, class_name=class_name, json_object=thing.object, sort_key=sort_key
+                iri=iri,
+                class_name=class_name,
+                json_object=thing.object,
+                sort_key=sort_key,
             )
 
 
@@ -114,7 +117,7 @@ class _SQLiteBackend(StorageBackend):
         db_path: Path,
         *,
         order_by: Iterable[str] | None = None,
-        echo: bool = False
+        echo: bool = False,
     ) -> None:
         super().__init__(order_by=order_by)
         self.db_path = db_path
@@ -149,18 +152,18 @@ class _SQLiteBackend(StorageBackend):
                 )
 
     def _add_record_with_session(
-            self,
-            session: Session,
-            iri: str,
-            class_name: str,
-            json_object: dict,
+        self,
+        session: Session,
+        iri: str,
+        class_name: str,
+        json_object: dict,
     ):
         sort_key = create_sort_key(json_object, self.order_by)
         existing_record = session.query(Thing).filter_by(iri=iri).first()
         if existing_record:
             existing_record.class_name = class_name
             existing_record.object = json_object
-            existing_record.sort_key=sort_key
+            existing_record.sort_key = sort_key
         else:
             session.add(
                 Thing(
@@ -226,15 +229,13 @@ class _SQLiteBackend(StorageBackend):
                 for thing in session.scalars(statement).all()
             )
 
+
 # Ensure that there is only one SQL-backend per database file.
 _existing_sqlite_backends = {}
 
 
 def SQLiteBackend(  # noqa: N802
-        db_path: Path,
-        *,
-        order_by: Iterable[str] | None = None,
-        echo: bool = False
+    db_path: Path, *, order_by: Iterable[str] | None = None, echo: bool = False
 ) -> _SQLiteBackend:
     existing_backend = _existing_sqlite_backends.get(db_path)
     if not existing_backend:

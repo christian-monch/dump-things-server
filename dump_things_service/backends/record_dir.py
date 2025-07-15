@@ -3,6 +3,7 @@ Backend that stores records in a directory structure
 
 The disk-layout is described in <https://concepts.datalad.org/dump-things/>.
 """
+
 from __future__ import annotations
 
 import logging
@@ -42,6 +43,7 @@ class RecordDirResultList(BackendResultList):
     """
     The specific result list for record directory backends.
     """
+
     def generate_result(
         self,
         _: int,
@@ -144,7 +146,6 @@ class _RecordDirStore(StorageBackend):
         self,
         iri: str,
     ) -> RecordInfo | None:
-
         index_entry = self.index.get_info_for_iri(iri)
         if index_entry is None:
             return None
@@ -158,11 +159,7 @@ class _RecordDirStore(StorageBackend):
             sort_key=sort_key,
         )
 
-    def get_records_of_classes(
-        self,
-        class_names: list[str]
-    ) -> RecordDirResultList:
-
+    def get_records_of_classes(self, class_names: list[str]) -> RecordDirResultList:
         return RecordDirResultList().add_info(
             sorted(
                 (
@@ -182,7 +179,6 @@ class _RecordDirStore(StorageBackend):
     def get_all_records(
         self,
     ) -> RecordDirResultList:
-
         return RecordDirResultList().add_info(
             sorted(
                 (
@@ -202,11 +198,12 @@ class _RecordDirStore(StorageBackend):
 # Ensure that there is only one store per root directory.
 _existing_stores = {}
 
+
 def RecordDirStore(  # noqa: N802
-        root: Path,
-        pid_mapping_function: Callable,
-        suffix: str,
-        order_by: Iterable[str] | None = None,
+    root: Path,
+    pid_mapping_function: Callable,
+    suffix: str,
+    order_by: Iterable[str] | None = None,
 ) -> _RecordDirStore:
     """Get a record directory store for the given root directory."""
     existing_store = _existing_stores.get(root)

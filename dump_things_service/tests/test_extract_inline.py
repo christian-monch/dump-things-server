@@ -151,7 +151,10 @@ ttls_with_inline = (
 )
 
 ttl_tree = (
-    ('trr379:test_ttl_inline_1', ('trr379:test_ttl_inline_1_1', 'trr379:test_ttl_inline_1_2')),
+    (
+        'trr379:test_ttl_inline_1',
+        ('trr379:test_ttl_inline_1_1', 'trr379:test_ttl_inline_1_2'),
+    ),
     ('trr379:test_ttl_inline_1_1', ('trr379:test_ttl_inline_1_1_1',)),
     ('trr379:test_ttl_inline_1_2', ()),
     ('trr379:test_ttl_inline_1_1_1', ()),
@@ -159,7 +162,6 @@ ttl_tree = (
 
 
 def test_inline_extraction_locally():
-
     store = ModelStore(
         schema=str(schema_path),
         backend=None,

@@ -39,11 +39,11 @@ def export_collection(
     collection_destination.mkdir(parents=True, exist_ok=True)
 
     config_content = (
-        "type: records\n"
-        "version: 1\n"
-        f"schema: {instance_config.schemas[collection]}\n"
-        "format: yaml\n"
-        "idfx: digest-md5-p3-p3\n"
+        'type: records\n'
+        'version: 1\n'
+        f'schema: {instance_config.schemas[collection]}\n'
+        'format: yaml\n'
+        'idfx: digest-md5-p3-p3\n'
     )
 
     curated_destination = collection_destination / 'curated'
@@ -56,9 +56,14 @@ def export_collection(
 
     # Determine stores for incoming zones
     zones = {
-        label: instance_config.token_stores[token]['collections'].get(collection, {}).get('store')
+        label: instance_config.token_stores[token]['collections']
+        .get(collection, {})
+        .get('store')
         for token, label in instance_config.zones.get(collection, {}).items()
-        if instance_config.token_stores[token]['collections'].get(collection, {}).get('store') is not None
+        if instance_config.token_stores[token]['collections']
+        .get(collection, {})
+        .get('store')
+        is not None
     }
 
     if zones:
@@ -71,7 +76,9 @@ def export_collection(
                 zone_destination.parent.mkdir(parents=True, exist_ok=True)
                 zone_destination.symlink_to(exported_stores[id(store)])
                 continue
-            exported_stores[id(store)] = zone_destination = collection_destination / 'incoming' / zone
+            exported_stores[id(store)] = zone_destination = (
+                collection_destination / 'incoming' / zone
+            )
             zone_destination.mkdir(parents=True, exist_ok=True)
             (zone_destination / '.dumpthings.yaml').write_text(config_content)
             export_classes(store, zone_destination)
@@ -83,7 +90,6 @@ def export_classes(
 ):
     class_names = get_classes(store.model)
     for class_name in class_names:
-
         # We know that pure `Thing` instances are not stored in the store.
         if class_name == 'Thing':
             continue
