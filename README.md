@@ -12,7 +12,7 @@ We distinguish between two areas of a collection, an **incoming** are and a **cu
 Data written to a collection is stored in a collection-specific **incoming** area.
 A curation process, which is outside the scope of the service, moves data from the incoming area of a collection to the **curated** area of the collection.
 
-In order to submit a record to a collection, a token is required.
+To submit a record to a collection, a token is required.
 The token defines read- and write- permissions for the incoming areas of collections and read-permissions for the curated area of a collection.
 A token can carry permissions for multiple collections.
 In addition, the token carries a submitter ID.
@@ -184,25 +184,38 @@ The service currently supports the following backends for storing records:
 
 - `sqlite`: this backend stores records in a SQLite database. There is an individual database file, named `records.db`, for each curated area and incoming area.
 
+- `record_dir+stl`: here `stl` stands for "schema-type-layer".
+  This backend stores records in the same format as `record_dir`, but adds special treatment for the `schema_type` attribute in records.
+  It removes `schema_type`-attributes from the top-level mapping of a record before storing it as YAML-file. When records are read from this backend, a `schema_type` attribute is added back into the record, using a schema to determine the correct class-URI.
+  In other words, all records stored with this backend will have no `schema_type`-attribute in the top-level, and all records read with this backend will have a `schema_type` attribute in the top-level.
+
+- `sqlite+stl`: This backend stores records in the same format as `sqlite`, but adds the same special treatment for the `schema_type` attribute as `record_dir+stl`.
+
 Backends can be defined per collection in the configuration file.
-If no backend is defined for a collection, the `record_dir`-backend is used by default.
+The backend will be used for the curated area and for the incoming areas of the collection.
+If no backend is defined for a collection, the `record_dir+stl`-backend is used by default.
+The `+stl`-backends can be useful to ensure that commands that return records of multiple classes in JSON format will always return records with a `schema_type` attribute.
+This attribute allows to client to determine the class of each result record.
+
+The service guarantees that backends of all types can co-exist independently in the same directory, i.e., there are no name collisions in files that are used for different backends (as long as no class name starts with `.`)).
+
 The following configuration snippet shows how to define a backend for a collection:
 
 ```yaml
 ...
 collections:
-  collection_with_default_record_dir_backend:
+  collection_with_default_record_dir+stl_backend:
     default_token: anon_read
     curated: collection_1/curated
 
-  collection_with_explicit_record_dir_backend:
+  collection_with_explicit_record_dir+stl_backend:
     default_token: anon_read
     curated: collection_1/curated
     backend:
       # The record_dir-backend is identified by the
       # type: "record_dir". No more attributes are
       # defined for this backend.
-      type: record_dir
+      type: record_dir+stl
 
   collection_with_sqlite_backend:
     default_token: anon_read
@@ -234,13 +247,7 @@ The service supports the following command line parameters:
 - `--log-level`: set the log level for the service, allowed values are `ERROR`, `WARNING`, `INFO`, `DEBUG`. The default-level is `WARNING`.
 
 
-- `--sort-by`: sort results by the given fields. Multiple fields can be specified, e.g. `--sort-by pid --sort-by date` to define primary, secondary, etc. sorting fields. If a given field is not present in the record, the record will be sorted behind all records that possess the field.
-
-
-- `--export-to`: export all data in `<storage root>` as JSON to the given path and exit. If the path is `-`, the data will be written to `stdout`. The data in `<storage root>` will not be modified. This is useful to export the data for backup or migration purposes. The file will contain all records in all collections. NOTE: the resulting file might be large.
-
-
-- `--export-json`: an alias for `export-to`.
+- `--export-json`: export all data in `<storage root>` as JSON to the given path and exit. If the path is `-`, the data will be written to `stdout`. The data in `<storage root>` will not be modified. This is useful to export the data for backup or migration purposes. The file will contain all records in all collections. NOTE: the resulting file might be large.
 
 
 - `--export-tree`: export all data in `<storage root>` as file tree at the given path. The tree confirms to the [dumpthings-specification](https://concepts.datalad.org/dump-things/).
@@ -321,6 +328,9 @@ The service provides the following endpoints:
 
 ### Tips & Tricks
 
+
+#### Using the same backend for incoming and curated areas
+
 The service can be configured in such a way that incoming records are immediately available in the curated area.
 To achieve this, the final path of the incoming zone must be the same as the curated area, for example:
 
@@ -351,12 +361,49 @@ tokens:
 ```
 In this example the curated area is `datamgt/curated` and the incoming area for the token `trusted-submitter-token` is `datamgt` plus the incoming zone `curated`, i.e., `datamgt/curated` which is exactly the curated area defined for `collection_1`.
 
+#### Migrating from `record_dir` (or `record_dir+stl`) to `sqlite`
 
-### Restrictions
+The command `dump-things-copy-store` can be used to copy a collection from a `record_dir` (or `record_dir+stl`) store to a `sqlite` store.
+The command expects a source and a destination store. Both are given in the format `<backend>:<directory-path>`, where `<backend>` is one of `record_dir`, `record_dir+stl`, `sqlite`, or `sqlite+stl`, and `<path>` is the path to the directory of the store.
 
-The current implementation has the following restriction:
+For example, to migrate a collection from a `record_dir`-backend at the directory `<path-to-data>/penguis/curated` to a `sqlite` backend in the same directory, the following command can be used:
+```bash
+> dump-things-copy-store \
+    record_dir:<path-to-data>/penguis/curated  \
+    sqlite:<path-to-data>/penguis/curated
+```
 
-- the `record_dir`-backend does not yet support any other data format than `yaml`.
+For example, to migrate from a `record_dir+stl` backend, the command is similar, but a schema has to be supplied via the `-s/--schema` command line parameter. For example:
+```bash
+> dump-things-copy-store \
+    --schema https://concepts.inm7.de/s/flat-data/unreleased.yaml \
+    record_dir+stl:<path-to-data>/penguis/curated  \
+    sqlite:<path-to-data>/penguis/curated
+```
+(Note: a `record_dir:<path>` can be used to copy without the schema type layer from a `record_dir+stl` backend. But in this case the copied records will not have a `schema_type` attribute, because the `record_dir` backend does not "put it back in", unlike a `record_dir+stl` backend.)
+
+If the source backend is a `record_dir` or `record_dir+stl` backend and the store was manually modified outside the service (for example, by adding or removing files), it is recommended to run the command `dump-things-rebuild-index` on the source store before copying. This ensures that the index is up to date and all records are copied.
+
+If any backend is a `record_dir+stl` backend, a schema has to be supplied via the `-s/--schema` command line parameter. The schema is used to determine the `schema_type` attribute of the records that are copied.
+
+
+### Maintenance commands
+
+- `dump-things-rebuild-index`: this command rebuilds the persistent index of a `record_dir`store. This should be done after the `record_dir` store was modified outside the service, for example, by manually adding or removing files in the directory structure of the store.
+
+- `dump-things-copy-store`: this command copies a collection that is stored in a source store to a destination store. For example, to copy a collection from a `record_dir` store at the directory `<path-to-data>/penguis/curated` to a `sqlite` store in the same directory, the following command can be used:
+  ```bash
+  > dump-things-copy-store \
+      record_dir:<path-to-data>/penguis/curated  \
+      sqlite:<path-to-data>/penguis/curated
+  ```
+  The copy command will add the copied records to any existing record in the destination store.
+  Note: when records are copied from a `record-dir` store, the index is used to locate the records in the source store. If the index is not up-to-date, the copied records might not be complete. In this case, it is recommended to run `dump-things-rebuild-index` on the source store before copying.
+
+
+### Requirements
+
+The service requires sqlite3.
 
 
 ## Acknowledgements

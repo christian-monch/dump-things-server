@@ -4,7 +4,12 @@ from typing import TYPE_CHECKING
 
 import yaml
 
-from dump_things_service.backends.sqlite import SQLiteBackend
+from dump_things_service.backends.sqlite import (
+    SQLiteBackend,
+)
+from dump_things_service.backends.sqlite import (
+    record_file_name as sqlite_record_file_name,
+)
 from dump_things_service.config import (
     BackendConfigRecordDir,
     CollectionConfig,
@@ -97,10 +102,9 @@ def create_collection(
         curated_dir.mkdir(parents=True, exist_ok=True)
 
     if collection_config.backend is None:
-        collection_config.backend = BackendConfigRecordDir(type='record_dir')
+        collection_config.backend = BackendConfigRecordDir(type='record_dir+stl')
 
-    if collection_config.backend.type == 'record_dir':
-
+    if collection_config.backend.type == 'record_dir+stl':
         # Add the collection level config file
         collection_config_file = curated_dir / config_file_name
         collection_config_file.write_text(
@@ -130,9 +134,8 @@ def create_collection(
         (curated_dir / 'faulty-file.txt').write_text(faulty_yaml)
 
     else:
-
         # Add SQL entries
-        db_path = curated_dir / 'records.db'
+        db_path = curated_dir / sqlite_record_file_name
         sql_backend = SQLiteBackend(db_path)
         model = get_model_for_schema(schema_url)[0]
         for class_name, _, yaml_text in default_entries or []:

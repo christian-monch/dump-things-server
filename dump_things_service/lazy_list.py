@@ -1,4 +1,4 @@
-""" Implementation of a lazy list
+"""Implementation of a lazy list
 
 The lazy list calls a subclass method to generate list elements on demand. The
 generation is based on the list index and information stored by the user of the
@@ -17,6 +17,7 @@ storage and retrieval costs. It is mainly used to:
  The memory footprint of a lazy list depends on the number of entries and the
  size of the user-supplied `info`-object.
 """
+
 from __future__ import annotations
 
 from abc import (
@@ -34,7 +35,6 @@ if TYPE_CHECKING:
 
 
 class LazyList(list, metaclass=ABCMeta):
-
     class LazyListIterator:
         def __init__(self, lazy_list: LazyList):
             self.lazy_list = lazy_list
@@ -175,6 +175,7 @@ class PriorityList(LazyList):
     `unique_identifier` method of the added lists.
     All lists should be added before the first iteration.
     """
+
     def __init__(
         self,
     ):
@@ -214,10 +215,11 @@ class ModifierList(LazyList):
     """
     A lazy list that modifies every item of `input_list` by the `modifier`
     """
+
     def __init__(
-            self,
-            input_list: LazyList,
-            modifier: Callable,
+        self,
+        input_list: LazyList,
+        modifier: Callable,
     ):
         super().__init__()
         self.input_list = input_list

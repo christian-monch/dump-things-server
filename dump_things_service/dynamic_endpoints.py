@@ -28,7 +28,11 @@ def create_endpoints(
     logger.info('Creating dynamic endpoints...')
     serial_number = count()
 
-    for collection, (model, classes, model_var_name) in instance_config.model_info.items():
+    for collection, (
+        model,
+        classes,
+        model_var_name,
+    ) in instance_config.model_info.items():
         global_dict[model_var_name] = model
         for class_name in classes:
             # Create an endpoint to dump data of type `class_name` in version

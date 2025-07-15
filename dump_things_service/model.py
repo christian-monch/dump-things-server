@@ -97,5 +97,7 @@ def get_schema_model_for_schema(
     schema_location: str,
 ) -> ModuleType:
     if schema_location not in _schema_model_cache:
-        _schema_model_cache[schema_location] = PythonGenerator(schema_location).compile_module()
+        _schema_model_cache[schema_location] = PythonGenerator(
+            schema_location
+        ).compile_module()
     return _schema_model_cache[schema_location]

@@ -22,7 +22,6 @@ if TYPE_CHECKING:
     from dump_things_service.lazy_list import LazyList
 
 
-
 submitter_class = 'NCIT_C54269'
 submitter_namespace = 'http://purl.obolibrary.org/obo/'
 
@@ -42,7 +41,6 @@ class _ModelStore:
         obj: BaseModel,
         submitter: str,
     ) -> Iterable[tuple[str, dict]]:
-
         if obj.__class__.__name__ == 'Thing':
             msg = f'Cannot store `Thing` instance: {obj}.'
             raise ValueError(msg)
@@ -55,7 +53,7 @@ class _ModelStore:
                 self._store_flat_object(
                     obj=obj,
                     submitter=submitter,
-                )
+                ),
             )
             for obj in self.extract_inlined(obj)
         ]
@@ -65,7 +63,6 @@ class _ModelStore:
         obj: BaseModel,
         submitter: str,
     ) -> dict:
-
         iri = resolve_curie(self.model, obj.pid)
         class_name = obj.__class__.__name__
 
@@ -113,7 +110,6 @@ class _ModelStore:
         self,
         record: BaseModel,
     ) -> list[BaseModel]:
-
         # The trivial case: no relations
         if not hasattr(record, 'relations') or record.relations is None:
             return [record]

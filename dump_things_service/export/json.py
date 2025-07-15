@@ -41,7 +41,7 @@ def export_json(
     if destination == '-':
         output = sys.stdout
     else:
-        output = Path(destination).open('wt', encoding='utf-8')
+        output = Path(destination).open('wt', encoding='utf-8')  # noqa: SIM115
 
     output.write('{\n')
     for collection, is_last in _lookahead(instance_config.collections):
@@ -62,14 +62,21 @@ def export_collection(
 ):
     output.write(f'{indent * " "}"schema": "{instance_config.schemas[collection]}",\n')
     output.write(f'{indent * " "}"curated": {{\n')
-    append_classes(instance_config.curated_stores[collection], indent + level_width, output)
+    append_classes(
+        instance_config.curated_stores[collection], indent + level_width, output
+    )
     output.write(f'\n{indent * " "}}}')
 
     # Determine stores for incoming zones
     zones = {
-        label: instance_config.token_stores[token]['collections'].get(collection, {}).get('store')
+        label: instance_config.token_stores[token]['collections']
+        .get(collection, {})
+        .get('store')
         for token, label in instance_config.zones.get(collection, {}).items()
-        if instance_config.token_stores[token]['collections'].get(collection, {}).get('store') is not None
+        if instance_config.token_stores[token]['collections']
+        .get(collection, {})
+        .get('store')
+        is not None
     }
 
     if zones:
@@ -99,12 +106,13 @@ def append_classes(
 
     first = True
     for class_name in class_names:
-
         # We know that pure `Thing` instances are not stored in the store.
         if class_name == 'Thing':
             continue
 
-        class_instances = store.get_objects_of_class(class_name, include_subclasses=False)
+        class_instances = store.get_objects_of_class(
+            class_name, include_subclasses=False
+        )
         if class_instances:
             if not first:
                 output.write(',\n')
