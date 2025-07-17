@@ -48,7 +48,7 @@ Source = "https://github.com/christian-monch/dump-things-server"
 
 [project.scripts]
 dump-things-service = "dump_things_service.main:main"
-dump-things-graphql = "dump_things_service.graphql.main:main"
+dump-things-graphql = "dump_things_service.graphql.main:server"
 dump-things-rebuild-index = "dump_things_service.commands.rebuild_index:main"
 dump-things-copy-store = "dump_things_service.commands.copy_store:main"
 

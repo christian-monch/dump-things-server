@@ -61,10 +61,10 @@ def get_record_by_pid(
     class_name = None
     record = None
     if final_permissions.incoming_read:
-        class_name, record = token_store.get_record_by_iri(iri)
+        class_name, record = token_store.get_object_by_iri(iri)
 
     if not record and final_permissions.curated_read:
-        class_name, record = instance_config.curated_stores[collection].get_record_by_iri(iri)
+        class_name, record = instance_config.curated_stores[collection].get_object_by_iri(iri)
 
     if class_name and record:
         _convert_relations(record)
@@ -91,14 +91,18 @@ def get_records_by_class_name(
     records = {}
     if final_permissions.curated_read:
         for search_class_name in get_subclasses(instance_config.curated_stores[collection].model, class_name):
-            for record_class_name, record in instance_config.curated_stores[collection].get_records_of_class(
+            for record_info in instance_config.curated_stores[collection].get_objects_of_class(
                     search_class_name
             ):
+                record_class_name = record_info.class_name
+                record = record_info.json_object
                 records[record['pid']] = record_class_name, record
 
     if final_permissions.incoming_read:
         for search_class_name in get_subclasses(token_store.model, class_name):
-            for record_class_name, record in token_store.get_records_of_class(search_class_name):
+            for record_info in token_store.get_objects_of_class(search_class_name):
+                record_class_name = record_info.class_name
+                record = record_info.json_object
                 records[record['pid']] = record_class_name, record
 
     for pid, (record_class_name, record) in records.items():

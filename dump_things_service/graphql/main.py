@@ -75,6 +75,7 @@ config_path = Path(arguments.config) if arguments.config else store_path / confi
 g_instance_config = process_config(
     store_path=store_path,
     config_file=config_path,
+    order_by=['pid'],
     globals_dict=globals(),
 )
 check_collection(g_instance_config, arguments.collection)

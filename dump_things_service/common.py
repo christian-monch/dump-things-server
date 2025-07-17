@@ -13,7 +13,7 @@ from dump_things_service.config import (
     get_token_store,
     join_default_token_permissions,
 )
-from dump_things_service.record import RecordDirStore
+from dump_things_service.backends.record_dir import RecordDirStore
 
 
 def check_collection(
