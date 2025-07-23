@@ -142,19 +142,27 @@ class ConvertingList(LazyList):
         schema: str,
         input_format: Format,
         output_format: Format,
+        exception_handler: Callable | None = None,
     ):
         super().__init__()
         self.input_list = input_list
         # We reuse `list_info` from the input list to save time and memory.
         self.list_info = input_list.list_info
+        self.exception_handler: Callable | None = exception_handler
         self.converter = FormatConverter(schema, input_format, output_format)
 
     def generate_element(self, index: int, _: Any) -> Any:
         record_info: RecordInfo = self.input_list[index]
-        record_info.json_object = self.converter.convert(
-            data=record_info.json_object,
-            target_class=record_info.class_name,
-        )
+        try:
+            record_info.json_object = self.converter.convert(
+                data=record_info.json_object,
+                target_class=record_info.class_name,
+            )
+        except BaseException as e:
+            if self.exception_handler:
+                self.exception_handler(e)
+            else:
+                raise
         return record_info.json_object
 
 
@@ -181,7 +189,10 @@ def _convert_format(
             schema_view=schema_view,
         )
     except Exception as e:  # BLE001
-        msg = f'Conversion {input_format} -> {output_format} of data ({data}) failed for class {target_class}.'
+        msg = (
+            f'Conversion {input_format} -> {output_format}. Error: {e}, '
+            f'target class {target_class}, data:\n{data}'
+        )
         raise ValueError(msg) from e
 
 

@@ -68,7 +68,10 @@ from dump_things_service.model import (
     get_classes,
     get_subclasses,
 )
-from dump_things_service.utils import combine_ttl
+from dump_things_service.utils import (
+    combine_ttl,
+    wrap_http_exception,
+)
 
 if TYPE_CHECKING:
     from dump_things_service.lazy_list import LazyList
@@ -252,11 +255,12 @@ def store_record(
         )
 
     if input_format == Format.ttl:
-        json_object = FormatConverter(
-            g_instance_config.schemas[collection],
-            input_format=Format.ttl,
-            output_format=Format.json,
-        ).convert(data, class_name)
+        with wrap_http_exception(ValueError, header='Conversion error'):
+            json_object = FormatConverter(
+                g_instance_config.schemas[collection],
+                input_format=Format.ttl,
+                output_format=Format.json,
+            ).convert(data, class_name)
         record = TypeAdapter(getattr(model, class_name)).validate_python(json_object)
     else:
         record = data
@@ -272,18 +276,19 @@ def store_record(
             input_format=Format.json,
             output_format=Format.ttl,
         )
-        return PlainTextResponse(
-            combine_ttl(
-                [
-                    format_converter.convert(
-                        record,
-                        class_name,
-                    )
-                    for class_name, record in stored_records
-                ]
-            ),
-            media_type='text/turtle',
-        )
+        with wrap_http_exception(ValueError, header='Conversion error'):
+            return PlainTextResponse(
+                combine_ttl(
+                    [
+                        format_converter.convert(
+                            record,
+                            class_name,
+                        )
+                        for class_name, record in stored_records
+                    ]
+                ),
+                media_type='text/turtle',
+            )
     return JSONResponse([record for _, record in stored_records])
 
 
@@ -360,7 +365,8 @@ async def read_record_with_pid(
             input_format=Format.json,
             output_format=format,
         )
-        ttl_record = converter.convert(json_object, class_name)
+        with wrap_http_exception(ValueError, header='Conversion error'):
+            ttl_record = converter.convert(json_object, class_name)
         return PlainTextResponse(ttl_record, media_type='text/turtle')
     return json_object
 
@@ -417,8 +423,13 @@ async def _read_records_of_type(
                 f'(/{collection}/records/p/{class_name}).',
             )
 
-    _check_collection(g_instance_config, collection)
+    def convert_to_http_exception(e: BaseException):
+        raise HTTPException(
+            status_code=HTTP_400_BAD_REQUEST,
+            detail=f'Conversion error: {e}',
+        ) from e
 
+    _check_collection(g_instance_config, collection)
     model = g_instance_config.model_info[collection][0]
     if class_name not in get_classes(model):
         raise HTTPException(
@@ -456,6 +467,7 @@ async def _read_records_of_type(
             g_instance_config.schemas[collection],
             input_format=Format.json,
             output_format=format,
+            exception_handler=convert_to_http_exception,
         )
     else:
         result_list = ModifierList(
