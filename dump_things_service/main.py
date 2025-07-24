@@ -32,6 +32,7 @@ from fastapi_pagination import (
     add_pagination,
     paginate,
 )
+from fastapi_pagination.utils import disable_installed_extensions_check
 from pydantic import (
     BaseModel,
     TypeAdapter,
@@ -174,6 +175,8 @@ for switch in ('json', 'tree'):
         exporter_info[switch](g_instance_config, argument)
         sys.exit(0)
 
+
+disable_installed_extensions_check()
 
 app = FastAPI()
 
