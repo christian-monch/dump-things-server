@@ -1,3 +1,11 @@
+# 2.0.1 (2025-07-24)
+
+## Bugfixes
+
+- Ensure that format conversion errors are caught and reported correctly in
+  the API.
+
+
 # 2.0.0 (2025-07-15)
 
 ## Breaking changes
