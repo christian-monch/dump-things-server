@@ -6,7 +6,10 @@ from functools import reduce
 from typing import TYPE_CHECKING
 
 import fsspec
+from fastapi import HTTPException
 from rdflib import Graph
+
+from dump_things_service import HTTP_400_BAD_REQUEST
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -61,3 +64,19 @@ def get_schema_type_curie(
     schema_module = instance_config.conversion_objects[schema_url]['schema_module']
     class_object = getattr(schema_module, class_name)
     return class_object.class_class_curie
+
+
+@contextmanager
+def wrap_http_exception(
+    exception_class: type[BaseException] = ValueError,
+    status_code: int = HTTP_400_BAD_REQUEST,
+    header: str = ''
+):
+    """Wrap exceptions of class `exception_class` into HTTP exceptions"""
+    try:
+        yield
+    except exception_class as e:
+        raise HTTPException(
+            status_code=status_code,
+            detail=f'{header}: {e}' if header else str(e),
+        )
