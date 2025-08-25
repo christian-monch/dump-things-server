@@ -142,6 +142,7 @@ class StorageBackend(metaclass=ABCMeta):
     def get_records_of_classes(
         self,
         class_names: Iterable[str],
+        matching: str | None = None,
     ) -> BackendResultList:
         raise NotImplementedError
 

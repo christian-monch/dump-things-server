@@ -35,6 +35,8 @@ from sqlalchemy import (
     JSON,
     String,
     create_engine,
+    distinct,
+    func,
     select,
 )
 from sqlalchemy.orm import (
@@ -193,8 +195,18 @@ class _SQLiteBackend(StorageBackend):
     def get_records_of_classes(
         self,
         class_names: Iterable[str],
+        pattern: str | None = None,
     ) -> SQLResultList:
-        statement = select(Thing).where(Thing.class_name.in_(class_names))
+
+        if pattern is None:
+            statement = select(Thing).where(Thing.class_name.in_(class_names))
+        else:
+            # The SQLAlchemy code implements the following SQL query:
+            # select distinct * from thing where json(thing.object) like '<pattern>';
+            statement = select(Thing).distinct().where(func.json(Thing.object).like(pattern))
+            # TODO: `statement` above should be changed to implement:
+            #  select distinct * from thing, json_tree(thing.object) where json_tree.value like '<pattern>';
+
         for attribute in self.order_by:
             statement = statement.order_by(Thing.object[attribute]).options(
                 load_only(Thing.id)
