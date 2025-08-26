@@ -77,7 +77,7 @@
 
 - support for multiple backends. The default backend is `record_dir`, which is the
   backend used in the previous versions. It is fully compatible with existing stores.
-  This version adds a new backend, `sqllite`, which uses a SQLite database. More
+  This version adds a new backend, `sqlite`, which uses a SQLite database. More
   SQL backends will be added in the future. SQL backends should be able to support
   far bigger record numbers than the `record_dir` backend (hundreds of thousands)
   without performance degradation.

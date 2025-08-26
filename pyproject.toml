@@ -133,3 +133,10 @@ quote-style = "single"
 ]
 # permit relative import in subpackage root
 "dump_things_service/*/__init__.py" = ["TID252"]
+
+[tool.codespell]
+# Ref: https://github.com/codespell-project/codespell#using-a-config-file
+skip = '.git*'
+check-hidden = true
+# ignore-regex = ''
+# ignore-words-list = ''

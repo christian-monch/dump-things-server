@@ -55,7 +55,7 @@ The following command line parameters are supported:
 
 ### Configuration file
 
-The service is configured via a configuration file that defines collections, pathes for incoming and curated data for each collection, as well as token properties.
+The service is configured via a configuration file that defines collections, paths for incoming and curated data for each collection, as well as token properties.
 Token properties include a submitter identification and for each collection an incoming zone specifier, permissions for reading and writing of the incoming zone and permission for reading the curated data of the collection.
 
 A "formal" definition of the configuration file is provided by the class `GlobalConfig` in the file `dumpthings-server/config.py`.
