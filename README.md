@@ -180,7 +180,7 @@ tokens:
 #### Backends
 
 The service currently supports the following backends for storing records:
-- `record_dir`: this backend stores records as YAML-files in a directory structure that is defined [here](https://concepts.datalad.org/dump-things/). It reads the backend configuration from a "record collection configuration file" as described [here](https://concepts.datalad.org/dump-things/).
+- `record_dir`: this backend stores records as YAML-files in a directory structure that is defined [here](https://concepts.datalad.org/dump-things-storage-v0/). It reads the backend configuration from a "record collection configuration file" as described [here](https://concepts.datalad.org/dump-things-storage-v0/).
 
 - `sqlite`: this backend stores records in a SQLite database. There is an individual database file, named `records.db`, for each curated area and incoming area.
 
