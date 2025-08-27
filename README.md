@@ -7,6 +7,10 @@ Data is stored in **collections**.
 Each collection has a name and an associated schema.
 All data records in the collection have to adhere to the given schema.
 
+The canonical format for schemas is [LinkML](https://linkml.io/).
+The service supports schemas that are based on Datalad's *Thing* schema, i.e. on [https://concepts.datalad.org/s/things/v1/](https://concepts.datalad.org/s/things/v1/).
+It assumes that the classes of stored records are subclasses of `Thing`, and inherit the properties `pid` and `schema_type` from the `Thing`-baseclass.
+
 The general workflow in the service is as follows.
 We distinguish between two areas of a collection, an **incoming** are and a **curated** area.
 Data written to a collection is stored in a collection-specific **incoming** area.
@@ -295,6 +299,7 @@ The service provides the following endpoints:
  Objects from incoming spaces will take precedence over objects from curated spaces, i.e. if there are two objects with identical `pid` in the curated space and in the incoming space, the object from the incoming space will be returned.
  The endpoint supports the query parameter `format`, which determines the format of the query result.
  It can be set to `json` (the default) or to `ttl`,
+ The result is a list of JSON-records or ttl-strings, depending on the selected format.
 
 
 - `GET /<collection>/records/p/<class>`: this endpoint (ending on `.../p/<class>`) provides the same functionality as the endpoint `GET /<collection>/records/<class>` (without `.../p/...`) but supports result pagination. In addition to the query parameter `format`, it supports the query parameters `page` and `size`.
@@ -312,7 +317,6 @@ The service provides the following endpoints:
   "pages": <number of pages in the result>
 }
  ```
-  In contrast to the `GET /<collection>/records/<class>` endpoint, this endpoint will return individual ttl-records, not a combination of all ttl-records in the result.
 
 
 - `GET /<collection>/record?pid=<pid>`: retrieve an object with the pid `<pid>` from the collection `<collection>`, if the provided token allows reading. If the provided token allows reading of incoming and curated spaces, objects from incoming spaces will take precedence.
