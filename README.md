@@ -199,7 +199,7 @@ Backends can be defined per collection in the configuration file.
 The backend will be used for the curated area and for the incoming areas of the collection.
 If no backend is defined for a collection, the `record_dir+stl`-backend is used by default.
 The `+stl`-backends can be useful to ensure that commands that return records of multiple classes in JSON format will always return records with a `schema_type` attribute.
-This attribute allows to client to determine the class of each result record.
+This attribute allows clients to determine the class of each result record.
 
 The service guarantees that backends of all types can co-exist independently in the same directory, i.e., there are no name collisions in files that are used for different backends (as long as no class name starts with `.`)).
 
