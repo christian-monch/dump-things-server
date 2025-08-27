@@ -209,9 +209,36 @@ The following configuration snippet shows how to define a backend for a collecti
 ...
 collections:
   collection_with_default_record_dir+stl_backend:
+    # This is a collection with the default backend, i.e. `record_dir+stl` and
+    # the default authentication, i.e. config-based authentication.
     default_token: anon_read
     curated: collection_1/curated
 
+  collection_with_forgejo_permission_source:
+    # This is a collection with the default backend, i.e. `record_dir+stl` and
+    # a forgejo-based permission source. That means it will use a forgejo
+    # instance to determine the permissions of a token for this collection.
+    # The instance is also used to determine the user-id and the incoming label.
+    # In the case of forgejo, the user-id and the incoming label are the
+    # forgejo login associated with the token.
+
+    # We still need the name of a default token. If the token is defined in this
+    # config file, its properties will be determined by the
+    # config file. If the token is not defined in the config file, its
+    # properties will be determined by the authentication provider. In this
+    # example by the forgejo-instance at `https://forgejo.example.com`.
+    # If there is more than one authentication provider, they will be tried
+    # in the order they are defined in the config file.
+    default_token: anon_read    # We still need a default token
+    curated: collection_1/curated
+    permission_sources:
+      forgejo:
+        url: https://forgejo.example.com
+        # A repository that determines the users access rights. The access
+        # rights of the token for this repository will determine the access
+        # rights of the request for this collection.
+        repo: example-repository
+  
   collection_with_explicit_record_dir+stl_backend:
     default_token: anon_read
     curated: collection_1/curated
