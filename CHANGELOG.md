@@ -1,3 +1,12 @@
+# 2.1.0 (2025-08-28)
+
+## New features
+
+- Add a `matching`-parameter to the `/<collection>/records/<class>`- and
+  `/<collection>/records/p/<class>`-endpoint.
+  This parameter allows to filter records by a simple text matching.
+
+
 # 2.0.1 (2025-07-24)
 
 ## Bugfixes
