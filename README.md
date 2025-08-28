@@ -290,19 +290,22 @@ The service provides the following endpoints:
  It can be set to `json` (the default) or to `ttl` (Terse RDF Triple Language, a.k.a. Turtle).
  If the `ttl`-format is selected, the content-type should be `text/turtle`.  
  The service supports extraction of inlined records as described in [Dump Things Service](https://concepts.datalad.org/dump-things/).
- On success the endpoint will return a list of all stored records.
+ On success, the endpoint will return a list of all stored records.
  This might be more than one record if the posted object contains inlined records.
   
 
-- `GET /<collection>/records/<class>`: retrieve all readable objects from collection `<collection>` that are of type `<class>` or any of its subclasses.that are readable .
+- `GET /<collection>/records/<class>`: retrieve all readable objects from collection `<collection>` that are of type `<class>` or any of its subclasses.
  Objects are readable, if the default token for the collection allows reading of objects or if a token is provided that allows reading of objects in the collection.
  Objects from incoming spaces will take precedence over objects from curated spaces, i.e. if there are two objects with identical `pid` in the curated space and in the incoming space, the object from the incoming space will be returned.
  The endpoint supports the query parameter `format`, which determines the format of the query result.
  It can be set to `json` (the default) or to `ttl`,
+ The endpoint supports the query parameter `matching`, which is interpreted by `sqlite`-backends and ignored by `record_dir`-backends.
+ If given, the endpoint will only return records for which the JSON-string representation matches the `matching` parameter.
+ Matching supports the wildcard character `%` which matches any characters.
+ For example, to search for `Alice` anywhere in the JSON-string representation of the record the matching parameter should be set to `%Alice%` or `%alice%` (matching is not case-sentitive).
  The result is a list of JSON-records or ttl-strings, depending on the selected format.
 
-
-- `GET /<collection>/records/p/<class>`: this endpoint (ending on `.../p/<class>`) provides the same functionality as the endpoint `GET /<collection>/records/<class>` (without `.../p/...`) but supports result pagination. In addition to the query parameter `format`, it supports the query parameters `page` and `size`.
+- `GET /<collection>/records/p/<class>`: this endpoint (ending on `.../p/<class>`) provides the same functionality as the endpoint `GET /<collection>/records/<class>` (without `.../p/...`) but supports result pagination. In addition to the query parameters `format` and `matching`, it supports the query parameters `page` and `size`.
  The `page`-parameter defines the page number to retrieve, starting with 1.
  The `size`-parameter defines how many records should be returned per page.
  If no `size`-parameter is given, the default value of 50 is used.
