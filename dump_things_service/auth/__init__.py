@@ -1,4 +1,17 @@
+"""Token-based authentication handlers
+
+The authentication handlers are used to authenticate a token and to
+determine:
+
+- the permissions associated with the token
+- the user id associated with the token
+- the incoming_label to be used with the token
+
+"""
+from __future__ import annotations
+
 import abc
+import dataclasses
 
 from dump_things_service.config import TokenPermission
 
@@ -8,12 +21,16 @@ class AuthenticationError(Exception):
     pass
 
 
-class RemoteAuthenticationError(AuthenticationError):
-    """Exception for remote authentication errors."""
-    def __init__(self, status: int, message: str):
-        self.status = status
-        self.message = message
-        super().__init__(f'Authentication failed with status {status}: {message}')
+class InvalidTokenError(AuthenticationError):
+    """Exception for invalid token errors."""
+    pass
+
+
+@dataclasses.dataclass
+class AuthenticationInfo:
+    token_permission: TokenPermission
+    user_id: str
+    incoming_label: str | None
 
 
 class AuthenticationSource(metaclass=abc.ABCMeta):
@@ -21,13 +38,12 @@ class AuthenticationSource(metaclass=abc.ABCMeta):
     def authenticate(
         self,
         token: str,
-        collection: str,
-    ) -> TokenPermission:
+    ) -> AuthenticationInfo:
         """
         Authenticate a user based on the provided token and collection.
 
         :param token: The authentication token.
-        :param collection: The collection to authenticate against.
-        :return: TokenPermissions
+        :return: AuthenticationInfo
+        :raises AuthenticationError: If authentication fails.
         """
         raise NotImplemented

@@ -1,19 +1,31 @@
-
+"""Use Forgejo instance to fetch token permissions, ids, and incomng_label """
 import requests
 
-from . import (
+from dump_things_service.auth import (
+    AuthenticationError,
+    AuthenticationInfo,
     AuthenticationSource,
-    RemoteAuthenticationError,
+    InvalidTokenError,
 )
-from ..config import TokenPermission
+from dump_things_service.config import TokenPermission
+
+
+class RemoteAuthenticationError(AuthenticationError):
+    """Exception for remote authentication errors."""
+    def __init__(self, status: int, message: str):
+        self.status = status
+        self.message = message
+        super().__init__(f'Authentication failed with status {status}: {message}')
 
 
 class ForgejoAuthenticationSource(AuthenticationSource):
     def __init__(
         self,
-        api_url: str
+        api_url: str,
+        repo: str,
     ):
         self.api_url = api_url
+        self.repo = repo
 
     def _get_user_for_token(
         self,
@@ -28,17 +40,16 @@ class ForgejoAuthenticationSource(AuthenticationSource):
         )
         if 200 <= r.status_code < 300:
             return r.json()
-        raise RemoteAuthenticationError(status=r.status_code, message=r.text)
+        raise InvalidTokenError(f'Invalid token: ({r.status_code}: {r.text})')
 
     def _get_permissions(
             self,
             token: str,
             user: str,
-            repo: str,
     ) -> TokenPermission:
 
         r = requests.get(
-            url=f'{self.api_url}/repos/{user}/{repo}',
+            url=f'{self.api_url}/repos/{user}/{self.repo}',
             headers=
             {
                 'Accept': 'application/json',
@@ -52,15 +63,22 @@ class ForgejoAuthenticationSource(AuthenticationSource):
                 incoming_read=r.json()['permissions']['pull'],
                 incoming_write=r.json()['permissions']['push'],
             )
-        raise RemoteAuthenticationError(status=r.status_code, message=r.text)
+        raise RemoteAuthenticationError(
+            status=r.status_code,
+            message=f'repository not found: \'{user}/{self.repo}\'. '
+                    f'(message from host: {r.text})'
+        )
 
     def authenticate(
         self,
         token: str,
-        collection: str,
-    ) -> TokenPermission:
-        return self._get_permissions(
-            token,
-            self._get_user_for_token(token)['login'],
-            collection,
+    ) -> AuthenticationInfo:
+        user_info = self._get_user_for_token(token)
+        return AuthenticationInfo(
+            token_permission=self._get_permissions(
+                token,
+                user_info['login'],
+            ),
+            user_id=user_info['email'],
+            incoming_label='forgejo-' + user_info['login'],
         )

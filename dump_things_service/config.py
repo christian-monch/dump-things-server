@@ -18,6 +18,7 @@ from pydantic import (
     BaseModel,
     ValidationError,
 )
+from starlette.status import HTTP_500_INTERNAL_SERVER_ERROR
 from yaml.scanner import ScannerError
 
 from dump_things_service import (
@@ -104,11 +105,22 @@ class BackendConfigSQLite(BaseModel):
     schema: str
 
 
+class ForgejoAuthConfig(BaseModel):
+    type: Literal['forgejo']
+    url: str
+    repo: str
+
+
+class ConfigAuthConfig(BaseModel):
+    type: Literal['config'] = 'config'
+
+
 class CollectionConfig(BaseModel):
     default_token: str
     curated: Path
     incoming: Path | None = None
     backend: BackendConfigRecordDir | BackendConfigSQLite | None = None
+    auth_provider: list[ForgejoAuthConfig | ConfigAuthConfig] = [ConfigAuthConfig()]
 
 
 class GlobalConfig(BaseModel):
@@ -131,6 +143,7 @@ class InstanceConfig:
     schemas: dict = dataclasses.field(default_factory=dict)
     conversion_objects: dict = dataclasses.field(default_factory=dict)
     backend: dict = dataclasses.field(default_factory=dict)
+    auth_provider: dict = dataclasses.field(default_factory=dict)
 
 
 mode_mapping = {
@@ -270,8 +283,6 @@ def process_config_object(
     instance_config = InstanceConfig(store_path=store_path)
     instance_config.collections = config_object.collections
 
-    # Create a `ModelStore` (with currently fixed backend `RecordDirStore`) for
-    # the `curated`-dir in each collection.
     for collection_name, collection_info in config_object.collections.items():
         # Set the default backend if not specified
         backend = collection_info.backend or BackendConfigRecordDir(
@@ -416,19 +427,28 @@ def process_config_object(
     return instance_config
 
 
+def check_collection(
+    instance_config: InstanceConfig,
+    collection: str,
+):
+    if collection not in instance_config.collections:
+        raise HTTPException(
+            status_code=HTTP_404_NOT_FOUND,
+            detail=f'No such collection: "{collection}".',
+        )
+
+
 def get_backend_and_extension(backend_type: str) -> tuple[str, str]:
     elements = backend_type.split('+')
     return (elements[0], elements[1]) if len(elements) > 1 else (elements[0], '')
 
 
 def get_token_store(
-    instance_config: InstanceConfig, collection_name: str, token: str
+    instance_config: InstanceConfig,
+    collection_name: str,
+    token: str
 ) -> tuple[ModelStore, TokenPermission] | tuple[None, None]:
-    if collection_name not in instance_config.curated_stores:
-        raise HTTPException(
-            status_code=HTTP_404_NOT_FOUND,
-            detail=f'No such collection: "{collection_name}".',
-        )
+    check_collection(instance_config, collection_name)
     if token not in instance_config.token_stores:
         raise HTTPException(status_code=HTTP_401_UNAUTHORIZED, detail='Invalid token.')
 
@@ -447,11 +467,11 @@ def get_token_store(
     return token_store, permissions
 
 
-def get_default_token_name(instance_config: InstanceConfig, collection: str) -> str:
-    if collection not in instance_config.collections:
-        raise HTTPException(
-            status_code=HTTP_404_NOT_FOUND, detail=f'No such collection: {collection}'
-        )
+def get_default_token_name(
+    instance_config: InstanceConfig,
+    collection: str
+) -> str:
+    check_collection(instance_config, collection)
     return instance_config.collections[collection].default_token
 
 
@@ -490,8 +510,8 @@ def get_zone(
         )
     if token not in instance_config.zones[collection]:
         raise HTTPException(
-            status_code=HTTP_404_NOT_FOUND,
-            detail=f'No incoming zone defined for collection: {collection}',
+            status_code=HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f'Missing incoming_label for given token in collection: {collection}',
         )
     return instance_config.zones[collection][token]
 
@@ -501,11 +521,7 @@ def get_conversion_objects_for_collection(
     collection_name: str,
 ) -> dict:
     """Get the conversion objects for the given collection."""
-    if collection_name not in instance_config.schemas:
-        raise HTTPException(
-            status_code=HTTP_400_BAD_REQUEST,
-            detail=f'No such collection: {collection_name}',
-        )
+    check_collection(instance_config, collection_name)
     return instance_config.conversion_objects[instance_config.schemas[collection_name]]
 
 
@@ -513,9 +529,5 @@ def get_model_info_for_collection(
     instance_config: InstanceConfig,
     collection_name: str,
 ) -> tuple[types.ModuleType, dict[str, Any], str]:
-    if collection_name not in instance_config.model_info:
-        raise HTTPException(
-            status_code=HTTP_400_BAD_REQUEST,
-            detail=f'No such collection: {collection_name}',
-        )
+    check_collection(instance_config, collection_name)
     return instance_config.model_info[collection_name]

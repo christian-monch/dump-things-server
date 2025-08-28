@@ -231,13 +231,33 @@ collections:
     # in the order they are defined in the config file.
     default_token: anon_read    # We still need a default token
     curated: collection_1/curated
+
+    # Token permissions, user-ids (for record annotations), and incoming
+    # label can be determined by multiple permission sources.
+    # The default permission source is of type `config`, which is added
+    # automatically and reads the token permissions for this collection,
+    # i.e. `collection_with_forgejo_permission_source`.
+    # This example uses another permission source, a `forgejo` instance.
     permission_sources:
-      forgejo:
-        url: https://forgejo.example.com
-        # A repository that determines the users access rights. The access
+      - type: forgejo
+        # The API-URL of the forgejo instance that should be used
+        url: https://forgejo.example.com/api/v1
+        # A repository that determines the user's access rights. The access
         # rights of the token for this repository will determine the access
-        # rights of the request for this collection.
-        repo: example-repository
+        # rights of the token for this collection, i.e. for the collection
+        # `collection_with_forgejo_permission_source`.
+        repo: reference-repository
+
+      # Multiple permission sources are allowed. They will be tried in the
+      # order defined in the config file. If a permission source returns
+      # permissions for a token, those permissions will be used and no other
+      # permission sources will be queried.
+      # The default permission source is `config`, which reads the token 
+      # permissions, user-id, and incoming
+      # label from the config file. It is automatically added as the last
+      # permission source. You can also add it explicitly as shown here.
+      # This allows prioritizing `config` over other permission sources.
+      - type: config
   
   collection_with_explicit_record_dir+stl_backend:
     default_token: anon_read
