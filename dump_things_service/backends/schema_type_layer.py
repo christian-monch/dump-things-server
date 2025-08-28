@@ -110,9 +110,16 @@ class _SchemaTypeLayer(StorageBackend):
             )
         return origin_result
 
-    def get_records_of_classes(self, class_names: list[str]) -> BackendResultList:
+    def get_records_of_classes(
+        self,
+        class_names: list[str],
+        matching: str | None = None,
+    ) -> BackendResultList:
         return SchemaTypeLayerResultList(
-            origin_list=self.backend.get_records_of_classes(class_names),
+            origin_list=self.backend.get_records_of_classes(
+                class_names,
+                matching,
+            ),
             schema_model=self.schema_model,
         )
 

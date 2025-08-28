@@ -378,12 +378,14 @@ async def read_record_with_pid(
 async def read_records_of_type(
     collection: str,
     class_name: str,
+    matching: str | None = None,
     format: Format = Format.json,  # noqa A002
     api_key: str = Depends(api_key_header_scheme),
 ):
     return await _read_records_of_type(
         collection=collection,
         class_name=class_name,
+        matching=matching,
         format=format,
         api_key=api_key,
         # Set an upper limit for the number of non-paginated result records to
@@ -397,12 +399,14 @@ async def read_records_of_type(
 async def read_records_of_type_paginated(
     collection: str,
     class_name: str,
+        matching: str | None = None,
     format: Format = Format.json,  # noqa A002
     api_key: str = Depends(api_key_header_scheme),
 ) -> Page[dict | str]:
     result_list = await _read_records_of_type(
         collection=collection,
         class_name=class_name,
+        matching=matching,
         format=format,
         api_key=api_key,
         bound=None,
@@ -413,6 +417,7 @@ async def read_records_of_type_paginated(
 async def _read_records_of_type(
     collection: str,
     class_name: str,
+    matching: str | None = None,
     format: Format = Format.json,  # noqa A002
     api_key: str = Depends(api_key_header_scheme),
     bound: int | None = None,
@@ -447,7 +452,10 @@ async def _read_records_of_type(
     result_list = PriorityList()
     if final_permissions.incoming_read:
         for search_class_name in get_subclasses(model, class_name):
-            token_store_list = token_store.get_objects_of_class(search_class_name)
+            token_store_list = token_store.get_objects_of_class(
+                class_name=search_class_name,
+                matching=matching,
+            )
             if bound:
                 check_bounds(len(token_store_list), bound)
             result_list.add_list(token_store_list)
@@ -456,7 +464,10 @@ async def _read_records_of_type(
         for search_class_name in get_subclasses(model, class_name):
             curated_store_list = g_instance_config.curated_stores[
                 collection
-            ].get_objects_of_class(search_class_name)
+            ].get_objects_of_class(
+                class_name=search_class_name,
+                matching=matching,
+            )
             if bound:
                 check_bounds(len(curated_store_list), bound)
             result_list.add_list(curated_store_list)

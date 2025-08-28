@@ -159,7 +159,11 @@ class _RecordDirStore(StorageBackend):
             sort_key=sort_key,
         )
 
-    def get_records_of_classes(self, class_names: list[str]) -> RecordDirResultList:
+    def get_records_of_classes(
+        self,
+        class_names: list[str],
+        matching: str | None = None,
+    ) -> RecordDirResultList:
         return RecordDirResultList().add_info(
             sorted(
                 (

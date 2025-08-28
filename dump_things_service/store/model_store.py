@@ -152,6 +152,7 @@ class _ModelStore:
     def get_objects_of_class(
         self,
         class_name: str,
+        matching: str | None,
         *,
         include_subclasses: bool = True,
     ) -> LazyList[RecordInfo]:
@@ -165,7 +166,7 @@ class _ModelStore:
             class_names = get_subclasses(self.model, class_name)
         else:
             class_names = [class_name]
-        return self.backend.get_records_of_classes(class_names)
+        return self.backend.get_records_of_classes(class_names, matching)
 
 
 _existing_model_stores = {}
