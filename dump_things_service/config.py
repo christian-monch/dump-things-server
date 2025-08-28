@@ -427,6 +427,52 @@ def process_config_object(
     return instance_config
 
 
+def create_token_store(
+    instance_config: InstanceConfig,
+    backend_type: str,
+    store_dir: Path,
+    schema_uri: str,
+) -> ModelStore:
+
+    backend_name, extension = get_backend_and_extension(backend_type)
+    if backend_name == 'record_dir':
+        token_store = create_record_dir_token_store()
+    elif backend_name == 'sqlite':
+        token_store = create_sqlite_token_store()
+    else:
+        msg = f'Unsupported backend type: `{backend_type}`.'
+        raise ConfigError(msg)
+
+    if extension == 'stl':
+        token_store = SchemaTypeLayer(backend=token_store, schema=schema_uri)
+
+    return ModelStore(backend=token_store, schema=schema_uri)
+
+
+def create_record_dir_store(
+    store_dir: Path,
+    mapping_function: Callable,
+    suffix: str,
+    order_by: list[str],
+    schema_uri: str,
+) -> RecordDirStore:
+
+    store_backend = RecordDirStore(
+        root=store_dir,
+        pid_mapping_function=mapping_function,
+        suffix=suffix,
+        order_by=order_by,
+    )
+    store_backend.build_index_if_needed(schema=schema_uri)
+    return store_backend
+
+
+def create_sqlite_store(
+    store_dir: Path,
+)  -> SQLiteBackend:
+    return SQLiteBackend(db_path=store_dir / sqlite_record_file_name)
+
+
 def check_collection(
     instance_config: InstanceConfig,
     collection: str,
