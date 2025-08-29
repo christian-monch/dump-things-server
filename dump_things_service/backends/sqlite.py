@@ -202,8 +202,11 @@ class _SQLiteBackend(StorageBackend):
             statement = select(Thing).where(Thing.class_name.in_(class_names))
         else:
             # The SQLAlchemy code implements the following SQL query:
-            # select distinct * from thing where lower(json(thing.object)) like lower('<pattern>');
-            statement = select(Thing).distinct().where(func.json(Thing.object).ilike(pattern))
+            # select distinct * from thing where lower(json(thing.object)) like lower('<pattern>') and Thing.class_name in (<class_names>);
+            statement = select(Thing).distinct().where(
+                Thing.class_name.in_(class_names),
+                func.json(Thing.object).ilike(pattern),
+            )
             # TODO: `statement` above should be changed to implement:
             #  select distinct * from thing, json_tree(thing.object) where lower(json_tree.value) like lower('<pattern>');
 
