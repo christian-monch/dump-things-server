@@ -1,3 +1,15 @@
+# 2.2.0 (2025-08-29)
+
+## New features
+
+- Add a `x-dumpthings-service-version`-header to all API responses. This header
+  contains the version of the dump-things-service that generated the response.
+
+## Bugfixes
+
+- Fix a bug in matching-parameter handling that prevented class-selection.
+
+
 # 2.1.0 (2025-08-28)
 
 ## New features
