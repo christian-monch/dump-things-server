@@ -11,10 +11,12 @@ logger = logging.getLogger('dump_things_service')
 _endpoint_template = """
 async def {name}(
         data: {model_var_name}.{class_name} | Annotated[str, Body(media_type='text/plain')],
+        response: Response,
         api_key: str = Depends(api_key_header_scheme),
         format: Format = Format.json,
 ) -> JSONResponse | PlainTextResponse:
     uvicorn_logger.info('{name}(%s, %s, %s, %s)', repr(data), repr('{class_name}'), repr({model_var_name}), repr(format))
+    response.headers['X-Dumpthings-Service-Version'] = __version__
     return store_record('{collection}', data, '{class_name}', {model_var_name}, format, api_key)
 """
 

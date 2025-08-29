@@ -24,6 +24,7 @@ from fastapi import (
     FastAPI,
     HTTPException,
     Request,
+    Response,
 )
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import APIKeyHeader
@@ -49,6 +50,7 @@ from dump_things_service import (
     Format,
     config_file_name,
 )
+from dump_things_service.__about__ import __version__
 from dump_things_service.config import (
     ConfigError,
     TokenPermission,
@@ -310,7 +312,10 @@ def _check_collection(
 async def fetch_token_permissions(
     collection: str,
     body: TokenCapabilityRequest,
+    response: Response,
 ):
+    response.headers['X-Dumpthings-Service-Version'] = __version__
+
     _check_collection(g_instance_config, collection)
     token = (
         get_default_token_name(g_instance_config, collection)
@@ -341,9 +346,12 @@ async def fetch_token_permissions(
 async def read_record_with_pid(
     collection: str,
     pid: str,
+    response: Response,
     format: Format = Format.json,  # noqa A002
     api_key: str = Depends(api_key_header_scheme),
 ):
+    response.headers['X-Dumpthings-Service-Version'] = __version__
+
     _check_collection(g_instance_config, collection)
 
     final_permissions, token_store = await process_token(
@@ -378,10 +386,12 @@ async def read_record_with_pid(
 async def read_records_of_type(
     collection: str,
     class_name: str,
+    response: Response,
     matching: str | None = None,
     format: Format = Format.json,  # noqa A002
     api_key: str = Depends(api_key_header_scheme),
 ):
+    response.headers['X-Dumpthings-Service-Version'] = __version__
     return await _read_records_of_type(
         collection=collection,
         class_name=class_name,
@@ -399,10 +409,12 @@ async def read_records_of_type(
 async def read_records_of_type_paginated(
     collection: str,
     class_name: str,
-        matching: str | None = None,
+    response: Response,
+    matching: str | None = None,
     format: Format = Format.json,  # noqa A002
     api_key: str = Depends(api_key_header_scheme),
 ) -> Page[dict | str]:
+    response.headers['X-Dumpthings-Service-Version'] = __version__
     result_list = await _read_records_of_type(
         collection=collection,
         class_name=class_name,
