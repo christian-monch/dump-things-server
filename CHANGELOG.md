@@ -1,3 +1,12 @@
+# 2.3.2 (2025-09-01)
+
+# Bugfixes
+
+- This version improves the bugfix that was introduced in version 2.3.1.
+  A token provided for a collection that is not defined in the token
+  configuration object will now be ignored.
+
+
 # 2.3.1 (2025-09-01)
 
 # Bugfixes
