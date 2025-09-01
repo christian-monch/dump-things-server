@@ -24,6 +24,7 @@ from dump_things_service.model import (
     get_model_for_schema,
     get_schema_model_for_schema,
 )
+from dump_things_service.resolve_curie import resolve_curie
 from dump_things_service.utils import cleaned_json
 
 if TYPE_CHECKING:
@@ -37,36 +38,53 @@ if TYPE_CHECKING:
 _cached_conversion_objects = {}
 
 
-# Enable rdflib to parse date time literals with type ref:
-# `https://www.w3.org/TR/NOTE-datetime`. We add a regex-based validation and
-# return the validated datetime string verbatim.
+class TypeValidator:
+    def __init__(
+        self,
+        type_name: str,
+        pattern: str | None,
+    ):
+        self.type_name = type_name
+        self.matcher = None if pattern is None else re.compile(pattern)
 
-_datetime_regex = re.compile(
-    r'^([-+]\d+)|(\d{4})|(\d{4}-[01]\d)|(\d{4}-[01]\d-[0-3]\d)|(\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d:[0-5]\d\.\d+([+-][0-2]\d:[0-5]\d|Z))|(\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d:[0-5]\d([+-][0-2]\d:[0-5]\d|Z))|(\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d([+-][0-2]\d:[0-5]\d|Z))$'
-)
+    def validate(
+        self,
+        value: str
+    ) -> str:
+        if self.matcher:
+            match = self.matcher.match(value)
+            if not match:
+                msg = f'Invalid {self.type_name} format: {value}'
+                raise ValueError(msg)
+        return value
 
 
-def _validate_datetime(value: str) -> str:
-    match = _datetime_regex.match(value)
-    if not match:
-        msg = 'Invalid datetime format: {value}'
-        raise ValueError(msg)
-    return value
-
-
-bind(
-    datatype=URIRef('https://www.w3.org/TR/NOTE-datetime'),
-    constructor=_validate_datetime,
-    pythontype=str,
-)
+def add_type_validator(
+    uri_ref: str,
+    regex: str | None,
+):
+    bind(
+        datatype=URIRef(uri_ref),
+        constructor=TypeValidator(uri_ref, regex).validate,
+        pythontype=str,
+    )
 
 
 def get_conversion_objects(schema: str):
     if schema not in _cached_conversion_objects:
+        model = get_model_for_schema(schema)[0]
+        schema_view = SchemaView(schema)
         _cached_conversion_objects[schema] = {
             'schema_module': get_schema_model_for_schema(schema),
-            'schema_view': SchemaView(schema),
+            'schema_view': schema_view,
         }
+        # Add types to support explicit type clauses in TTL
+        for type_definition in schema_view.all_types().values():
+            uri = resolve_curie(model, type_definition.uri)
+            add_type_validator(
+                uri_ref=uri,
+                regex=type_definition.pattern,
+            )
     return _cached_conversion_objects[schema]
 
 
