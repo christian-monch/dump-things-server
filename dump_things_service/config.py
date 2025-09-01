@@ -433,6 +433,10 @@ def get_token_store(
         raise HTTPException(status_code=HTTP_401_UNAUTHORIZED, detail='Invalid token.')
 
     token_store = None
+    if collection_name not in instance_config.token_stores[token]['collections']:
+        detail = f'Token does not give access to collection `{collection_name}`.'
+        raise HTTPException(status_code=HTTP_401_UNAUTHORIZED, detail=detail)
+
     token_collection_info = instance_config.token_stores[token]['collections'][
         collection_name
     ]
