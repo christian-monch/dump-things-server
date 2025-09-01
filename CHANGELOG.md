@@ -1,3 +1,11 @@
+# 2.3.0 (2025-09-01)
+
+## New features
+
+- Support explicit type declarations in TTL input for all types that are
+  defined in the underlying schema.
+
+
 # 2.2.0 (2025-08-29)
 
 ## New features
