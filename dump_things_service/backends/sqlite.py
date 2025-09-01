@@ -206,11 +206,11 @@ class _SQLiteBackend(StorageBackend):
                 class_list = ', '.join(f"'{cn}'" for cn in class_names)
                 rs = connection.execute(
                     text(
-                        'select distinct thing.* '
+                        'select distinct thing.iri, thing.class_name, thing.sort_key, thing.id '
                         'from thing, json_tree(thing.object) '
                         'where lower(json_tree.value) like lower(:pattern) '
                         f"and thing.class_name in ({class_list}) "
-                        "and json_tree.type = 'text'"
+                        "and json_tree.type = 'text' ORDER BY thing.sort_key"
                     ),
                     parameters={
                         'pattern': pattern,
