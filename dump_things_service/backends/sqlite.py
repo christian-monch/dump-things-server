@@ -38,6 +38,7 @@ from sqlalchemy import (
     distinct,
     func,
     select,
+    text,
 )
 from sqlalchemy.orm import (
     DeclarativeBase,
@@ -201,14 +202,30 @@ class _SQLiteBackend(StorageBackend):
         if pattern is None:
             statement = select(Thing).where(Thing.class_name.in_(class_names))
         else:
-            # The SQLAlchemy code implements the following SQL query:
-            # select distinct * from thing where lower(json(thing.object)) like lower('<pattern>') and Thing.class_name in (<class_names>);
-            statement = select(Thing).distinct().where(
-                Thing.class_name.in_(class_names),
-                func.json(Thing.object).ilike(pattern),
-            )
-            # TODO: `statement` above should be changed to implement:
-            #  select distinct * from thing, json_tree(thing.object) where lower(json_tree.value) like lower('<pattern>');
+            with self.engine.connect() as connection:
+                class_list = ', '.join(f"'{cn}'" for cn in class_names)
+                rs = connection.execute(
+                    text(
+                        'select distinct thing.* '
+                        'from thing, json_tree(thing.object) '
+                        'where lower(json_tree.value) like lower(:pattern) '
+                        f"and thing.class_name in ({class_list}) "
+                        "and json_tree.type = 'text'"
+                    ),
+                    parameters={
+                        'pattern': pattern,
+                    }
+                )
+
+                return SQLResultList(self.engine).add_info(
+                    ResultListInfo(
+                        iri=thing.iri,
+                        class_name=thing.class_name,
+                        sort_key=thing.sort_key,
+                        private=thing.id,
+                    )
+                    for thing in rs
+                )
 
         for attribute in self.order_by:
             statement = statement.order_by(Thing.object[attribute]).options(
