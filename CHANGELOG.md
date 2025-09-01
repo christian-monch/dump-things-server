@@ -1,3 +1,14 @@
+# 2.3.1 (2025-09-01)
+
+# Bugfixes
+
+- Fix a bug that caused internal server errors if a token was provided for a
+  collection that was not defined in the token configuration object. Now, this
+  situation will lead to a 401 Unauthorized error.  
+  (There is no ignoring of the token and no fallback to a default token. To
+  use a default token, the request should be performed without a token.)
+
+
 # 2.3.0 (2025-09-01)
 
 ## New features
