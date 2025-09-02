@@ -200,7 +200,20 @@ class _SQLiteBackend(StorageBackend):
     ) -> SQLResultList:
 
         if pattern is None:
-            statement = select(Thing).where(Thing.class_name.in_(class_names))
+            statement = select(Thing).where(
+                Thing.class_name.in_(class_names)
+            ).order_by(Thing.sort_key).options(load_only(Thing.id))
+
+            with Session(self.engine) as session, session.begin():
+                return SQLResultList(self.engine).add_info(
+                    ResultListInfo(
+                        iri=thing.iri,
+                        class_name=thing.class_name,
+                        sort_key=thing.sort_key,
+                        private=thing.id,
+                    )
+                    for thing in session.scalars(statement).all()
+                )
         else:
             with self.engine.connect() as connection:
                 class_list = ', '.join(f"'{cn}'" for cn in class_names)
@@ -226,21 +239,6 @@ class _SQLiteBackend(StorageBackend):
                     )
                     for thing in rs
                 )
-
-        for attribute in self.order_by:
-            statement = statement.order_by(Thing.object[attribute]).options(
-                load_only(Thing.id)
-            )
-        with Session(self.engine) as session, session.begin():
-            return SQLResultList(self.engine).add_info(
-                ResultListInfo(
-                    iri=thing.iri,
-                    class_name=thing.class_name,
-                    sort_key=thing.sort_key,
-                    private=thing.id,
-                )
-                for thing in session.scalars(statement).all()
-            )
 
     def get_all_records(
         self,
