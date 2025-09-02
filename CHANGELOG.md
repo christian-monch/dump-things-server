@@ -1,3 +1,11 @@
+# 2.4.0 (2025-09-02)
+
+# New features
+
+- Search pattern in constrained searches are only matched against values in
+  records, and not against keys anymore.
+
+
 # 2.3.2 (2025-09-01)
 
 # Bugfixes
