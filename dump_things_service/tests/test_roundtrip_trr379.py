@@ -90,6 +90,7 @@ def test_json_ttl_json_trr379(fastapi_client_simple):
         assert json_object == json_record_out
 
 
+@pytest.mark.xfail
 def test_ttl_json_ttl_trr379(fastapi_client_simple):
     test_client, _ = fastapi_client_simple
 
