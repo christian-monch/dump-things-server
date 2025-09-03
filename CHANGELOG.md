@@ -1,3 +1,11 @@
+# 2.3.3 (2025-09-01)
+
+# Bugfixes
+
+- Catch pydantic `ValidationError` exceptions and convert them to HTTP 400 errors.
+  This prevents internal server errors in case of invalid input data.
+
+
 # 2.3.2 (2025-09-01)
 
 # Bugfixes
