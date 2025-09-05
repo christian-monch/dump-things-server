@@ -1,3 +1,10 @@
+# 2.3.4 (2025-09-05)
+
+# Bugfixes
+
+- Improve performance of class-instance fetching with SQL-backends.
+
+
 # 2.3.3 (2025-09-01)
 
 # Bugfixes
