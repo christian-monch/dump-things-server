@@ -38,6 +38,7 @@ from sqlalchemy import (
     distinct,
     func,
     select,
+    text,
 )
 from sqlalchemy.orm import (
     DeclarativeBase,
@@ -198,23 +199,25 @@ class _SQLiteBackend(StorageBackend):
         pattern: str | None = None,
     ) -> SQLResultList:
 
+        class_list = ', '.join(f"'{cn}'" for cn in class_names)
         if pattern is None:
-            statement = select(Thing).where(Thing.class_name.in_(class_names))
+            statement = text(
+                'select distinct thing.iri, thing.class_name, thing.sort_key, thing.id '
+                'from thing '
+                f"where thing.class_name in ({class_list}) "
+                "ORDER BY thing.sort_key"
+            )
         else:
-            # The SQLAlchemy code implements the following SQL query:
-            # select distinct * from thing where lower(json(thing.object)) like lower('<pattern>') and Thing.class_name in (<class_names>);
-            statement = select(Thing).distinct().where(
-                Thing.class_name.in_(class_names),
-                func.json(Thing.object).ilike(pattern),
+            statement = text(
+                'select distinct thing.iri, thing.class_name, thing.sort_key, thing.id '
+                'from thing, json_tree(thing.object) '
+                'where lower(json_tree.value) like lower(:pattern) '
+                f"and thing.class_name in ({class_list}) "
+                "and json_tree.type = 'text' ORDER BY thing.sort_key"
             )
-            # TODO: `statement` above should be changed to implement:
-            #  select distinct * from thing, json_tree(thing.object) where lower(json_tree.value) like lower('<pattern>');
 
-        for attribute in self.order_by:
-            statement = statement.order_by(Thing.object[attribute]).options(
-                load_only(Thing.id)
-            )
-        with Session(self.engine) as session, session.begin():
+        with self.engine.connect() as connection:
+            rs = connection.execute(statement, parameters={'pattern': pattern})
             return SQLResultList(self.engine).add_info(
                 ResultListInfo(
                     iri=thing.iri,
@@ -222,7 +225,7 @@ class _SQLiteBackend(StorageBackend):
                     sort_key=thing.sort_key,
                     private=thing.id,
                 )
-                for thing in session.scalars(statement).all()
+                for thing in rs
             )
 
     def get_all_records(
