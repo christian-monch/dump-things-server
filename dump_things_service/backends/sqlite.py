@@ -35,8 +35,6 @@ from sqlalchemy import (
     JSON,
     String,
     create_engine,
-    distinct,
-    func,
     select,
     text,
 )
