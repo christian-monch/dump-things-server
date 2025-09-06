@@ -1,3 +1,13 @@
+# 2.4.1 (2025-09-06)
+
+# Bugfixes
+
+- Improve performance of class-instance fetching with SQL-backends. (from 2.3.4)
+
+- Catch pydantic `ValidationError` exceptions and convert them to HTTP 400 errors.
+  This prevents internal server errors in case of invalid input data. (from 2.3.3)
+
+
 # 2.4.0 (2025-09-02)
 
 # New features

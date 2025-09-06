@@ -37,6 +37,7 @@ from fastapi_pagination.utils import disable_installed_extensions_check
 from pydantic import (
     BaseModel,
     TypeAdapter,
+    ValidationError,
 )
 from starlette.responses import (
     JSONResponse,
@@ -266,7 +267,8 @@ def store_record(
                 input_format=Format.ttl,
                 output_format=Format.json,
             ).convert(data, class_name)
-        record = TypeAdapter(getattr(model, class_name)).validate_python(json_object)
+        with wrap_http_exception(ValidationError, header='Validation error'):
+            record = TypeAdapter(getattr(model, class_name)).validate_python(json_object)
     else:
         record = data
 

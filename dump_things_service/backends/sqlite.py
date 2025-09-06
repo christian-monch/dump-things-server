@@ -199,46 +199,34 @@ class _SQLiteBackend(StorageBackend):
         pattern: str | None = None,
     ) -> SQLResultList:
 
+        class_list = ', '.join(f"'{cn}'" for cn in class_names)
         if pattern is None:
-            statement = select(Thing).where(
-                Thing.class_name.in_(class_names)
-            ).order_by(Thing.sort_key).options(load_only(Thing.id))
-
-            with Session(self.engine) as session, session.begin():
-                return SQLResultList(self.engine).add_info(
-                    ResultListInfo(
-                        iri=thing.iri,
-                        class_name=thing.class_name,
-                        sort_key=thing.sort_key,
-                        private=thing.id,
-                    )
-                    for thing in session.scalars(statement).all()
-                )
+            statement = text(
+                'select distinct thing.iri, thing.class_name, thing.sort_key, thing.id '
+                'from thing '
+                f"where thing.class_name in ({class_list}) "
+                "ORDER BY thing.sort_key"
+            )
         else:
-            with self.engine.connect() as connection:
-                class_list = ', '.join(f"'{cn}'" for cn in class_names)
-                rs = connection.execute(
-                    text(
-                        'select distinct thing.iri, thing.class_name, thing.sort_key, thing.id '
-                        'from thing, json_tree(thing.object) '
-                        'where lower(json_tree.value) like lower(:pattern) '
-                        f"and thing.class_name in ({class_list}) "
-                        "and json_tree.type = 'text' ORDER BY thing.sort_key"
-                    ),
-                    parameters={
-                        'pattern': pattern,
-                    }
-                )
+            statement = text(
+                'select distinct thing.iri, thing.class_name, thing.sort_key, thing.id '
+                'from thing, json_tree(thing.object) '
+                'where lower(json_tree.value) like lower(:pattern) '
+                f"and thing.class_name in ({class_list}) "
+                "and json_tree.type = 'text' ORDER BY thing.sort_key"
+            )
 
-                return SQLResultList(self.engine).add_info(
-                    ResultListInfo(
-                        iri=thing.iri,
-                        class_name=thing.class_name,
-                        sort_key=thing.sort_key,
-                        private=thing.id,
-                    )
-                    for thing in rs
+        with self.engine.connect() as connection:
+            rs = connection.execute(statement, parameters={'pattern': pattern})
+            return SQLResultList(self.engine).add_info(
+                ResultListInfo(
+                    iri=thing.iri,
+                    class_name=thing.class_name,
+                    sort_key=thing.sort_key,
+                    private=thing.id,
                 )
+                for thing in rs
+            )
 
     def get_all_records(
         self,
