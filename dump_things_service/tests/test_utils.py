@@ -6,8 +6,8 @@ unauthorized_write_locations = tuple((x, 'token_1') for x in range(3, 6))
 
 def test_cleaned_json():
     dirty_data = {
-        'pid': 'trr379:contributors/michael-hanke',
-        'schema_type': 'dlsocial:Person',
+        'pid': 'dlflatsocial:contributors/michael-hanke',
+        'schema_type': 'dlflatsocial:Person',
         'identifiers': [
             {
                 'notation': '0000-0001-6398-6370',
@@ -25,8 +25,8 @@ def test_cleaned_json():
     clean_data = cleaned_json(dirty_data)
     assert clean_data is not dirty_data
     assert clean_data == {
-        'pid': 'trr379:contributors/michael-hanke',
-        'schema_type': 'dlsocial:Person',
+        'pid': 'dlflatsocial:contributors/michael-hanke',
+        'schema_type': 'dlflatsocial:Person',
         'identifiers': [
             {
                 'notation': '0000-0001-6398-6370',

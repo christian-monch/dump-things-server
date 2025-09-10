@@ -218,7 +218,7 @@ def test_token_store_adding(fastapi_client_simple):
 
 def test_funky_pid(fastapi_client_simple):
     test_client, _ = fastapi_client_simple
-    record_pid = 'trr379:contributors/someone'
+    record_pid = 'dlflatsocial:contributors/someone'
     for i, token in basic_write_locations:
         response = test_client.post(
             f'/collection_{i}/record/Person',

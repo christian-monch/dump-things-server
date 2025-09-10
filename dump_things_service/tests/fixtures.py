@@ -60,14 +60,14 @@ collections:
     backend:
       type: sqlite
       schema: {schema_path}
-  collection_trr379-1:
+  collection_dlflatsocial-1:
     default_token: basic_access
-    curated: {curated}/collection_trr379-1
-    incoming: {incoming}/collection_trr379-1
-  collection_trr379-2:
+    curated: {curated}/collection_dlflatsocial-1
+    incoming: {incoming}/collection_dlflatsocial-1
+  collection_dlflatsocial-2:
     default_token: basic_access
-    curated: {curated}/collection_trr379-2
-    incoming: {incoming}/collection_trr379-2
+    curated: {curated}/collection_dlflatsocial-2
+    incoming: {incoming}/collection_dlflatsocial-2
     backend:
       type: sqlite
       schema: https://concepts.datalad.org/s/flat-social/unreleased.yaml
@@ -100,10 +100,10 @@ tokens:
       collection_8:
         mode: READ_CURATED
         incoming_label: ''
-      collection_trr379-1:
+      collection_dlflatsocial-1:
         mode: READ_CURATED
         incoming_label: ''
-      collection_trr379-2:
+      collection_dlflatsocial-2:
         mode: READ_CURATED
         incoming_label: ''
   token_1:
@@ -112,10 +112,10 @@ tokens:
       collection_1:
         mode: WRITE_COLLECTION
         incoming_label: in_token_1
-      collection_trr379-1:
+      collection_dlflatsocial-1:
         mode: WRITE_COLLECTION
         incoming_label: in_token_1
-      collection_trr379-2:
+      collection_dlflatsocial-2:
         mode: WRITE_COLLECTION
         incoming_label: in_token_1
   token_1_xxo:
@@ -205,8 +205,8 @@ def dump_stores_simple(tmp_path_factory):
             ),
         ]
     )
-    default_entries['collection_trr379-1'] = [('Person', pid_trr, test_record_trr)]
-    default_entries['collection_trr379-2'] = [('Person', pid_trr, test_record_trr)]
+    default_entries['collection_dlflatsocial-1'] = [('Person', pid_trr, test_record_trr)]
+    default_entries['collection_dlflatsocial-2'] = [('Person', pid_trr, test_record_trr)]
     create_store(
         root_dir=tmp_path,
         config=GlobalConfig(**yaml.safe_load(global_config_text)),
@@ -219,11 +219,11 @@ def dump_stores_simple(tmp_path_factory):
             'collection_6': (str(schema_path), 'digest-md5-p3-p3'),
             'collection_7': (str(schema_path), 'digest-sha1-p3-p3'),
             'collection_8': (str(schema_path), 'digest-md5'),
-            'collection_trr379-1': (
+            'collection_dlflatsocial-1': (
                 'https://concepts.datalad.org/s/flat-social/unreleased.yaml',
                 'digest-md5',
             ),
-            'collection_trr379-2': (
+            'collection_dlflatsocial-2': (
                 'https://concepts.datalad.org/s/flat-social/unreleased.yaml',
                 'digest-md5',
             ),

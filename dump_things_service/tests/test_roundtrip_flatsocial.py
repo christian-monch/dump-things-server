@@ -4,7 +4,7 @@ from .. import HTTP_200_OK
 from ..utils import cleaned_json
 
 json_record = {
-    'pid': 'trr379:test_john_json',
+    'pid': 'dlflatsocial:test_john_json',
     'given_name': 'Johnöüß',
 }
 json_record_out = {
@@ -48,13 +48,13 @@ dlflatsocial:test_john_ttl a dlflatsocial:Person ;
 new_json_pid = 'dlflatsocial:another_john_ttl'
 
 
-def test_json_ttl_json_trr379(fastapi_client_simple):
+def test_json_ttl_json_dlflatsocial(fastapi_client_simple):
     test_client, _ = fastapi_client_simple
 
     for i in range(1, 3):
         # Deposit JSON records
         response = test_client.post(
-            f'/collection_trr379-{i}/record/Person',
+            f'/collection_dlflatsocial-{i}/record/Person',
             headers={'x-dumpthings-token': 'token_1'},
             json=json_record,
         )
@@ -62,7 +62,7 @@ def test_json_ttl_json_trr379(fastapi_client_simple):
 
         # Retrieve TTL records
         response = test_client.get(
-            f'/collection_trr379-{i}/record?pid={json_record["pid"]}&format=ttl',
+            f'/collection_dlflatsocial-{i}/record?pid={json_record["pid"]}&format=ttl',
             headers={'x-dumpthings-token': 'token_1'},
         )
         assert response.status_code == HTTP_200_OK
@@ -72,7 +72,7 @@ def test_json_ttl_json_trr379(fastapi_client_simple):
         ttl = ttl.replace(json_record['pid'], new_ttl_pid)
 
         response = test_client.post(
-            f'/collection_trr379-{i}/record/Person?format=ttl',
+            f'/collection_dlflatsocial-{i}/record/Person?format=ttl',
             headers={'content-type': 'text/turtle', 'x-dumpthings-token': 'token_1'},
             data=ttl,
         )
@@ -80,7 +80,7 @@ def test_json_ttl_json_trr379(fastapi_client_simple):
 
         # Retrieve JSON record
         response = test_client.get(
-            f'/collection_trr379-{i}/record?pid={new_ttl_pid}&format=json',
+            f'/collection_dlflatsocial-{i}/record?pid={new_ttl_pid}&format=json',
             headers={'x-dumpthings-token': 'token_1'},
         )
         assert response.status_code == HTTP_200_OK
@@ -90,14 +90,13 @@ def test_json_ttl_json_trr379(fastapi_client_simple):
         assert json_object == json_record_out
 
 
-#@pytest.mark.xfail
-def test_ttl_json_ttl_trr379(fastapi_client_simple):
+def test_ttl_json_ttl_dlflatsocial(fastapi_client_simple):
     test_client, _ = fastapi_client_simple
 
     for i in range(1, 3):
         # Deposit a ttl record
         response = test_client.post(
-            f'/collection_trr379-{i}/record/Person?format=ttl',
+            f'/collection_dlflatsocial-{i}/record/Person?format=ttl',
             headers={
                 'x-dumpthings-token': 'token_1',
                 'content-type': 'text/turtle',
@@ -108,7 +107,7 @@ def test_ttl_json_ttl_trr379(fastapi_client_simple):
 
         # Retrieve JSON records
         response = test_client.get(
-            f'/collection_trr379-{i}/record?pid=dlflatsocial:test_john_ttl&format=json',
+            f'/collection_dlflatsocial-{i}/record?pid=dlflatsocial:test_john_ttl&format=json',
             headers={'x-dumpthings-token': 'token_1'},
         )
         assert response.status_code == HTTP_200_OK
@@ -118,7 +117,7 @@ def test_ttl_json_ttl_trr379(fastapi_client_simple):
         json_object['pid'] = new_json_pid
 
         response = test_client.post(
-            f'/collection_trr379-{i}/record/Person?format=json',
+            f'/collection_dlflatsocial-{i}/record/Person?format=json',
             headers={'x-dumpthings-token': 'token_1'},
             json=json_object,
         )
@@ -126,7 +125,7 @@ def test_ttl_json_ttl_trr379(fastapi_client_simple):
 
         # Retrieve ttl record
         response = test_client.get(
-            f'/collection_trr379-{i}/record?pid={new_json_pid}&format=ttl',
+            f'/collection_dlflatsocial-{i}/record?pid={new_json_pid}&format=ttl',
             headers={'x-dumpthings-token': 'token_1'},
         )
         assert response.status_code == HTTP_200_OK
