@@ -1,6 +1,17 @@
+# 3.0.0 (2025-09-10)
+
+## Breaking Changes
+
+- Remove the `token-permissions`-endpoint.
+
+## Bugfixes
+
+- Fix failing tests
+
+
 # 2.4.1 (2025-09-06)
 
-# Bugfixes
+## Bugfixes
 
 - Improve performance of class-instance fetching with SQL-backends. (from 2.3.4)
 
@@ -10,7 +21,7 @@
 
 # 2.4.0 (2025-09-02)
 
-# New features
+## New features
 
 - Search pattern in constrained searches are only matched against values in
   records, and not against keys anymore.
@@ -18,7 +29,7 @@
 
 # 2.3.2 (2025-09-01)
 
-# Bugfixes
+## Bugfixes
 
 - This version improves the bugfix that was introduced in version 2.3.1.
   A token provided for a collection that is not defined in the token
@@ -27,7 +38,7 @@
 
 # 2.3.1 (2025-09-01)
 
-# Bugfixes
+## Bugfixes
 
 - Fix a bug that caused internal server errors if a token was provided for a
   collection that was not defined in the token configuration object. Now, this

@@ -310,40 +310,6 @@ def _check_collection(
         )
 
 
-@app.post('/{collection}/token_permissions')
-async def fetch_token_permissions(
-    collection: str,
-    body: TokenCapabilityRequest,
-    response: Response,
-):
-    response.headers['X-Dumpthings-Service-Version'] = __version__
-
-    _check_collection(g_instance_config, collection)
-    token = (
-        get_default_token_name(g_instance_config, collection)
-        if body.token is None
-        else body.token
-    )
-    token_store, token_permissions = get_token_store(
-        g_instance_config, collection, token
-    )
-    final_permissions = join_default_token_permissions(
-        g_instance_config, token_permissions, collection
-    )
-    return JSONResponse(
-        {
-            'read_curated': final_permissions.curated_read,
-            'read_incoming': final_permissions.incoming_read,
-            'write_incoming': final_permissions.incoming_write,
-            **(
-                {'incoming_zone': get_zone(g_instance_config, collection, token)}
-                if final_permissions.incoming_read or final_permissions.incoming_write
-                else {}
-            ),
-        }
-    )
-
-
 @app.get('/{collection}/record')
 async def read_record_with_pid(
     collection: str,

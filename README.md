@@ -327,9 +327,6 @@ The service provides the following endpoints:
   It can be set to `json` (the default) or to `ttl`,
 
 
-- `POST /<collection>/token_permissions`: post an object of type `TokenCapabilityRequest` (JSON-encoded) to receive the permission flags and the zone-label of the specified token, or of the default token. 
-
-
 - `GET /docs`: provides information about the API of the service, i.e. about all endpoints.
 
 
