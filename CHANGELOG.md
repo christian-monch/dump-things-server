@@ -1,5 +1,9 @@
 # Pending
 
+## Breaking Changes
+
+- Remove the `token-permissions`-endpoint.
+
 ## Bugfixes
 
 - Fix failing tests
