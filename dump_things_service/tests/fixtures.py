@@ -70,7 +70,7 @@ collections:
     incoming: {incoming}/collection_trr379-2
     backend:
       type: sqlite
-      schema: https://concepts.trr379.de/s/base/unreleased.yaml
+      schema: https://concepts.datalad.org/s/flat-social/unreleased.yaml
 
 tokens:
   basic_access:
@@ -220,11 +220,11 @@ def dump_stores_simple(tmp_path_factory):
             'collection_7': (str(schema_path), 'digest-sha1-p3-p3'),
             'collection_8': (str(schema_path), 'digest-md5'),
             'collection_trr379-1': (
-                'https://concepts.trr379.de/s/base/unreleased.yaml',
+                'https://concepts.datalad.org/s/flat-social/unreleased.yaml',
                 'digest-md5',
             ),
             'collection_trr379-2': (
-                'https://concepts.trr379.de/s/base/unreleased.yaml',
+                'https://concepts.datalad.org/s/flat-social/unreleased.yaml',
                 'digest-md5',
             ),
         },

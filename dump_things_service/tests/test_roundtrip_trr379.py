@@ -8,44 +8,44 @@ json_record = {
     'given_name': 'Johnöüß',
 }
 json_record_out = {
-    'schema_type': 'dlsocial:Person',
+    'schema_type': 'dlflatsocial:Person',
     **json_record,
 }
 
-new_ttl_pid = 'trr379:another_john_json'
+new_ttl_pid = 'dlflatsocial:another_john_json'
 
-ttl_record = """@prefix dlsocial: <https://concepts.datalad.org/s/social/unreleased/> .
+ttl_record = """@prefix dlflatsocial: <https://concepts.datalad.org/s/flat-social/unreleased/> .
+@prefix dlsocialmx: <https://concepts.datalad.org/s/social-mixin/unreleased/> .
 @prefix dlthings: <https://concepts.datalad.org/s/things/v1/> .
-@prefix trr379: <https://trr379.de/> .
 
-trr379:test_john_ttl a dlsocial:Person ;
-    dlsocial:given_name "Johnöüß" ;
+dlflatsocial:test_john_ttl a dlflatsocial:Person ;
+    dlsocialmx:given_name "Johnöüß" ;
     dlthings:annotations [ a dlthings:Annotation ;
             dlthings:annotation_tag <http://purl.obolibrary.org/obo/NCIT_C54269> ;
             dlthings:annotation_value "test_user_1" ] .
 """
 
-ttl_input_record = """@prefix dlsocial: <https://concepts.datalad.org/s/social/unreleased/> .
+ttl_input_record = """@prefix dlflatsocial: <https://concepts.datalad.org/s/flat-social/unreleased/> .
+@prefix dlsocialmx: <https://concepts.datalad.org/s/social-mixin/unreleased/> .
 @prefix dlthings: <https://concepts.datalad.org/s/things/v1/> .
-@prefix trr379: <https://trr379.de/> .
 
-trr379:test_john_ttl a dlsocial:Person ;
-    dlsocial:given_name "Johnöüß" .
+dlflatsocial:test_john_ttl a dlflatsocial:Person ;
+    dlsocialmx:given_name "Johnöüß" .
 """
 
-ttl_output_record = """@prefix dlsocial: <https://concepts.datalad.org/s/social/unreleased/> .
+ttl_output_record = """@prefix dlflatsocial: <https://concepts.datalad.org/s/flat-social/unreleased/> .
+@prefix dlsocialmx: <https://concepts.datalad.org/s/social-mixin/unreleased/> .
 @prefix dlthings: <https://concepts.datalad.org/s/things/v1/> .
 @prefix obo: <http://purl.obolibrary.org/obo/> .
-@prefix trr379: <https://trr379.de/> .
 
-trr379:test_john_ttl a dlsocial:Person ;
-    dlsocial:given_name "Johnöüß" ;
+dlflatsocial:test_john_ttl a dlflatsocial:Person ;
+    dlsocialmx:given_name "Johnöüß" ;
     dlthings:annotations [ a dlthings:Annotation ;
             dlthings:annotation_tag obo:NCIT_C54269 ;
             dlthings:annotation_value "test_user_1" ] .
 """
 
-new_json_pid = 'trr379:another_john_ttl'
+new_json_pid = 'dlflatsocial:another_john_ttl'
 
 
 def test_json_ttl_json_trr379(fastapi_client_simple):
@@ -90,7 +90,7 @@ def test_json_ttl_json_trr379(fastapi_client_simple):
         assert json_object == json_record_out
 
 
-@pytest.mark.xfail
+#@pytest.mark.xfail
 def test_ttl_json_ttl_trr379(fastapi_client_simple):
     test_client, _ = fastapi_client_simple
 
@@ -104,11 +104,11 @@ def test_ttl_json_ttl_trr379(fastapi_client_simple):
             },
             data=ttl_input_record,
         )
-        assert response.status_code == HTTP_200_OK
+        assert response.status_code == HTTP_200_OK, 'Response content: ' + response.content.decode()
 
         # Retrieve JSON records
         response = test_client.get(
-            f'/collection_trr379-{i}/record?pid=trr379:test_john_ttl&format=json',
+            f'/collection_trr379-{i}/record?pid=dlflatsocial:test_john_ttl&format=json',
             headers={'x-dumpthings-token': 'token_1'},
         )
         assert response.status_code == HTTP_200_OK
@@ -132,5 +132,5 @@ def test_ttl_json_ttl_trr379(fastapi_client_simple):
         assert response.status_code == HTTP_200_OK
         assert (
             response.text.strip()
-            == ttl_output_record.replace('trr379:test_john_ttl', new_json_pid).strip()
+            == ttl_output_record.replace('dlflatsocial:test_john_ttl', new_json_pid).strip()
         )
