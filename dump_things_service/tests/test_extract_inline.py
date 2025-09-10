@@ -202,7 +202,7 @@ def test_dont_extract_empty_things_locally():
 
 # We skip this test because the dlflatsocial-schema does not support inlined
 # relations
-@pytest.mark.skip
+@pytest.mark.xfail
 def test_inline_extraction_on_service(fastapi_client_simple):
     test_client, _ = fastapi_client_simple
 
@@ -247,7 +247,7 @@ def test_inline_extraction_on_service(fastapi_client_simple):
 
 # We skip this test because the dlflatsocial-schema does not support inlined
 # relations
-@pytest.mark.skip
+@pytest.mark.xfail
 def test_inline_ttl_processing(fastapi_client_simple):
     test_client, _ = fastapi_client_simple
 
