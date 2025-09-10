@@ -1,4 +1,4 @@
-# Pending
+# 3.0.0 (2025-09-10)
 
 ## Breaking Changes
 
