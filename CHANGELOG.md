@@ -1,3 +1,10 @@
+# 3.0.1 (2025-09-11)
+
+## Bugfixes
+
+- Unpin pydantic-version. This gets rid of a `RecursionError` that appeared on certain schemas.
+
+
 # 3.0.0 (2025-09-10)
 
 ## Breaking Changes
