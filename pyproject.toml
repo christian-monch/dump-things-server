@@ -26,12 +26,12 @@ classifiers = [
 ]
 dependencies = [
     "aiohttp",
-    "click==8.1.8",
+    "click",
     "fastapi[standard]",
     "fastapi-pagination",
     "fsspec",
     "linkml",
-    "pydantic==2.8.0",
+    "pydantic",
     "PyYAML",
     "rdflib",
     "requests",
