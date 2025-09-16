@@ -131,7 +131,7 @@ tokens:
         # A token and collection-specific label, that defines "zones" in which incoming
         # records are stored. Multiple tokens can share the same zone, for example if
         # many clients with individual tokens work together to build a collection.
-        # (Since this token does not allow right access, "incoming_label" is ignored and
+        # (Since this token does not allow write access, "incoming_label" is ignored and
         # left empty here (TODO: it should not be required in this case)).
         incoming_label: ''
 
@@ -186,7 +186,7 @@ tokens:
 The service currently supports the following backends for storing records:
 - `record_dir`: this backend stores records as YAML-files in a directory structure that is defined [here](https://concepts.datalad.org/dump-things-storage-v0/). It reads the backend configuration from a "record collection configuration file" as described [here](https://concepts.datalad.org/dump-things-storage-v0/).
 
-- `sqlite`: this backend stores records in a SQLite database. There is an individual database file, named `records.db`, for each curated area and incoming area.
+- `sqlite`: this backend stores records in a SQLite database. There is an individual database file, named `.sqlite-records.db`, for each curated area and incoming area.
 
 - `record_dir+stl`: here `stl` stands for "schema-type-layer".
   This backend stores records in the same format as `record_dir`, but adds special treatment for the `schema_type` attribute in records.
@@ -198,10 +198,9 @@ The service currently supports the following backends for storing records:
 Backends can be defined per collection in the configuration file.
 The backend will be used for the curated area and for the incoming areas of the collection.
 If no backend is defined for a collection, the `record_dir+stl`-backend is used by default.
-The `+stl`-backends can be useful to ensure that commands that return records of multiple classes in JSON format will always return records with a `schema_type` attribute.
-This attribute allows clients to determine the class of each result record.
+The `+stl`-backends can be useful if an endpoint returns records of multiple classes, because it allows clients to determine the class of each result record.
 
-The service guarantees that backends of all types can co-exist independently in the same directory, i.e., there are no name collisions in files that are used for different backends (as long as no class name starts with `.`)).
+The service guarantees that backends of all types can co-exist independently in the same directory, i.e., there are no name collisions in files that are used for different backends (as long as no class name starts with `.` or `_`)).
 
 The following configuration snippet shows how to define a backend for a collection:
 
@@ -209,9 +208,56 @@ The following configuration snippet shows how to define a backend for a collecti
 ...
 collections:
   collection_with_default_record_dir+stl_backend:
+    # This is a collection with the default backend, i.e. `record_dir+stl` and
+    # the default authentication, i.e. config-based authentication.
     default_token: anon_read
     curated: collection_1/curated
 
+  collection_with_forgejo_permission_source:
+    # This is a collection with the default backend, i.e. `record_dir+stl` and
+    # a forgejo-based permission source. That means it will use a forgejo
+    # instance to determine the permissions of a token for this collection.
+    # The instance is also used to determine the user-id and the incoming label.
+    # In the case of forgejo, the user-id and the incoming label are the
+    # forgejo login associated with the token.
+
+    # We still need the name of a default token. If the token is defined in this
+    # config file, its properties will be determined by the
+    # config file. If the token is not defined in the config file, its
+    # properties will be determined by the authentication provider. In this
+    # example by the forgejo-instance at `https://forgejo.example.com`.
+    # If there is more than one authentication provider, they will be tried
+    # in the order they are defined in the config file.
+    default_token: anon_read    # We still need a default token
+    curated: collection_1/curated
+
+    # Token permissions, user-ids (for record annotations), and incoming
+    # label can be determined by multiple permission sources.
+    # The default permission source is of type `config`, which is added
+    # automatically and reads the token permissions for this collection,
+    # i.e. `collection_with_forgejo_permission_source`.
+    # This example uses another permission source, a `forgejo` instance.
+    permission_sources:
+      - type: forgejo
+        # The API-URL of the forgejo instance that should be used
+        url: https://forgejo.example.com/api/v1
+        # A repository that determines the user's access rights. The access
+        # rights of the token for this repository will determine the access
+        # rights of the token for this collection, i.e. for the collection
+        # `collection_with_forgejo_permission_source`.
+        repo: reference-repository
+
+      # Multiple permission sources are allowed. They will be tried in the
+      # order defined in the config file. If a permission source returns
+      # permissions for a token, those permissions will be used and no other
+      # permission sources will be queried.
+      # The default permission source is `config`, which reads the token 
+      # permissions, user-id, and incoming
+      # label from the config file. It is automatically added as the last
+      # permission source. You can also add it explicitly as shown here.
+      # This allows prioritizing `config` over other permission sources.
+      - type: config
+  
   collection_with_explicit_record_dir+stl_backend:
     default_token: anon_read
     curated: collection_1/curated
