@@ -39,8 +39,8 @@ collections:
       type: record_dir+stl
       schema: {schema_path}
       idfx: digest_md5
-    auth:
-      - config
+    auth_sources:
+      - type: config
   collection_2:
     default_token: basic_access
     curated: {curated}/collection_2

@@ -116,7 +116,7 @@ class CollectionConfig(BaseModel):
     curated: Path
     incoming: Path | None = None
     backend: BackendConfigRecordDir | BackendConfigSQLite | None = None
-    auth_provider: list[ForgejoAuthConfig | ConfigAuthConfig] = [ConfigAuthConfig()]
+    auth_sources: list[ForgejoAuthConfig | ConfigAuthConfig] = [ConfigAuthConfig()]
 
 
 class GlobalConfig(BaseModel):
@@ -293,7 +293,7 @@ def process_config_object(
 
         auth_provider_list = []
         # Check for multiple providers
-        for auth_provider in collection_info.auth_provider:
+        for auth_provider in collection_info.auth_sources:
             if auth_provider.type == 'config':
                 key = ('config',)
             elif auth_provider.type == 'forgejo':
