@@ -3,6 +3,7 @@ from __future__ import annotations
 import dataclasses
 import enum
 import hashlib
+import logging
 from functools import partial
 from pathlib import Path
 from typing import (
@@ -21,25 +22,25 @@ from pydantic import (
 from yaml.scanner import ScannerError
 
 from dump_things_service import (
-    HTTP_400_BAD_REQUEST,
     HTTP_401_UNAUTHORIZED,
     HTTP_404_NOT_FOUND,
 )
+from dump_things_service.auth import AuthenticationError
 from dump_things_service.backends.record_dir import RecordDirStore
 from dump_things_service.backends.schema_type_layer import SchemaTypeLayer
-from dump_things_service.backends.sqlite import (
-    SQLiteBackend,
-)
+from dump_things_service.backends.sqlite import SQLiteBackend
 from dump_things_service.backends.sqlite import (
     record_file_name as sqlite_record_file_name,
 )
 from dump_things_service.converter import get_conversion_objects
 from dump_things_service.model import get_model_for_schema
 from dump_things_service.store.model_store import ModelStore
+from dump_things_service.token import TokenPermission
 
 if TYPE_CHECKING:
     import types
 
+logger = logging.getLogger('uvicorn')
 
 config_file_name = '.dumpthings.yaml'
 token_config_file_name = '.token_config.yaml'  # noqa: S105
@@ -66,12 +67,6 @@ class CollectionDirConfig(BaseModel):
     schema: str
     format: Literal['yaml']
     idfx: MappingMethod
-
-
-class TokenPermission(BaseModel):
-    curated_read: bool = False
-    incoming_read: bool = False
-    incoming_write: bool = False
 
 
 class TokenModes(enum.Enum):
@@ -104,11 +99,24 @@ class BackendConfigSQLite(BaseModel):
     schema: str
 
 
+class ForgejoAuthConfig(BaseModel):
+    type: Literal['forgejo']
+    url: str
+    organization: str
+    team: str
+    repository: str | None = None
+
+
+class ConfigAuthConfig(BaseModel):
+    type: Literal['config'] = 'config'
+
+
 class CollectionConfig(BaseModel):
     default_token: str
     curated: Path
     incoming: Path | None = None
     backend: BackendConfigRecordDir | BackendConfigSQLite | None = None
+    auth_provider: list[ForgejoAuthConfig | ConfigAuthConfig] = [ConfigAuthConfig()]
 
 
 class GlobalConfig(BaseModel):
@@ -126,11 +134,14 @@ class InstanceConfig:
     curated_stores: dict = dataclasses.field(default_factory=dict)
     incoming: dict = dataclasses.field(default_factory=dict)
     zones: dict = dataclasses.field(default_factory=dict)
+    permissions: dict = dataclasses.field(default_factory=dict)
     model_info: dict = dataclasses.field(default_factory=dict)
     token_stores: dict = dataclasses.field(default_factory=dict)
     schemas: dict = dataclasses.field(default_factory=dict)
     conversion_objects: dict = dataclasses.field(default_factory=dict)
     backend: dict = dataclasses.field(default_factory=dict)
+    auth_providers: dict = dataclasses.field(default_factory=dict)
+    tokens: dict = dataclasses.field(default_factory=dict)
 
 
 mode_mapping = {
@@ -234,6 +245,9 @@ class Config:
         file_name: str = config_file_name,
     ) -> CollectionDirConfig:
         config_path = path / file_name
+        if not config_path.exists():
+            msg = f'Config file does not exist: {config_path}'
+            raise ConfigError(msg)
         try:
             return CollectionDirConfig(
                 **yaml.load(config_path.read_text(), Loader=yaml.SafeLoader)
@@ -267,12 +281,50 @@ def process_config_object(
     order_by: list[str],
     globals_dict: dict[str, Any],
 ):
+    from dump_things_service.auth.config import ConfigAuthenticationSource
+    from dump_things_service.auth.forgejo import ForgejoAuthenticationSource
+
     instance_config = InstanceConfig(store_path=store_path)
     instance_config.collections = config_object.collections
 
-    # Create a `ModelStore` (with currently fixed backend `RecordDirStore`) for
-    # the `curated`-dir in each collection.
     for collection_name, collection_info in config_object.collections.items():
+        # Create the authentication providers
+        instance_config.auth_providers[collection_name] = []
+
+        auth_provider_list = []
+        # Check for multiple providers
+        for auth_provider in collection_info.auth_provider:
+            if auth_provider.type == 'config':
+                key = ('config',)
+            elif auth_provider.type == 'forgejo':
+                key = (
+                    'forgejo',
+                    auth_provider.url,
+                    auth_provider.organization,
+                    auth_provider.team,
+                    auth_provider.repository,
+                )
+            else:
+                msg = f'Unknown authentication provider type: {auth_provider.type}'
+                raise ConfigError(msg)
+            if key in auth_provider_list:
+                logger.warning(f'Ignoring duplicate authentication provider: {key}')
+                continue
+            auth_provider_list.append(key)
+
+        for auth_provider in auth_provider_list:
+            if auth_provider[0] == 'config':
+                instance_config.auth_providers[collection_name].append(
+                    ConfigAuthenticationSource(
+                        instance_config=instance_config,
+                        collection=collection_name,
+                    )
+                )
+            else:
+                instance_config.auth_providers[collection_name].append(
+                    ForgejoAuthenticationSource(*auth_provider[1:])
+                )
+
         # Set the default backend if not specified
         backend = collection_info.backend or BackendConfigRecordDir(
             type='record_dir+stl'
@@ -297,6 +349,7 @@ def process_config_object(
         instance_config.model_info[collection_name] = model, classes, model_var_name
         globals_dict[model_var_name] = model
 
+        # Generate the curated stores
         if backend_name == 'record_dir':
             curated_store_backend = RecordDirStore(
                 root=store_path / collection_info.curated,
@@ -333,24 +386,29 @@ def process_config_object(
         if schema not in instance_config.conversion_objects:
             instance_config.conversion_objects[schema] = get_conversion_objects(schema)
 
-    # Create a `ModelStore` for each token dir and fetch the permissions
-    for token_name, token_info in config_object.tokens.items():
-        entry = {'user_id': token_info.user_id, 'collections': {}}
-        instance_config.token_stores[token_name] = entry
-        for collection_name, token_collection_info in token_info.collections.items():
-            backend = instance_config.backend[collection_name]
-            entry['collections'][collection_name] = {}
+        # We do not create stores for tokens here, but leave it to the token
+        # authentication routine.
+        instance_config.token_stores[collection_name] = dict()
 
-            # A token might be a pure curated read token, i.e., have the mode
-            # `READ_COLLECTION`. In this case, there might be no incoming store.
-            if (
-                collection_name in instance_config.incoming
-                and token_collection_info.mode
-                not in (
-                    TokenModes.READ_CURATED,
-                    TokenModes.NOTHING,
-                )
-            ):
+    # Read info for tokens from the configuration
+    for token_name, token_info in config_object.tokens.items():
+        for collection_name, token_collection_info in token_info.collections.items():
+
+            if collection_name not in instance_config.tokens:
+                instance_config.tokens[collection_name] = dict()
+
+            permissions = get_permissions(token_collection_info.mode)
+            instance_config.tokens[collection_name][token_name] = {
+                'permissions': permissions,
+                'user_id': token_info.user_id,
+                'incoming_label': token_collection_info.incoming_label,
+            }
+
+            # There is only a token store if the token has incoming read- or
+            # incoming write-permissions. If a token store exists, we ensure
+            # that an incoming path is set and an incoming label exists.
+            if permissions.incoming_read or permissions.incoming_write:
+
                 # Check that the incoming label is set for a token that has
                 # access rights to incoming records.
                 if not token_collection_info.incoming_label:
@@ -358,62 +416,112 @@ def process_config_object(
                     raise ConfigError(msg)
 
                 if any(c in token_collection_info.incoming_label for c in ('\\', '/')):
-                    msg = f'Incoming label for token `{token_name}` must not contain slashes or backslashes: `{token_collection_info.incoming_label}`'
+                    msg = (
+                        f'Incoming label for token `...` on collection '
+                        f'`{collection_name}` must not contain slashes or '
+                        f'backslashes: `{token_collection_info.incoming_label}`'
+                    )
                     raise ConfigError(msg)
 
-                if collection_name not in instance_config.zones:
-                    instance_config.zones[collection_name] = {}
-                instance_config.zones[collection_name][token_name] = (
-                    token_collection_info.incoming_label
-                )
-                # Ensure that the store directory exists
-                store_dir = (
-                    store_path
-                    / instance_config.incoming[collection_name]
-                    / token_collection_info.incoming_label
-                )
-                store_dir.mkdir(parents=True, exist_ok=True)
-
-                backend_name, extension = get_backend_and_extension(backend.type)
-                if backend_name == 'record_dir':
-                    mapping_function = instance_config.curated_stores[
-                        collection_name
-                    ].backend.pid_mapping_function
-                    token_store_backend = RecordDirStore(
-                        root=store_dir,
-                        pid_mapping_function=mapping_function,
-                        suffix=instance_config.curated_stores[
-                            collection_name
-                        ].backend.suffix,
-                        order_by=order_by,
+                if collection_name not in instance_config.incoming:
+                    msg = (
+                        'Incoming location not defined for collection '
+                        f'`{collection_name}`, which has at least one token '
+                        f'with write access'
                     )
-                    token_store_backend.build_index_if_needed(
-                        schema=instance_config.schemas[collection_name]
-                    )
-                elif backend_name == 'sqlite':
-                    token_store_backend = SQLiteBackend(
-                        db_path=store_dir / sqlite_record_file_name,
-                    )
-                else:
-                    msg = f'Unsupported backend `{collection_info.backend.type}` for collection `{collection_name}`.'
                     raise ConfigError(msg)
 
-                if extension == 'stl':
-                    token_store_backend = SchemaTypeLayer(
-                        backend=token_store_backend,
-                        schema=instance_config.schemas[collection_name],
-                    )
+    # Check that default tokens are defined
+    for collection_name, collection_info in config_object.collections.items():
+        if collection_info.default_token not in instance_config.tokens[collection_name]:
+            msg = f'Unknown default token: `{collection_info.default_token}`'
+            raise ConfigError(msg)
 
-                token_store = ModelStore(
-                    schema=instance_config.schemas[collection_name],
-                    backend=token_store_backend,
-                )
-                entry['collections'][collection_name]['store'] = token_store
-
-            entry['collections'][collection_name]['permissions'] = get_permissions(
-                token_collection_info.mode
-            )
     return instance_config
+
+
+def create_token_store(
+    instance_config: InstanceConfig,
+    collection_name: str,
+    store_dir: Path,
+) -> ModelStore:
+
+    schema_uri = instance_config.schemas[collection_name]
+
+    # We get the backend information from the curated store
+    backend_type = instance_config.backend[collection_name].type
+    backend_name, extension = get_backend_and_extension(backend_type)
+
+    backend = instance_config.curated_stores[collection_name].backend
+    if backend_name == 'record_dir':
+        # The configuration routines have read the backend configuration of the
+        # curated store from disk and stored it in `instance_config`. We fetch
+        # it from there.
+        if extension == 'stl':
+            backend = backend.backend
+
+        token_store = create_record_dir_token_store(
+            store_dir=store_dir,
+            order_by=backend.order_by,
+            schema_uri=instance_config.schemas[collection_name],
+            mapping_function=backend.pid_mapping_function,
+            suffix=backend.suffix,
+        )
+    elif backend_name == 'sqlite':
+        token_store = create_sqlite_token_store(
+            store_dir=store_dir,
+            order_by=backend.order_by,
+        )
+    else:
+        # This should not happen because we base our decision on already
+        # existing backends.
+        msg = f'Unsupported backend type: `{backend_type}`.'
+        raise ConfigError(msg)
+
+    if extension == 'stl':
+        token_store = SchemaTypeLayer(backend=token_store, schema=schema_uri)
+
+    return ModelStore(backend=token_store, schema=schema_uri)
+
+
+def create_record_dir_token_store(
+    store_dir: Path,
+    order_by: list[str],
+    schema_uri: str,
+    mapping_function: Callable,
+    suffix: str,
+) -> RecordDirStore:
+
+    store_backend = RecordDirStore(
+        root=store_dir,
+        pid_mapping_function=mapping_function,
+        suffix=suffix,
+        order_by=order_by,
+    )
+    store_backend.build_index_if_needed(schema=schema_uri)
+    return store_backend
+
+
+def create_sqlite_token_store(
+    store_dir: Path,
+    order_by: list[str],
+)  -> SQLiteBackend:
+
+    return SQLiteBackend(
+        db_path=store_dir / sqlite_record_file_name,
+        order_by=order_by,
+    )
+
+
+def check_collection(
+    instance_config: InstanceConfig,
+    collection: str,
+):
+    if collection not in instance_config.collections:
+        raise HTTPException(
+            status_code=HTTP_404_NOT_FOUND,
+            detail=f'No such collection: "{collection}".',
+        )
 
 
 def get_backend_and_extension(backend_type: str) -> tuple[str, str]:
@@ -422,41 +530,76 @@ def get_backend_and_extension(backend_type: str) -> tuple[str, str]:
 
 
 def get_token_store(
-    instance_config: InstanceConfig, collection_name: str, token: str
+    instance_config: InstanceConfig,
+    collection_name: str,
+    token: str
 ) -> tuple[ModelStore, TokenPermission] | tuple[None, None]:
-    if collection_name not in instance_config.curated_stores:
-        raise HTTPException(
-            status_code=HTTP_404_NOT_FOUND,
-            detail=f'No such collection: "{collection_name}".',
-        )
-    if token not in instance_config.token_stores:
-        raise HTTPException(status_code=HTTP_401_UNAUTHORIZED, detail='Invalid token.')
+    check_collection(instance_config, collection_name)
 
-    token_store = None
-    if collection_name not in instance_config.token_stores[token]['collections']:
-        # This token is not configured for the requested collection, return
-        # empty permissions.
-        return token_store, TokenPermission()
+    # Check whether a store for this collection and token does already exist
+    store_info = instance_config.token_stores[collection_name].get(token)
+    if store_info:
+        return store_info
 
-    token_collection_info = instance_config.token_stores[token]['collections'][
-        collection_name
-    ]
-    permissions = token_collection_info['permissions']
-    if permissions.incoming_write or permissions.incoming_read:
-        token_store = token_collection_info.get('store')
-        if not token_store:
-            raise HTTPException(
-                status_code=HTTP_400_BAD_REQUEST,
-                detail=f'Configuration does not define an incoming store for token "{token}" in collection "{collection_name}".',
+    # Try to authenticate the token with the authentication providers that
+    # are associated with the collection.
+    auth_info = None
+    for auth_provider in instance_config.auth_providers[collection_name]:
+        try:
+            auth_info = auth_provider.authenticate(token)
+            break
+        except AuthenticationError:
+            logger.debug(
+                'Authentication provider %s could not authenticate token %s.',
+                auth_provider,
+                token,
             )
+            continue
+
+    if not auth_info:
+        raise HTTPException(
+            status_code=HTTP_401_UNAUTHORIZED,
+            detail='Invalid token for collection ' + collection_name,
+        )
+
+    permissions = auth_info.token_permission
+
+    # If the token has no incoming-read or incoming-write permissions, we do not
+    # need to create a store.
+    if not permissions.incoming_read and not permissions.incoming_write:
+        instance_config.token_stores[collection_name][token] = None
+        return None, permissions
+
+    # Check whether the collection has an incoming definition
+    incoming = instance_config.incoming.get(collection_name)
+    if not incoming:
+        raise HTTPException(
+            status_code=HTTP_401_UNAUTHORIZED,
+            detail='No incoming area for collection ' +  collection_name
+        )
+
+    store_dir = instance_config.store_path / incoming / auth_info.incoming_label
+    store_dir.mkdir(parents=True, exist_ok=True)
+
+    token_store = create_token_store(
+        instance_config=instance_config,
+        collection_name=collection_name,
+        store_dir=store_dir,
+    )
+
+    instance_config.token_stores[collection_name][token] = (
+        token_store,
+        permissions,
+    )
+
     return token_store, permissions
 
 
-def get_default_token_name(instance_config: InstanceConfig, collection: str) -> str:
-    if collection not in instance_config.collections:
-        raise HTTPException(
-            status_code=HTTP_404_NOT_FOUND, detail=f'No such collection: {collection}'
-        )
+def get_default_token_name(
+    instance_config: InstanceConfig,
+    collection: str
+) -> str:
+    check_collection(instance_config, collection)
     return instance_config.collections[collection].default_token
 
 
@@ -466,9 +609,7 @@ def join_default_token_permissions(
     collection: str,
 ) -> TokenPermission:
     default_token_name = instance_config.collections[collection].default_token
-    default_token_permissions = instance_config.token_stores[default_token_name][
-        'collections'
-    ][collection]['permissions']
+    default_token_permissions = instance_config.tokens[collection][default_token_name]['permissions']
     result = TokenPermission()
     result.curated_read = (
         permissions.curated_read | default_token_permissions.curated_read
@@ -496,7 +637,7 @@ def get_zone(
     if token not in instance_config.zones[collection]:
         raise HTTPException(
             status_code=HTTP_404_NOT_FOUND,
-            detail=f'No incoming zone defined for collection: {collection}',
+            detail=f'Missing incoming_label for given token in collection: {collection}',
         )
     return instance_config.zones[collection][token]
 
@@ -506,11 +647,7 @@ def get_conversion_objects_for_collection(
     collection_name: str,
 ) -> dict:
     """Get the conversion objects for the given collection."""
-    if collection_name not in instance_config.schemas:
-        raise HTTPException(
-            status_code=HTTP_400_BAD_REQUEST,
-            detail=f'No such collection: {collection_name}',
-        )
+    check_collection(instance_config, collection_name)
     return instance_config.conversion_objects[instance_config.schemas[collection_name]]
 
 
@@ -518,9 +655,5 @@ def get_model_info_for_collection(
     instance_config: InstanceConfig,
     collection_name: str,
 ) -> tuple[types.ModuleType, dict[str, Any], str]:
-    if collection_name not in instance_config.model_info:
-        raise HTTPException(
-            status_code=HTTP_400_BAD_REQUEST,
-            detail=f'No such collection: {collection_name}',
-        )
+    check_collection(instance_config, collection_name)
     return instance_config.model_info[collection_name]
