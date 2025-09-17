@@ -26,32 +26,28 @@ _timeout = 10
 _cached_data = {}
 
 
-# Cache data based on specific input variables
-def cache_on(
-    inputs: list[int | str],
-    duration: int = 3600,
-) -> Callable:
-    """ Cache results based on a subset of inputs for a given time """
-    def decorator(func: Callable) -> Callable:
-        @wraps(func)
-        def wrapper(*args, **kwargs):
-            key = (
-                func.__qualname__,
-                *tuple(
-                    args[x] if isinstance(x, int)
-                    else kwargs[x]
-                    for x in inputs if (
-                        isinstance(x, int)
-                        or isinstance(x, str) and x in kwargs
-                    )
-                )
-            )
-            cached_data = _cached_data.get(key)
-            if cached_data is None or time.time() - cached_data[0] > duration:
-                _cached_data[key] = (time.time(), func(*args, **kwargs))
-            return _cached_data[key][1]
-        return wrapper
-    return decorator
+# Base class for classes that use method-level caching. The cache lives in
+# the class instance and will be deleted when the instance is deleted.
+class MethodCache:
+    def __init__(self):
+        self.__cached_data = {}
+
+    @staticmethod
+    def cache_temporary(
+        duration: int = 3600,
+    ) -> Callable:
+        """ Cache results for a given time (default: 3600 seconds) """
+        def decorator(func: Callable) -> Callable:
+            @wraps(func)
+            def wrapper(*args, **kwargs):
+                self = args[0]
+                key = tuple((func.__qualname__, *(args[1:]), *(kwargs.items())))
+                cached_data = self.__cached_data.get(key)
+                if cached_data is None or time.time() - cached_data[0] > duration:
+                    self.__cached_data[key] = (time.time(), func(*args, **kwargs))
+                return self.__cached_data[key][1]
+            return wrapper
+        return decorator
 
 
 class RemoteAuthenticationError(AuthenticationError):
@@ -62,7 +58,7 @@ class RemoteAuthenticationError(AuthenticationError):
         super().__init__(f'Authentication failed with status {status}: {message}')
 
 
-class ForgejoAuthenticationSource(AuthenticationSource):
+class ForgejoAuthenticationSource(AuthenticationSource, MethodCache):
     def __init__(
         self,
         api_url: str,
@@ -84,11 +80,13 @@ class ForgejoAuthenticationSource(AuthenticationSource):
         :param repository:  Optional repository. If this is provided, access
             will only be granted if the team has access to the repository.
         """
+        super().__init__()
         self.api_url = api_url[:-1] if api_url[-1] == '/' else api_url
         self.organization = organization
         self.team = team
         self.repository = repository
 
+    @MethodCache.cache_temporary()
     def _get_json_from_endpoint(
         self,
         endpoint: str,
@@ -111,30 +109,26 @@ class ForgejoAuthenticationSource(AuthenticationSource):
             ) from e
 
         if r.status_code >= HTTP_300_MULTIPLE_CHOICES:
-            msg = f'invalid token: ({r.status_code}): {r.txt}'
+            msg = f'invalid token: ({r.status_code}): {r.text}'
             raise InvalidTokenError(msg)
         return r.json()
 
-    @cache_on([1])
     def _get_user(
             self,
             token: str,
     ) -> dict:
         return self._get_json_from_endpoint('user', token)
 
-    @cache_on([1])
     def _get_organization(self, token: str) -> dict:
         return self._get_json_from_endpoint(
             f'orgs/{self.organization}',
             token,
         )
 
-    @cache_on([1])
     def _get_teams_for_user(self, token: str) -> dict:
         r = self._get_json_from_endpoint('user/teams', token)
         return {team['name']: team for team in r}
 
-    @cache_on([1, 2])
     def _get_teams_for_organization(
         self,
         token: str,
@@ -146,7 +140,6 @@ class ForgejoAuthenticationSource(AuthenticationSource):
         )
         return {team['name']: team for team in r}
 
-    @cache_on([1, 2, 3])
     def _get_teams_for_repo(
         self,
         token: str,
@@ -160,7 +153,7 @@ class ForgejoAuthenticationSource(AuthenticationSource):
         return {team['name']: team for team in r}
 
     @staticmethod
-    def _get_permissions(code_permission) -> TokenPermission:
+    def _get_permissions(code_permission: str) -> TokenPermission:
         read = code_permission in ('read', 'write')
         write = code_permission == 'write'
         return TokenPermission(
