@@ -104,6 +104,7 @@ class ForgejoAuthConfig(BaseModel):
     url: str
     organization: str
     team: str
+    label_type: Literal['team', 'user']
     repository: str | None = None
 
 
@@ -302,6 +303,7 @@ def process_config_object(
                     auth_provider.url,
                     auth_provider.organization,
                     auth_provider.team,
+                    auth_provider.label_type,
                     auth_provider.repository,
                 )
             else:

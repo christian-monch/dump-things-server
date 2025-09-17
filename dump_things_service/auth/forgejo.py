@@ -64,7 +64,8 @@ class ForgejoAuthenticationSource(AuthenticationSource, MethodCache):
         api_url: str,
         organization: str,
         team: str,
-        repository: str | None = None
+        label_type: str,
+        repository: str | None = None,
     ):
         """
         Create a Forgejo authentication source.
@@ -77,6 +78,8 @@ class ForgejoAuthenticationSource(AuthenticationSource, MethodCache):
         :param api_url: Forgejo API URL
         :param organization: The name of the organization that defines the team
         :param team:  The name of the team
+        :param label_type:  'team' or 'user', determines how the incoming label
+            is created.
         :param repository:  Optional repository. If this is provided, access
             will only be granted if the team has access to the repository.
         """
@@ -84,6 +87,7 @@ class ForgejoAuthenticationSource(AuthenticationSource, MethodCache):
         self.api_url = api_url[:-1] if api_url[-1] == '/' else api_url
         self.organization = organization
         self.team = team
+        self.label_type = label_type
         self.repository = repository
 
     @MethodCache.cache_temporary()
@@ -214,5 +218,8 @@ class ForgejoAuthenticationSource(AuthenticationSource, MethodCache):
         return AuthenticationInfo(
             token_permission=self._get_permissions(code_permissions),
             user_id=user_info['email'],
-            incoming_label=f'forgejo-{organization["name"]}-{team["name"]}',
+            incoming_label=
+                f'forgejo-team-{organization["name"]}-{team["name"]}'
+                if self.label_type == 'team'
+                else f'forgejo-user-{user_info["login"]}',
         )
