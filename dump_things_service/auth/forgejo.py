@@ -90,7 +90,6 @@ class ForgejoAuthenticationSource(AuthenticationSource, MethodCache):
         self.label_type = label_type
         self.repository = repository
 
-    @MethodCache.cache_temporary()
     def _get_json_from_endpoint(
         self,
         endpoint: str,
@@ -123,6 +122,7 @@ class ForgejoAuthenticationSource(AuthenticationSource, MethodCache):
     ) -> dict:
         return self._get_json_from_endpoint('user', token)
 
+    @MethodCache.cache_temporary()
     def _get_organization(self, token: str) -> dict:
         return self._get_json_from_endpoint(
             f'orgs/{self.organization}',
@@ -133,6 +133,7 @@ class ForgejoAuthenticationSource(AuthenticationSource, MethodCache):
         r = self._get_json_from_endpoint('user/teams', token)
         return {team['name']: team for team in r}
 
+    @MethodCache.cache_temporary()
     def _get_teams_for_organization(
         self,
         token: str,
@@ -144,6 +145,7 @@ class ForgejoAuthenticationSource(AuthenticationSource, MethodCache):
         )
         return {team['name']: team for team in r}
 
+    @MethodCache.cache_temporary()
     def _get_teams_for_repo(
         self,
         token: str,
