@@ -1,4 +1,12 @@
-"""Use Forgejo instance to fetch token permissions, ids, and incomng_label """
+"""Use Forgejo instance to fetch token permissions, ids, and incomng_label
+
+Note: for some reason, the request:
+
+    /api/v1/repos/{owner}/{repo}
+
+does not require a token. If the owner and the repo are known, the request
+will emit a complete repository-record including the complete owner-record.
+"""
 from __future__ import annotations
 
 import time
