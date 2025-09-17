@@ -6,7 +6,7 @@ from copy import copy
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-import pytest  # noqa F401
+import pytest  # F401
 
 from dump_things_service import HTTP_200_OK
 from dump_things_service.patches import (

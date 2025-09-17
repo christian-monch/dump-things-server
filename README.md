@@ -57,6 +57,7 @@ The following command line parameters are supported:
   The parameter can be repeated to define secondary, tertiary, etc. sorting fields.
   If a given field is not present in the record, the record will be sorted behind all records that possess the field.
 
+
 ### Configuration file
 
 The service is configured via a configuration file that defines collections, paths for incoming and curated data for each collection, as well as token properties.
@@ -131,7 +132,7 @@ tokens:
         # A token and collection-specific label, that defines "zones" in which incoming
         # records are stored. Multiple tokens can share the same zone, for example if
         # many clients with individual tokens work together to build a collection.
-        # (Since this token does not allow right access, "incoming_label" is ignored and
+        # (Since this token does not allow write access, "incoming_label" is ignored and
         # left empty here (TODO: it should not be required in this case)).
         incoming_label: ''
 
@@ -186,7 +187,7 @@ tokens:
 The service currently supports the following backends for storing records:
 - `record_dir`: this backend stores records as YAML-files in a directory structure that is defined [here](https://concepts.datalad.org/dump-things-storage-v0/). It reads the backend configuration from a "record collection configuration file" as described [here](https://concepts.datalad.org/dump-things-storage-v0/).
 
-- `sqlite`: this backend stores records in a SQLite database. There is an individual database file, named `records.db`, for each curated area and incoming area.
+- `sqlite`: this backend stores records in a SQLite database. There is an individual database file, named `.sqlite-records.db`, for each curated area and incoming area.
 
 - `record_dir+stl`: here `stl` stands for "schema-type-layer".
   This backend stores records in the same format as `record_dir`, but adds special treatment for the `schema_type` attribute in records.
@@ -198,10 +199,9 @@ The service currently supports the following backends for storing records:
 Backends can be defined per collection in the configuration file.
 The backend will be used for the curated area and for the incoming areas of the collection.
 If no backend is defined for a collection, the `record_dir+stl`-backend is used by default.
-The `+stl`-backends can be useful to ensure that commands that return records of multiple classes in JSON format will always return records with a `schema_type` attribute.
-This attribute allows clients to determine the class of each result record.
+The `+stl`-backends can be useful if an endpoint returns records of multiple classes, because it allows clients to determine the class of each result record.
 
-The service guarantees that backends of all types can co-exist independently in the same directory, i.e., there are no name collisions in files that are used for different backends (as long as no class name starts with `.`)).
+The service guarantees that backends of all types can co-exist independently in the same directory, i.e., there are no name collisions in files that are used for different backends (as long as no class name starts with `.` or `_`)).
 
 The following configuration snippet shows how to define a backend for a collection:
 
@@ -209,12 +209,69 @@ The following configuration snippet shows how to define a backend for a collecti
 ...
 collections:
   collection_with_default_record_dir+stl_backend:
+    # This is a collection with the default backend, i.e. `record_dir+stl` and
+    # the default authentication, i.e. config-based authentication.
     default_token: anon_read
     curated: collection_1/curated
 
+  collection_with_forgejo_authentication_source:
+    # This is a collection with the default backend, i.e. `record_dir+stl` and
+    # a forgejo-based authentication source. That means it will use a forgejo
+    # instance to determine the permissions of a token for this collection.
+    # The instance is also used to determine the user-id and the incoming label.
+    # In the case of forgejo, the user-id and the incoming label are the
+    # forgejo login associated with the token.
+
+    # We still need the name of a default token. If the token is defined in this
+    # config file, its properties will be determined by the
+    # config file. If the token is not defined in the config file, its
+    # properties will be determined by the authentication sources. In this
+    # example by the forgejo-instance at `https://forgejo.example.com`.
+    # If there is more than one authentication source, they will be tried
+    # in the order they are defined in the config file.
+    default_token: anon_read    # We still need a default token
+    curated: collection_2/curated
+
+    # Token permissions, user-ids (for record annotations), and incoming
+    # label can be determined by multiple authentication sources.
+    # If no source is defined, `config` will be used, which reads token
+    # information from the config file.
+    # This example explicitly defines `config` and a second authentication
+    # source, a `forgejo` authentication source.
+    auth_sources:
+      - type: forgejo   # requires `user`-read and `organization`-read permissions on token
+        # The API-URL of the forgejo instance that should be used
+        url: https://forgejo.example.com/api/v1
+        # An organization
+        organization: data_handling
+        # A team in the organization. The authorization of the team
+        # determines the permissions of the token
+        team: data_entry_personal
+        # `label_type` determines how an incoming label is created for
+        # a Forgejo token. If `label_type` is `team`, the incoming label
+        # will be `forgejo-team-<organization>-<team>`. If `label_type`
+        # is `user`, the incoming label will be 
+        # `forgejo-user-<user-login>`
+        label_type: team
+        # An optional repository. The token will only be authorized
+        # if the team has access to the repository. Note: if `repo`
+        # is set, the token must have at least repository read
+        # permissions.
+        repo: reference-repository
+
+      # Fallback to the config file.
+      - type: config    # check tokens from the configuration file
+
+      # Multiple authorization sources are allowed. They will be tried in the
+      # order defined in the config file. If an authorization source returns
+      # permissions for a token, those permissions will be used and no other
+      # authorization sources will be queried.
+      # The default authorization source is `config`, which reads the token 
+      # permissions, user-id, and incoming
+  
   collection_with_explicit_record_dir+stl_backend:
     default_token: anon_read
-    curated: collection_1/curated
+    curated: collection_3/curated
     backend:
       # The record_dir-backend is identified by the
       # type: "record_dir". No more attributes are
@@ -223,7 +280,7 @@ collections:
 
   collection_with_sqlite_backend:
     default_token: anon_read
-    curated: collection_2/curated
+    curated: collection_4/curated
     backend:
       # The sqlite-backend is identified by the
       # type: "sqlite". It requires a schema attribute
@@ -232,6 +289,138 @@ collections:
       type: sqlite
       schema: https://concepts.inm7.de/s/flat-data/unreleased.yaml
 ```
+
+#### Authentication and authorization
+
+To authenticate and authorize a user based on tokens, dumpthing-service uses
+authentication sources. There are currently two authentication sources: the
+configuration file and a Forgejo-based authentication source. Authentication
+sources can be configured per collection. If no authentication source is
+configured, the collection uses the configuration file. 
+
+If authentication sources are configured, they will be tried in order until
+a token is authenticated. If an authentication source is listed twice, the
+second instance will be ignored.
+
+Authentication sources can be defined individually for each collection.
+The collection-level key `auth_sources` should contain a list of authentication source configurations.
+Authentication sources are tried in order until a token is successfully authenticated.
+If no authentication source authenticates the token, the token will be rejected.
+
+If no authentication source is defined, the configuration file will be used to authenticate tokens.
+If an authentication source is defined multiple times, the first instance will be queried, all other instances will be ignored.
+
+These authentication sources are available:
+
+- config: use the configuration file to 
+- forgejo: use a Forgejo-instance to authenticate tokens
+
+All authentication source configurations contain the key `type`.
+Additional keys are authentication source type-specific.
+
+The following configuration snippet contains an example for authentication
+source configuration:
+
+```yaml
+collections:
+  collection_with_config_and_forgejo_auth_sources:
+      # Token permissions, user-ids (for record annotations), and incoming
+      # label can be determined by multiple authentication sources.
+      # If no source is defined, `config` will be used, which reads token
+      # information from the config file.
+      # This example explicitly defines `config` and a second authentication
+      # source, a `forgejo` authentication source.
+      auth_sources:
+        - type: forgejo   # requires `user`-read and `organization`-read permissions on token
+          # The API-URL of the forgejo instance that should be used
+          url: https://forgejo.example.com/api/v1
+          # An organization
+          organization: data_handling
+          # A team in the organization. The authorization of the team
+          # determines the permissions of the token
+          team: data_entry_personal
+          # `label_type` determines how an incoming label is created for
+          # a Forgejo token. If `label_type` is `team`, the incoming label
+          # will be `forgejo-team-<organization>-<team>`. If `label_type`
+          # is `user`, the incoming label will be 
+          # `forgejo-user-<user-login>`
+          label_type: team
+          # An optional repository. The token will only be authorized
+          # if the team has access to the repository. Note: if `repo`
+          # is set, the token must have at least repository read
+          # permissions.
+          repo: reference-repository
+    
+        # Fallback to the config file.
+        - type: config    # check tokens from the configuration file
+    
+        # Multiple authorization sources are allowed. They will be tried in the
+        # order defined in `auth_sources`. If an authorization source returns
+        # permissions for a token, those permissions will be used and no other
+        # authorization sources will be queried.
+        # The default authorization source is `config`, which reads the token 
+        # permissions, user-id, and incoming
+
+...
+
+```
+
+
+##### Config-based authentication
+
+```yaml
+collections:
+  collection_with_config_authentication:
+    default_token: anon_read
+    curated: collection_5/curated
+    auth_sources:
+      - type: <must be 'config'>    # check tokens from the configuration file
+
+...
+```
+The configuration file will be used to authenticate tokens
+
+
+##### Forgejo-based authentication
+
+```yaml
+collections:
+  collection_with_forgejo_authentication:
+    default_token: anon_read
+    curated: collection_5/curated
+    auth_sources:
+      - type: <must be 'forgejo'>
+        url: <Forgejo API-URL>
+        organization: <organization name>
+        team: <team_name>
+        label_type: <'team' or 'user'>
+        repository: <repository name>  # Optional
+...
+```
+
+The defined Forgejo-instance will be used to authenticate a token
+
+The user ID is the email of the user.
+
+If `label_type` is set to `team`, the incoming label is `forgejo-team-<organization-name>-<team-name>`.
+If `label_type` is set to `user`, the incoming label is `forgejo-user-<user-login>`
+
+The permissions will be fetched from the unit `repo.code` of the team definition.
+The following mapping is used
+
+| `repo.code` | curated_read | incoming_read | incoming_write |
+| ------------- | ------------- | ------------- | ------------- |
+| `none` | `False` | `False` | `False` |
+| `read` | `True` | `True` | `False` |
+| `write` | `True` | `True` | `True` |
+
+
+A Forgejo authentication source can authenticate Forgejo-tokens that have at least the following `Read`-permissions:
+
+- User: this is required to determine user-related information, i.e. user-email and user login name.
+- Organization: this is required to determine the membership of a user to a team in an organization.
+- Repository (only if `repository` is set in the configuration): required to determine a team's access to the repository.
+
 
 ### Command line parameters:
 

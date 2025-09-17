@@ -25,7 +25,7 @@ schema_path = Path(__file__).parent / 'testschema.yaml'
 
 
 # The global configuration file, all collections and
-# staging areas share the same directories. All token
+# staging areas share the same directories. All tokens
 # of the same collection share an "incoming_label".
 global_config_text = f"""
 type: collections
@@ -35,28 +35,59 @@ collections:
     default_token: basic_access
     curated: {curated}/collection_1
     incoming: {incoming}/collection_1
+    backend:
+      type: record_dir+stl
+      schema: {schema_path}
+      idfx: digest_md5
+    auth_sources:
+      - type: config
   collection_2:
     default_token: basic_access
     curated: {curated}/collection_2
     incoming: {incoming}/collection_2
+    backend:
+      type: record_dir+stl
+      schema: {schema_path}
+      idfx: digest_md5
   collection_3:
     default_token: basic_access
     curated: {curated}/collection_3
+    backend:
+      type: record_dir+stl
+      schema: {schema_path}
+      idfx: digest_md5
   collection_4:
     default_token: basic_access
     curated: {curated}/collection_4
+    backend:
+      type: record_dir+stl
+      schema: {schema_path}
+      idfx: digest_md5
   collection_5:
     default_token: basic_access
     curated: {curated}/collection_5
+    backend:
+      type: record_dir+stl
+      schema: {schema_path}
+      idfx: digest_md5
   collection_6:
     default_token: basic_access
     curated: {curated}/collection_6
+    backend:
+      type: record_dir+stl
+      schema: {schema_path}
+      idfx: digest_md5
   collection_7:
     default_token: basic_access
     curated: {curated}/collection_7
+    backend:
+      type: record_dir+stl
+      schema: {schema_path}
+      idfx: digest_md5
   collection_8:
     default_token: basic_access
     curated: {curated}/collection_8
+    incoming: incoming_8
     backend:
       type: sqlite
       schema: {schema_path}
@@ -64,6 +95,10 @@ collections:
     default_token: basic_access
     curated: {curated}/collection_dlflatsocial-1
     incoming: {incoming}/collection_dlflatsocial-1
+    backend:
+      type: record_dir+stl
+      schema: https://concepts.datalad.org/s/flat-social/unreleased.yaml
+      idfx: digest_md5
   collection_dlflatsocial-2:
     default_token: basic_access
     curated: {curated}/collection_dlflatsocial-2
@@ -183,7 +218,7 @@ tokens:
     collections:
       collection_8:
         mode: WRITE_COLLECTION
-        incoming_label: in_token_8
+        incoming_label: test_user_8
 """
 
 

@@ -3,6 +3,8 @@ from __future__ import annotations
 import dataclasses  # noqa F401 -- used by generated code
 import importlib
 import logging
+import random
+import string
 import subprocess
 import tempfile
 from itertools import count
@@ -11,6 +13,7 @@ from typing import (
     TYPE_CHECKING,
     Any,
 )
+from urllib.parse import urlparse
 
 import annotated_types  # noqa F401 -- used by generated code
 import pydantic  # noqa F401 -- used by generated code
@@ -41,8 +44,15 @@ _schema_view_cache = {}
 def build_model(
     source_url: str,
 ) -> Any:
+
+    parse_result = urlparse(source_url)
+    schema_name = Path(parse_result.path).stem
+
     with tempfile.TemporaryDirectory() as temp_dir:
-        module_name = f'model_{next(serial_number)}'
+        random_suffix = ''.join(
+            random.choices(string.ascii_letters + string.digits, k=10)
+        )
+        module_name = f'model_{next(serial_number)}_{schema_name}_{random_suffix}'
         definition_file = Path(temp_dir) / 'definition.yaml'
         definition_file.write_text(read_url(source_url))
         subprocess.run(

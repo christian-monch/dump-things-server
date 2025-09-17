@@ -6,6 +6,7 @@ from typing import (
 
 from starlette.status import (
     HTTP_200_OK,
+    HTTP_300_MULTIPLE_CHOICES,
     HTTP_400_BAD_REQUEST,
     HTTP_401_UNAUTHORIZED,
     HTTP_403_FORBIDDEN,
@@ -17,6 +18,7 @@ from starlette.status import (
 __all__ = [
     'Format',
     'HTTP_200_OK',
+    'HTTP_300_MULTIPLE_CHOICES',
     'HTTP_400_BAD_REQUEST',
     'HTTP_401_UNAUTHORIZED',
     'HTTP_403_FORBIDDEN',

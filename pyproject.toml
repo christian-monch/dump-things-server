@@ -104,6 +104,7 @@ extra-dependencies = [
     "httpx",
     "pytest",
     "pytest-cov",
+    "pytest-httpserver",
 ]
 
 [tool.hatch.envs.tests.scripts]

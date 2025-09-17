@@ -58,7 +58,6 @@ from dump_things_service.config import (
     InstanceConfig,
     get_default_token_name,
     get_token_store,
-    get_zone,
     join_default_token_permissions,
     process_config,
 )
@@ -159,7 +158,7 @@ try:
         globals_dict=globals(),
     )
 except ConfigError:
-    logger.exception(
+    uvicorn_logger.exception(
         'ERROR: invalid configuration file at: `%s`',
         config_path,
     )
@@ -274,7 +273,7 @@ def store_record(
 
     stored_records = store.store_object(
         obj=record,
-        submitter=g_instance_config.token_stores[token]['user_id'],
+        submitter=g_instance_config.tokens[collection][token]['user_id'],
     )
 
     if input_format == Format.ttl:
