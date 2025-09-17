@@ -32,7 +32,6 @@ def test_structure_error_detection(tmp_path):
 
 
 def test_missing_incoming_detection(tmp_path):
-    schema_path = Path(__file__).parent / 'testschema.yaml'
     config_object = GlobalConfig(
         **yaml.load(
             """
@@ -56,5 +55,5 @@ tokens:
     )
 
     global_dict = {}
-    with pytest.raises(ConfigError) as e:
+    with pytest.raises(ConfigError):
         process_config_object(tmp_path, config_object, [], global_dict)
