@@ -41,7 +41,7 @@ class MethodCache:
             @wraps(func)
             def wrapper(*args, **kwargs):
                 self = args[0]
-                key = tuple((func.__qualname__, *(args[1:]), *(kwargs.items())))
+                key = (func.__qualname__, *(args[1:]), *(kwargs.items()))
                 cached_data = self.__cached_data.get(key)
                 if cached_data is None or time.time() - cached_data[0] > duration:
                     self.__cached_data[key] = (time.time(), func(*args, **kwargs))
