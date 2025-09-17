@@ -1,3 +1,13 @@
+# 3.1.0 (2025-09-17)
+
+## New features
+
+- Support multiple authentication sources for tokens. Currently two authentication
+  sources are provided:
+  - `config`: reads token information from the config file
+  - `forgejo`: authenticate and authorize users via a Forgejo token
+
+
 # 3.0.1 (2025-09-11)
 
 ## Bugfixes
