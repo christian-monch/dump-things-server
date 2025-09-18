@@ -42,6 +42,25 @@ def test_search_by_pid(fastapi_client_simple):
         }
 
 
+def test_hashed_token(fastapi_client_simple):
+    test_client, _ = fastapi_client_simple
+    response = test_client.get(
+        f'/collection_1/record?pid={pid}',
+        headers={'x-dumpthings-token': 'cmo-cmo'},
+    )
+    assert response.status_code == HTTP_200_OK
+    assert response.json() == {
+        'schema_type': 'abc:Person',
+        'pid': pid,
+        'given_name': given_name,
+    }
+    response = test_client.get(
+        f'/collection_1/record?pid={pid}',
+        headers={'x-dumpthings-token': 'cmo-33b726a7e2b9eaf1f8f124049822ade31cb6516a4d8221634b01d13d793bfe16'},
+    )
+    assert response.status_code == HTTP_401_UNAUTHORIZED
+
+
 def test_search_by_class(fastapi_client_simple):
     test_client, _ = fastapi_client_simple
     for i in range(1, 9):

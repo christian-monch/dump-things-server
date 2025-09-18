@@ -8,6 +8,10 @@ from dump_things_service.auth import (
 from dump_things_service.config import (
     InstanceConfig,
 )
+from dump_things_service.token import (
+    get_token_parts,
+    hash_token,
+)
 
 missing = {}
 
@@ -26,6 +30,7 @@ class ConfigAuthenticationSource(AuthenticationSource):
         token: str,
     ) -> AuthenticationInfo:
 
+        token = self._resolve_hashed_token(token)
         token_info = self.instance_config.tokens.get(self.collection, {}).get(token, missing)
         if token_info is missing:
             msg = f'Token not valid for collection `{self.collection}`'
@@ -36,3 +41,16 @@ class ConfigAuthenticationSource(AuthenticationSource):
             user_id=token_info['user_id'],
             incoming_label=token_info['incoming_label'],
         )
+
+    def _resolve_hashed_token(
+        self,
+        token: str
+    ) -> str:
+
+        try:
+            token_id, _ = get_token_parts(token)
+            if token_id in self.instance_config.hashed_token_ids:
+                return hash_token(token)
+        except ValueError:
+            pass
+        return token

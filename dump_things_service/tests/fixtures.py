@@ -141,6 +141,13 @@ tokens:
       collection_dlflatsocial-2:
         mode: READ_CURATED
         incoming_label: ''
+  cmo-33b726a7e2b9eaf1f8f124049822ade31cb6516a4d8221634b01d13d793bfe16:
+    hashed: True
+    user_id: cmo
+    collections:
+      collection_1:
+        mode: WRITE_COLLECTION
+        incoming_label: cmo
   token_1:
     user_id: test_user_1
     collections:
