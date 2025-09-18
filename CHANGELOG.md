@@ -1,3 +1,11 @@
+# 3.2.0 (2025-09-18)
+
+## New features
+
+- Support hashed tokens in configuration file. The configuration  file content
+  can not be used to exfiltrate a hashed token.
+
+
 # 3.1.0 (2025-09-17)
 
 ## New features
