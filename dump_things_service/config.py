@@ -35,7 +35,10 @@ from dump_things_service.backends.sqlite import (
 from dump_things_service.converter import get_conversion_objects
 from dump_things_service.model import get_model_for_schema
 from dump_things_service.store.model_store import ModelStore
-from dump_things_service.token import TokenPermission
+from dump_things_service.token import (
+    TokenPermission,
+    get_token_parts,
+)
 
 if TYPE_CHECKING:
     import types
@@ -88,6 +91,7 @@ class TokenCollectionConfig(BaseModel):
 class TokenConfig(BaseModel):
     user_id: str
     collections: dict[str, TokenCollectionConfig]
+    hashed: bool = False
 
 
 class BackendConfigRecordDir(BaseModel):
@@ -143,6 +147,7 @@ class InstanceConfig:
     backend: dict = dataclasses.field(default_factory=dict)
     auth_providers: dict = dataclasses.field(default_factory=dict)
     tokens: dict = dataclasses.field(default_factory=dict)
+    hashed_token_ids: set = dataclasses.field(default_factory=set)
 
 
 mode_mapping = {
@@ -395,6 +400,10 @@ def process_config_object(
     # Read info for tokens from the configuration
     for token_name, token_info in config_object.tokens.items():
         for collection_name, token_collection_info in token_info.collections.items():
+
+            if token_info.hashed:
+                token_id, _ = get_token_parts(token_name)
+                instance_config.hashed_token_ids.add(token_id)
 
             if collection_name not in instance_config.tokens:
                 instance_config.tokens[collection_name] = dict()
