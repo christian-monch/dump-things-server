@@ -1,3 +1,15 @@
+# 3.3.0 (2025-09-19)
+
+## New features
+
+- Add the endpoint `/server` which returns version information about the
+  running server.
+
+## Removed features
+
+- Remove the response header `X-Dumpthings-Service-Version`
+
+
 # 3.2.1 (2025-09-19)
 
 ## Bugfixes

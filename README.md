@@ -524,13 +524,19 @@ The service provides the following endpoints:
   "size": <number of records per page>,
   "pages": <number of pages in the result>
 }
- ```
-
+```
 
 - `GET /<collection>/record?pid=<pid>`: retrieve an object with the pid `<pid>` from the collection `<collection>`, if the provided token allows reading. If the provided token allows reading of incoming and curated spaces, objects from incoming spaces will take precedence.
   The endpoint supports the query parameter `format`, which determines the format of the query result.
   It can be set to `json` (the default) or to `ttl`,
 
+- `GET /server`: this endpoint provides information about the server.
+  The response is a JSON object with the following structure:
+```json
+{
+  "version": "<version of the server>"
+}
+ ```
 
 - `GET /docs`: provides information about the API of the service, i.e. about all endpoints.
 
