@@ -1,3 +1,11 @@
+# 3.2.1 (2025-09-19)
+
+## Bugfixes
+
+- Fix hashed token handling. This releases removes a bug that lead to server
+  crashes.
+
+
 # 3.2.0 (2025-09-18)
 
 ## New features
