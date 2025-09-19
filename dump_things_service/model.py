@@ -31,7 +31,7 @@ if TYPE_CHECKING:
     from types import ModuleType
 
 
-lgr = logging.getLogger('uvicorn')
+lgr = logging.getLogger('dump_things_service')
 
 serial_number = count()
 _model_counter = count()

@@ -56,7 +56,7 @@ def test_token_modes(fastapi_client_simple):
     # validate read/write permissions on class-base
     response = test_client.post(
         '/collection_1/record/Person',
-        headers={'x-dumpthings-token': 'token_1'},
+        headers={'x-dumpthings-token': 'token-1'},
         json={'pid': 'abc:incoming', 'given_name': 'incoming'},
     )
     assert response.status_code == HTTP_200_OK

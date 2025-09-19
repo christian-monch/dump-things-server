@@ -28,7 +28,7 @@ def test_web_interface_post_errors(
     test_client, _ = fastapi_client_simple
     result = test_client.post(
         f'/{collection_name}/record/{class_name}?{query}={format_name}',
-        headers={'x-dumpthings-token': 'token_1'},
+        headers={'x-dumpthings-token': 'token-1'},
         json={'pid': 'xyz:web_interface_test_pid0x123123'},
     )
     assert result.status_code < HTTP_500_INTERNAL_SERVER_ERROR
@@ -54,7 +54,7 @@ def test_web_interface_get_class_errors(
 
     result = test_client.get(
         f'/{collection_name}/record/{class_name}?{query}={format_name}',
-        headers={'x-dumpthings-token': 'token_1'},
+        headers={'x-dumpthings-token': 'token-1'},
     )
     assert result.status_code < HTTP_500_INTERNAL_SERVER_ERROR
 
@@ -79,6 +79,6 @@ def test_web_interface_get_pid_errors(
 
     result = test_client.get(
         f'/{collection_name}/records?{pid}&{query}={format_name}',
-        headers={'x-dumpthings-token': 'token_1'},
+        headers={'x-dumpthings-token': 'token-1'},
     )
     assert result.status_code < HTTP_500_INTERNAL_SERVER_ERROR

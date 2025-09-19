@@ -148,7 +148,9 @@ tokens:
       collection_1:
         mode: WRITE_COLLECTION
         incoming_label: cmo
-  token_1:
+  # The plaintext of the following is `token-1`:
+  token-6b86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875b4b:
+    hashed: True
     user_id: test_user_1
     collections:
       collection_1:
@@ -214,13 +216,13 @@ tokens:
       collection_1:
         mode: NOTHING
         incoming_label: modes
-  token_2:
+  token-2:
     user_id: test_user_2
     collections:
       collection_2:
         mode: WRITE_COLLECTION
-        incoming_label: in_token_2
-  token_8:
+        incoming_label: in_token-2
+  token-8:
     user_id: test_user_8
     collections:
       collection_8:
