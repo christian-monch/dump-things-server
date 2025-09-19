@@ -403,6 +403,11 @@ def process_config_object(
 
             if token_info.hashed:
                 token_id, _ = get_token_parts(token_name)
+                if token_id == '':
+                    raise ConfigError('empty ID in hashed token')
+                if token_id in instance_config.hashed_token_ids:
+                    msg = f'duplicated ID in hashed token: {token_id}'
+                    raise ConfigError(msg)
                 instance_config.hashed_token_ids.add(token_id)
 
             if collection_name not in instance_config.tokens:
