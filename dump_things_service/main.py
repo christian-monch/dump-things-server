@@ -85,6 +85,10 @@ class TokenCapabilityRequest(BaseModel):
     token: str | None
 
 
+class ServerResponse(BaseModel):
+    version: str
+
+
 logging.basicConfig(level=logging.WARNING)
 
 logger = logging.getLogger('dump_things_service')
@@ -320,16 +324,20 @@ def _check_collection(
         )
 
 
+@app.get('/server')
+async def get_server() -> ServerResponse:
+    return ServerResponse(
+        version = __version__,
+    )
+
+
 @app.get('/{collection}/record')
 async def read_record_with_pid(
     collection: str,
     pid: str,
-    response: Response,
     format: Format = Format.json,  # noqa A002
     api_key: str = Depends(api_key_header_scheme),
 ):
-    response.headers['X-Dumpthings-Service-Version'] = __version__
-
     _check_collection(g_instance_config, collection)
 
     final_permissions, token_store = await process_token(
@@ -364,12 +372,10 @@ async def read_record_with_pid(
 async def read_records_of_type(
     collection: str,
     class_name: str,
-    response: Response,
     matching: str | None = None,
     format: Format = Format.json,  # noqa A002
     api_key: str = Depends(api_key_header_scheme),
 ):
-    response.headers['X-Dumpthings-Service-Version'] = __version__
     return await _read_records_of_type(
         collection=collection,
         class_name=class_name,
@@ -387,12 +393,10 @@ async def read_records_of_type(
 async def read_records_of_type_paginated(
     collection: str,
     class_name: str,
-    response: Response,
     matching: str | None = None,
     format: Format = Format.json,  # noqa A002
     api_key: str = Depends(api_key_header_scheme),
 ) -> Page[dict | str]:
-    response.headers['X-Dumpthings-Service-Version'] = __version__
     result_list = await _read_records_of_type(
         collection=collection,
         class_name=class_name,
