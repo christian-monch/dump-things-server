@@ -85,6 +85,10 @@ class TokenCapabilityRequest(BaseModel):
     token: str | None
 
 
+class ServerResponse(BaseModel):
+    version: str
+
+
 logging.basicConfig(level=logging.WARNING)
 
 logger = logging.getLogger('dump_things_service')
@@ -318,6 +322,13 @@ def _check_collection(
             status_code=HTTP_404_NOT_FOUND,
             detail=f'No such collection: "{collection}".',
         )
+
+
+@app.get('/server')
+async def get_server() -> ServerResponse:
+    return ServerResponse(
+        version = __version__,
+    )
 
 
 @app.get('/{collection}/record')
