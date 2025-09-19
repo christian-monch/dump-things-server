@@ -5,6 +5,7 @@ from .. import (
     HTTP_401_UNAUTHORIZED,
     HTTP_403_FORBIDDEN,
 )
+from ..__about__ import __version__
 from ..utils import cleaned_json
 from .create_store import (
     given_name,
@@ -315,4 +316,16 @@ def test_curie_expansion(fastapi_client_simple):
         'schema_type': 'abc:Person',
         'pid': 'abc:mode_test',
         'given_name': 'mode_curated',
+    }
+
+
+def test_server(fastapi_client_simple):
+    test_client, _ = fastapi_client_simple
+
+    response = test_client.get(
+        '/server',
+    )
+    assert response.status_code == HTTP_200_OK
+    assert response.json() == {
+        'version': __version__,
     }
