@@ -210,7 +210,7 @@ def test_inline_extraction_on_service(fastapi_client_simple):
         # Deposit JSON record
         response = test_client.post(
             f'/collection_dlflatsocial-{i}/record/Person',
-            headers={'x-dumpthings-token': 'token_1'},
+            headers={'x-dumpthings-token': 'token-1'},
             json=inlined_json_record,
         )
         assert response.status_code == HTTP_200_OK, 'Response content:' + response.text
@@ -223,7 +223,7 @@ def test_inline_extraction_on_service(fastapi_client_simple):
         for record_pid in (entry[0] for entry in tree):
             response = test_client.get(
                 f'/collection_dlflatsocial-{i}/record?pid={record_pid}',
-                headers={'x-dumpthings-token': 'token_1'},
+                headers={'x-dumpthings-token': 'token-1'},
             )
             assert response.status_code == HTTP_200_OK
             records.append(response.json())
@@ -239,7 +239,7 @@ def test_inline_extraction_on_service(fastapi_client_simple):
         ):
             records = test_client.get(
                 f'/collection_dlflatsocial-{i}/records/{class_name}',
-                headers={'x-dumpthings-token': 'token_1'},
+                headers={'x-dumpthings-token': 'token-1'},
             ).json()
             for pid in pids:
                 assert any(record['pid'] == pid for record in records)
@@ -256,7 +256,7 @@ def test_inline_ttl_processing(fastapi_client_simple):
         for class_name, ttl_record in ttls_with_inline:
             response = test_client.post(
                 f'/collection_dlflatsocial-{i}/record/{class_name}?format=ttl',
-                headers={'x-dumpthings-token': 'token_1'},
+                headers={'x-dumpthings-token': 'token-1'},
                 json=ttl_record,
             )
             assert response.status_code == HTTP_200_OK
@@ -267,7 +267,7 @@ def test_inline_ttl_processing(fastapi_client_simple):
         for record_pid in (entry[0] for entry in ttl_tree):
             response = test_client.get(
                 f'/collection_dlflatsocial-{i}/record?pid={record_pid}',
-                headers={'x-dumpthings-token': 'token_1'},
+                headers={'x-dumpthings-token': 'token-1'},
             )
             assert response.status_code == HTTP_200_OK
             records.append(response.json())
@@ -283,7 +283,7 @@ def test_inline_ttl_processing(fastapi_client_simple):
         ):
             records = test_client.get(
                 f'/collection_dlflatsocial-{i}/records/{class_name}',
-                headers={'x-dumpthings-token': 'token_1'},
+                headers={'x-dumpthings-token': 'token-1'},
             ).json()
             for pid in pids:
                 assert any(record['pid'] == pid for record in records)
@@ -317,7 +317,7 @@ def test_dont_extract_empty_things_on_service(fastapi_client_simple):
         # Deposit JSON record
         response = test_client.post(
             f'/collection_dlflatsocial-{i}/record/Person',
-            headers={'x-dumpthings-token': 'token_1'},
+            headers={'x-dumpthings-token': 'token-1'},
             json=empty_inlined_json_record,
         )
         assert response.status_code == HTTP_200_OK

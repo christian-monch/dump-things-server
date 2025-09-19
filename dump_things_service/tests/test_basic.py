@@ -191,7 +191,7 @@ def test_encoding(fastapi_client_simple):
     # will trigger the YAML-dumping, which should be checked
     response = test_client.post(
         '/collection_1/record/Person',
-        headers={'x-dumpthings-token': 'token_1'},
+        headers={'x-dumpthings-token': 'token-1'},
         json=unicode_record,
     )
     assert response.status_code == HTTP_200_OK
@@ -262,7 +262,7 @@ def test_token_store_priority(fastapi_client_simple):
     # with different content.
     response = test_client.post(
         '/collection_1/record/Person',
-        headers={'x-dumpthings-token': 'token_1'},
+        headers={'x-dumpthings-token': 'token-1'},
         json={'pid': pid, 'given_name': 'DavidÖÄß'},
     )
     assert response.status_code == HTTP_200_OK
@@ -270,7 +270,7 @@ def test_token_store_priority(fastapi_client_simple):
     # Check that the new record is returned with the token
     response = test_client.get(
         f'/collection_1/record?pid={pid}',
-        headers={'x-dumpthings-token': 'token_1'},
+        headers={'x-dumpthings-token': 'token-1'},
     )
     assert response.status_code == HTTP_200_OK
     assert response.json()['given_name'] == 'DavidÖÄß'
