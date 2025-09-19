@@ -9,6 +9,7 @@ will emit a complete repository-record including the complete owner-record.
 """
 from __future__ import annotations
 
+import logging
 import time
 from functools import wraps
 from typing import Callable
@@ -28,10 +29,11 @@ from dump_things_service.auth import (
 )
 from dump_things_service.config import TokenPermission
 
+
+logger = logging.getLogger('dump_things_service')
+
 # Timeout for requests
 _timeout = 10
-
-_cached_data = {}
 
 
 # Base class for classes that use method-level caching. The cache lives in
@@ -181,8 +183,13 @@ class ForgejoAuthenticationSource(AuthenticationSource, MethodCache):
         token: str,
     ) -> AuthenticationInfo:
 
+        logger.debug(f'starting Forgejo authentication: {self.api_url}, {self.organization}, {self.team}')
+
         user_teams = self._get_teams_for_user(token)
+        logger.debug(f'user_teams: {user_teams}')
+
         if self.team not in user_teams:
+            logger.debug(f'{self.team} not in user\'s teams')
             msg = f'token user is not member of team `{self.team}`'
             raise RemoteAuthenticationError(
                 status=HTTP_401_UNAUTHORIZED,
@@ -203,10 +210,12 @@ class ForgejoAuthenticationSource(AuthenticationSource, MethodCache):
                 token,
                 self.organization,
             )
+        logger.debug(f'organization_teams: {organization_teams}')
 
         # Check that the configured team exists
         team = organization_teams.get(self.team)
         if not team:
+            logger.debug(f'{self.team} not in organization teams')
             if self.repository is not None:
                 msg = f'team `{self.team}` has no access to repository `{self.repository}`'
             else:
@@ -219,12 +228,14 @@ class ForgejoAuthenticationSource(AuthenticationSource, MethodCache):
         # Get the repo.code permissions from the team definition
         code_permissions = team['units_map'].get('repo.code')
         if not code_permissions:
+            logger.debug(f'no unit `repo.code` in team {self.team}')
             msg = f'no `repo.code`-unit defined for team `{self.team}` in organization {self.organization}'
             raise RemoteAuthenticationError(
                 status=HTTP_401_UNAUTHORIZED,
                 message=msg,
             )
 
+        logger.debug(f'authentication success, team permissions: {code_permissions}')
         return AuthenticationInfo(
             token_permission=self._get_permissions(code_permissions),
             user_id=user_info['email'],

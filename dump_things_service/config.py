@@ -591,6 +591,7 @@ def get_token_store(
     auth_info = None
     for auth_provider in instance_config.auth_providers[collection_name]:
         try:
+            logger.debug('trying to authenticate with %s', auth_provider)
             auth_info = auth_provider.authenticate(plain_token)
             break
         except AuthenticationError:
