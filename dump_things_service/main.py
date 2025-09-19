@@ -250,8 +250,17 @@ def store_record(
         if api_key is None
         else api_key
     )
-    # Get the token permissions and extend them by the default permissions
-    store, token_permissions = get_token_store(g_instance_config, collection, token)
+
+    # Get the token permissions and extend them by the default permissions.
+    # This call will also convert plaintext tokens into the hashed version of
+    # the token, if the token is hashed. This is necessary because we do not
+    # store the plaintext token, so all token-information is associated with
+    # the hashed representation of the token.
+    store, token, token_permissions = get_token_store(
+        g_instance_config,
+        collection,
+        token,
+    )
     final_permissions = join_default_token_permissions(
         g_instance_config, token_permissions, collection
     )
@@ -482,7 +491,12 @@ async def process_token(
         if api_key is None
         else api_key
     )
-    token_store, token_permissions = get_token_store(instance_config, collection, token)
+
+    token_store, token, token_permissions = get_token_store(
+        instance_config,
+        collection,
+        token,
+    )
     final_permissions = join_default_token_permissions(
         instance_config, token_permissions, collection
     )

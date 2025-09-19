@@ -49,7 +49,7 @@ class ConfigAuthenticationSource(AuthenticationSource):
 
         try:
             token_id, _ = get_token_parts(token)
-            if token_id in self.instance_config.hashed_token_ids:
+            if token_id in self.instance_config.hashed_tokens[self.collection]:
                 return hash_token(token)
         except ValueError:
             pass

@@ -38,6 +38,7 @@ from dump_things_service.store.model_store import ModelStore
 from dump_things_service.token import (
     TokenPermission,
     get_token_parts,
+    hash_token,
 )
 
 if TYPE_CHECKING:
@@ -147,7 +148,7 @@ class InstanceConfig:
     backend: dict = dataclasses.field(default_factory=dict)
     auth_providers: dict = dataclasses.field(default_factory=dict)
     tokens: dict = dataclasses.field(default_factory=dict)
-    hashed_token_ids: set = dataclasses.field(default_factory=set)
+    hashed_tokens: dict = dataclasses.field(default_factory=dict)
 
 
 mode_mapping = {
@@ -401,14 +402,17 @@ def process_config_object(
     for token_name, token_info in config_object.tokens.items():
         for collection_name, token_collection_info in token_info.collections.items():
 
+            if collection_name not in instance_config.hashed_tokens:
+                instance_config.hashed_tokens[collection_name] = dict()
+
             if token_info.hashed:
                 token_id, _ = get_token_parts(token_name)
                 if token_id == '':
                     raise ConfigError('empty ID in hashed token')
-                if token_id in instance_config.hashed_token_ids:
+                if token_id in instance_config.hashed_tokens[collection_name]:
                     msg = f'duplicated ID in hashed token: {token_id}'
                     raise ConfigError(msg)
-                instance_config.hashed_token_ids.add(token_id)
+                instance_config.hashed_tokens[collection_name][token_id] = token_name
 
             if collection_name not in instance_config.tokens:
                 instance_config.tokens[collection_name] = dict()
@@ -452,6 +456,22 @@ def process_config_object(
         if collection_info.default_token not in instance_config.tokens[collection_name]:
             msg = f'Unknown default token: `{collection_info.default_token}`'
             raise ConfigError(msg)
+
+    # Check that hashed plain tokens do not clash with hashed tokens:
+    hashed_plain_tokens = set(
+        hash_token(token)
+        for collection in instance_config.collections
+        for token in instance_config.tokens[collection]
+        if '-' in token
+    )
+    hashed_tokens = set(
+        value
+        for token_dict in instance_config.hashed_tokens.values()
+        for value in token_dict.values()
+    )
+    if hashed_plain_tokens.intersection(hashed_tokens):
+        msg = 'plain tokens clash with hashed tokens'
+        raise ConfigError(msg)
 
     return instance_config
 
@@ -548,12 +568,21 @@ def get_backend_and_extension(backend_type: str) -> tuple[str, str]:
 def get_token_store(
     instance_config: InstanceConfig,
     collection_name: str,
-    token: str
-) -> tuple[ModelStore, TokenPermission] | tuple[None, None]:
+    plain_token: str
+) -> tuple[ModelStore, str, TokenPermission] | tuple[None, None]:
     check_collection(instance_config, collection_name)
 
-    # Check whether a store for this collection and token does already exist
-    store_info = instance_config.token_stores[collection_name].get(token)
+    # If the token is hashed, get the hashed value. This is required because
+    # we associate token info with the hashed version of the token.
+    hashed_token = resolve_hashed_token(
+        instance_config,
+        collection_name,
+        plain_token,
+    )
+
+    # Check whether a store for this collection and token does already exist.
+    # If the token is a hashed token, we have to
+    store_info = instance_config.token_stores[collection_name].get(plain_token)
     if store_info:
         return store_info
 
@@ -562,13 +591,14 @@ def get_token_store(
     auth_info = None
     for auth_provider in instance_config.auth_providers[collection_name]:
         try:
-            auth_info = auth_provider.authenticate(token)
+            auth_info = auth_provider.authenticate(plain_token)
             break
         except AuthenticationError:
             logger.debug(
-                'Authentication provider %s could not authenticate token %s.',
+                'Authentication provider %s could not '
+                'authenticate token for collection %s.',
                 auth_provider,
-                token,
+                collection_name,
             )
             continue
 
@@ -583,8 +613,8 @@ def get_token_store(
     # If the token has no incoming-read or incoming-write permissions, we do not
     # need to create a store.
     if not permissions.incoming_read and not permissions.incoming_write:
-        instance_config.token_stores[collection_name][token] = None
-        return None, permissions
+        instance_config.token_stores[collection_name][plain_token] = None
+        return None, hashed_token, permissions
 
     # Check whether the collection has an incoming definition
     incoming = instance_config.incoming.get(collection_name)
@@ -603,12 +633,29 @@ def get_token_store(
         store_dir=store_dir,
     )
 
-    instance_config.token_stores[collection_name][token] = (
+    instance_config.token_stores[collection_name][plain_token] = (
         token_store,
+        hashed_token,
         permissions,
     )
 
-    return token_store, permissions
+    return token_store, hashed_token, permissions
+
+
+def resolve_hashed_token(
+    instance_config: InstanceConfig,
+    collection_name: str,
+    token: str,
+) -> str:
+
+    # Check for hashed token and return the hashed token value instead
+    # of the plain text token value if the token is hashed.
+    if '-' in token:
+        return instance_config.hashed_tokens[collection_name].get(
+            get_token_parts(token)[0],
+            token,
+        )
+    return token
 
 
 def get_default_token_name(
