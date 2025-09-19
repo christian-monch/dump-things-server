@@ -43,7 +43,7 @@ from dump_things_service.token import (
 if TYPE_CHECKING:
     import types
 
-logger = logging.getLogger('uvicorn')
+logger = logging.getLogger('dump_things_service')
 
 config_file_name = '.dumpthings.yaml'
 token_config_file_name = '.token_config.yaml'  # noqa: S105

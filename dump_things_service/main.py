@@ -85,8 +85,9 @@ class TokenCapabilityRequest(BaseModel):
     token: str | None
 
 
+logging.basicConfig(level=logging.WARNING)
+
 logger = logging.getLogger('dump_things_service')
-uvicorn_logger = logging.getLogger('uvicorn')
 
 
 parser = argparse.ArgumentParser()
@@ -141,7 +142,7 @@ if not isinstance(numeric_level, int):
         'Invalid log level: %s, defaulting to level "WARNING"', arguments.log_level
     )
 else:
-    logging.basicConfig(level=numeric_level)
+    logger.setLevel(level=numeric_level)
 
 store_path = Path(arguments.store)
 
@@ -157,10 +158,11 @@ try:
         order_by=['pid'],
         globals_dict=globals(),
     )
-except ConfigError:
-    uvicorn_logger.exception(
-        'ERROR: invalid configuration file at: `%s`',
+except ConfigError as e:
+    logger.error(
+        'ERROR: invalid configuration `%s`: %s',
         config_path,
+        e,
     )
     g_error = 'Server runs in error mode due to an invalid configuration. See server error-log for details.'
     g_instance_config = None
