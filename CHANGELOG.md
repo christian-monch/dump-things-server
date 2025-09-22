@@ -1,3 +1,11 @@
+# 3.3.1 (2025-09-22)
+
+## Bugfixes
+
+- Do not overwrite existing type validators in rdflib. This fixes an error
+  when converting from JSON to TTL.
+
+
 # 3.3.0 (2025-09-19)
 
 ## New features
