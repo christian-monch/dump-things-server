@@ -15,6 +15,7 @@ from linkml.utils.datautils import (
 from linkml_runtime import SchemaView
 from rdflib.term import (
     URIRef,
+    _toPythonMapping,
     bind,
 )
 
@@ -63,6 +64,8 @@ def add_type_validator(
     uri_ref: str,
     regex: str | None,
 ):
+    if URIRef(uri_ref) in _toPythonMapping:
+        return
     bind(
         datatype=URIRef(uri_ref),
         constructor=TypeValidator(uri_ref, regex).validate,
