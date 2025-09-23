@@ -173,8 +173,8 @@ class _ModelStore:
         return self.backend.get_records_of_classes(class_names, matching)
 
     def get_all_objects(
-            self,
-            matching: str | None,
+        self,
+        matching: str | None,
     ) -> LazyList[RecordInfo]:
         """
         Get all objects of a specific class.
@@ -183,6 +183,13 @@ class _ModelStore:
         :return: A lazy list of all objects in the store.
         """
         return self.backend.get_all_records(matching)
+
+    def delete_object(
+        self,
+        pid: str,
+    ) -> bool:
+        return self.backend.remove_record(resolve_curie(self.model, pid))
+
 
 _existing_model_stores = {}
 

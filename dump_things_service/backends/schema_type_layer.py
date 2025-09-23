@@ -98,6 +98,12 @@ class _SchemaTypeLayer(StorageBackend):
             json_object=json_object,
         )
 
+    def remove_record(
+        self,
+        iri: str,
+    ) -> bool:
+        return self.backend.remove_record(iri=iri)
+
     def get_record_by_iri(
         self,
         iri: str,

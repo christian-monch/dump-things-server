@@ -35,6 +35,7 @@ from sqlalchemy import (
     JSON,
     String,
     create_engine,
+    delete,
     select,
     text,
 )
@@ -42,7 +43,6 @@ from sqlalchemy.orm import (
     DeclarativeBase,
     Mapped,
     Session,
-    load_only,
     mapped_column,
 )
 
@@ -151,6 +151,15 @@ class _SQLiteBackend(StorageBackend):
                     class_name=record_info.class_name,
                     json_object=record_info.json_object,
                 )
+
+    def remove_record(
+        self,
+        iri: str,
+    ) -> bool:
+        statement = delete(Thing).where(Thing.iri == iri)
+        with Session(self.engine) as session, session.begin():
+            result = session.execute(statement)
+            return result.rowcount == 1
 
     def _add_record_with_session(
         self,

@@ -29,7 +29,6 @@ from dump_things_service.auth import (
 )
 from dump_things_service.config import TokenPermission
 
-
 logger = logging.getLogger('dump_things_service')
 
 # Timeout for requests

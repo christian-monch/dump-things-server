@@ -132,6 +132,13 @@ class StorageBackend(metaclass=ABCMeta):
             )
 
     @abstractmethod
+    def remove_record(
+        self,
+        iri: str,
+    ) -> bool:
+        raise NotImplementedError
+
+    @abstractmethod
     def get_record_by_iri(
         self,
         iri: str,

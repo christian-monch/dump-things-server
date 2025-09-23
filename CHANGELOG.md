@@ -2,8 +2,14 @@
 
 ## New features
 
-- Add the endpoints `/<collection>/records/` and `/<collection>/records/p/`,
+- Add the endpoints:
+  - `GET /<collection>/records/`
+  - `GET /<collection>/records/p/`
   which return all records in a store for which the token authorizes.
+
+- Add the endpoint:
+  - `GET /<collection>/delete?pid=<pid>`
+  which deletes the record with pid `<pid>`
 
 - Add `CURATOR`-token mode. This mode allows access to individual incoming
   areas.

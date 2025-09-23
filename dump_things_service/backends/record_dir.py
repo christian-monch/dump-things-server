@@ -199,6 +199,21 @@ class _RecordDirStore(StorageBackend):
             )
         )
 
+    def remove_record(
+        self,
+        iri: str,
+    ) -> bool:
+        index_entry = self.index.get_info_for_iri(iri)
+        if index_entry is None:
+            return False
+
+        if self.index.remove_iri_info(iri) is False:
+            return False
+
+        _, path, _ = index_entry
+        Path(path).unlink()
+        return True
+
 
 # Ensure that there is only one store per root directory.
 _existing_stores = {}

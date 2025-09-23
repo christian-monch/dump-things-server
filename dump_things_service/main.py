@@ -24,7 +24,7 @@ from fastapi import (
     FastAPI,
     HTTPException,
     Request,
-    Response,
+    Response,  # noqa F401 -- used by generated code
 )
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import APIKeyHeader
@@ -453,7 +453,7 @@ async def _read_all_records(
             raise HTTPException(
                 status_code=HTTP_413_REQUEST_ENTITY_TOO_LARGE,
                 detail=f'Too many records found in collection "{collection}". '
-                       f'Please use pagination (/{collection}/records/p).',
+                       f'Please use pagination (/{collection}/records/p/).',
             )
 
     def convert_to_http_exception(e: BaseException):
@@ -578,6 +578,26 @@ async def _read_records_of_type(
             lambda record_info: record_info.json_object,
         )
     return result_list
+
+
+@app.get('/{collection}/delete')
+async def delete_record(
+    collection: str,
+    pid: str,
+    api_key: str = Depends(api_key_header_scheme),
+):
+    _check_collection(g_instance_config, collection)
+    final_permissions, token_store = await process_token(
+        g_instance_config, api_key, collection
+    )
+
+    if not final_permissions.incoming_write:
+        raise HTTPException(
+            status_code=HTTP_403_FORBIDDEN,
+            detail=f'No write access to incoming data in collection "{collection}".',
+        )
+
+    return token_store.delete_object(pid)
 
 
 async def process_token(

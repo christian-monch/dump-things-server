@@ -1,4 +1,5 @@
 import pytest  # F401
+from starlette.status import HTTP_404_NOT_FOUND
 
 from .. import (
     HTTP_200_OK,
@@ -18,7 +19,11 @@ extra_record = {
     'pid': 'abc:aaaa',
     'given_name': 'DavidÖÄÜ',
 }
-
+delete_record = {
+    'schema_type': 'abc:Person',
+    'pid': 'abc:delete-me',
+    'given_name': 'Detlef',
+}
 unicode_name = 'AlienÖÄÜ-ß👽'
 unicode_bytes = unicode_name.encode('utf-8')
 unicode_record = {
@@ -59,6 +64,31 @@ def test_get_all(fastapi_client_simple):
         )
         assert response.status_code == HTTP_200_OK
         assert response.json()['total'] in (1, 3)
+
+
+def test_delete(fastapi_client_simple):
+    test_client, _ = fastapi_client_simple
+
+    response = test_client.post(
+        '/collection_1/record/Person',
+        headers={'x-dumpthings-token': 'token-1'},
+        json=delete_record,
+    )
+    assert response.status_code == HTTP_200_OK
+
+    response = test_client.get(
+        '/collection_1/delete?pid=abc:delete-me',
+        headers={'x-dumpthings-token': 'token-1'},
+    )
+    assert response.status_code == HTTP_200_OK
+    assert response.json() is True
+
+    response = test_client.get(
+        '/collection_1/record?pid=abc:delete-me',
+        headers={'x-dumpthings-token': 'token-1'},
+    )
+    assert response.status_code == HTTP_200_OK
+    assert response.json() is None
 
 
 def test_hashed_token(fastapi_client_simple):
