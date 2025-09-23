@@ -216,6 +216,12 @@ tokens:
       collection_1:
         mode: NOTHING
         incoming_label: modes
+  token_1_c:
+    user_id: test_user_1_curated
+    collections:
+      collection_1:
+        mode: CURATOR
+        incoming_label: modes
   token-2:
     user_id: test_user_2
     collections:

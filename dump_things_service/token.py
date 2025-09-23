@@ -7,6 +7,7 @@ class TokenPermission(BaseModel):
     curated_read: bool = False
     incoming_read: bool = False
     incoming_write: bool = False
+    curator_token: bool = False
 
 
 def get_token_parts(token: str) -> list[str]:

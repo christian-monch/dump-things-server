@@ -13,11 +13,11 @@ if TYPE_CHECKING:
 
 def verify_modes(
     test_client,
-    write_expactations: Iterable[tuple[str, str, int]],
+    write_expectations: Iterable[tuple[str, str, int]],
     read_class_expectations: Iterable[tuple[str, str, int, tuple[int, int]]],
     read_pid_expectations: Iterable[tuple[str, str, int, str]],
 ):
-    for collection, token, expected_status in write_expactations:
+    for collection, token, expected_status in write_expectations:
         response = test_client.post(
             f'/{collection}/record/Person',
             headers={'x-dumpthings-token': token},
@@ -69,6 +69,7 @@ def test_token_modes(fastapi_client_simple):
         headers={'x-dumpthings-token': 'token_1_xxx'},
         json={'pid': 'abc:mode_test', 'given_name': 'mode_incoming'},
     )
+    assert response.status_code == HTTP_200_OK
 
     # The modes we check are described below. Flags (o: False, x: True) indicate
     # which read, write permissions are given. They are in the order:
@@ -86,12 +87,14 @@ def test_token_modes(fastapi_client_simple):
     # flag: oox  SUBMIT_ONLY (write staging)
     # flag: xoo  READ_CURATED (read_curated)
     # flag: ooo  NOTHING ()
+    # flag: c    CURATED (curator_token)
 
-    # Because the default token permits read access to curated, all tokens
-    # will at least have this access.
+    # Because the default token permits read access to curated, all tokens,
+    # except the curator token, will at least have this access. The curator
+    # token will have access to everything.
     verify_modes(
         test_client=test_client,
-        write_expactations=[
+        write_expectations=[
             # READ_COLLECTION | READ_CURATED
             ('collection_1', 'token_1_xxo', HTTP_403_FORBIDDEN),
             # WRITE_COLLECTION | READ_CURATED
@@ -108,6 +111,8 @@ def test_token_modes(fastapi_client_simple):
             ('collection_1', 'token_1_xoo', HTTP_403_FORBIDDEN),
             # NOTHING | READ_CURATED
             ('collection_1', 'token_1_ooo', HTTP_403_FORBIDDEN),
+            # CURATOR
+            ('collection_1', 'token_1_c', HTTP_200_OK),
         ],
         read_class_expectations=[
             # READ_COLLECTION | READ_CURATED
@@ -126,6 +131,8 @@ def test_token_modes(fastapi_client_simple):
             ('collection_1', 'token_1_xoo', HTTP_200_OK, (1, 0)),
             # NOTHING | READ_CURATED
             ('collection_1', 'token_1_ooo', HTTP_200_OK, (1, 0)),
+            # CURATOR
+            ('collection_1', 'token_1_c', HTTP_200_OK, (1, 1)),
         ],
         read_pid_expectations=[
             # READ_COLLECTION | READ_CURATED
@@ -144,5 +151,7 @@ def test_token_modes(fastapi_client_simple):
             ('collection_1', 'token_1_xoo', HTTP_200_OK, 'mode_curated'),
             # NOTHING | READ_CURATED
             ('collection_1', 'token_1_ooo', HTTP_200_OK, 'mode_curated'),
+            # CURATOR
+            ('collection_1', 'token_1_c', HTTP_200_OK, 'mode_incoming'),
         ],
     )

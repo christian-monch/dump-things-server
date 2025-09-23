@@ -47,7 +47,6 @@ if TYPE_CHECKING:
 logger = logging.getLogger('dump_things_service')
 
 config_file_name = '.dumpthings.yaml'
-token_config_file_name = '.token_config.yaml'  # noqa: S105
 ignored_files = {'.', '..', config_file_name}
 
 
@@ -82,6 +81,7 @@ class TokenModes(enum.Enum):
     SUBMIT = 'SUBMIT'
     SUBMIT_ONLY = 'SUBMIT_ONLY'
     NOTHING = 'NOTHING'
+    CURATOR = 'CURATOR'
 
 
 class TokenCollectionConfig(BaseModel):
@@ -153,7 +153,10 @@ class InstanceConfig:
 
 mode_mapping = {
     TokenModes.READ_CURATED: TokenPermission(curated_read=True),
-    TokenModes.READ_COLLECTION: TokenPermission(curated_read=True, incoming_read=True),
+    TokenModes.READ_COLLECTION: TokenPermission(
+        curated_read=True,
+        incoming_read=True,
+    ),
     TokenModes.WRITE_COLLECTION: TokenPermission(
         curated_read=True, incoming_read=True, incoming_write=True
     ),
@@ -164,6 +167,12 @@ mode_mapping = {
     TokenModes.SUBMIT: TokenPermission(curated_read=True, incoming_write=True),
     TokenModes.SUBMIT_ONLY: TokenPermission(incoming_write=True),
     TokenModes.NOTHING: TokenPermission(),
+    TokenModes.CURATOR: TokenPermission(
+        curated_read=True,
+        incoming_read=True,
+        incoming_write=True,
+        curator_token=True,
+    ),
 }
 
 
