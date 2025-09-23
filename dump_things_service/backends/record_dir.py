@@ -162,7 +162,7 @@ class _RecordDirStore(StorageBackend):
     def get_records_of_classes(
         self,
         class_names: list[str],
-        matching: str | None = None,
+        pattern: str | None = None,
     ) -> RecordDirResultList:
         return RecordDirResultList().add_info(
             sorted(
@@ -182,6 +182,7 @@ class _RecordDirStore(StorageBackend):
 
     def get_all_records(
         self,
+        pattern: str | None = None,
     ) -> RecordDirResultList:
         return RecordDirResultList().add_info(
             sorted(

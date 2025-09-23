@@ -365,6 +365,42 @@ async def read_record_with_pid(
     return json_object
 
 
+@app.get('/{collection}/records/')
+async def read_all_records(
+        collection: str,
+        matching: str | None = None,
+        format: Format = Format.json,  # noqa A002
+        api_key: str = Depends(api_key_header_scheme),
+):
+    return await _read_all_records(
+        collection=collection,
+        matching=matching,
+        format=format,
+        api_key=api_key,
+        # Set an upper limit for the number of non-paginated result records to
+        # keep processing time for individual requests short and avoid
+        # overloading the server.
+        bound=1000,
+    )
+
+
+@app.get('/{collection}/records/p/')
+async def read_all_records(
+        collection: str,
+        matching: str | None = None,
+        format: Format = Format.json,  # noqa A002
+        api_key: str = Depends(api_key_header_scheme),
+) -> Page[dict | str]:
+    result_list = await _read_all_records(
+        collection=collection,
+        matching=matching,
+        format=format,
+        api_key=api_key,
+        bound=None,
+    )
+    return paginate(result_list)
+
+
 @app.get('/{collection}/records/{class_name}', tags=['Read records'])
 async def read_records_of_type(
     collection: str,
@@ -403,6 +439,68 @@ async def read_records_of_type_paginated(
         bound=None,
     )
     return paginate(result_list)
+
+
+async def _read_all_records(
+        collection: str,
+        matching: str | None = None,
+        format: Format = Format.json,  # noqa A002
+        api_key: str = Depends(api_key_header_scheme),
+        bound: int | None = None,
+) -> LazyList:
+    def check_bounds(length: int, max_length: int):
+        if length > max_length:
+            raise HTTPException(
+                status_code=HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+                detail=f'Too many records found in collection "{collection}". '
+                       f'Please use pagination (/{collection}/records/p).',
+            )
+
+    def convert_to_http_exception(e: BaseException):
+        raise HTTPException(
+            status_code=HTTP_400_BAD_REQUEST,
+            detail=f'Conversion error: {e}',
+        ) from e
+
+    _check_collection(g_instance_config, collection)
+    final_permissions, token_store = await process_token(
+        g_instance_config, api_key, collection
+    )
+
+    result_list = PriorityList()
+    if final_permissions.incoming_read:
+        token_store_list = token_store.get_all_objects(matching=matching)
+        if bound:
+            check_bounds(len(token_store_list), bound)
+        result_list.add_list(token_store_list)
+
+    if final_permissions.curated_read:
+        curated_store_list = g_instance_config.curated_stores[
+            collection
+        ].get_all_objects(
+            matching=matching,
+        )
+        if bound:
+            check_bounds(len(curated_store_list), bound)
+        result_list.add_list(curated_store_list)
+
+    # Sort the result list.
+    result_list.sort(key=result_list.sort_key)
+
+    if format == Format.ttl:
+        result_list = ConvertingList(
+            result_list,
+            g_instance_config.schemas[collection],
+            input_format=Format.json,
+            output_format=format,
+            exception_handler=convert_to_http_exception,
+        )
+    else:
+        result_list = ModifierList(
+            result_list,
+            lambda record_info: record_info.json_object,
+        )
+    return result_list
 
 
 async def _read_records_of_type(

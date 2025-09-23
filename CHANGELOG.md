@@ -1,3 +1,14 @@
+# x.x.x (2025-09-xx)
+
+## New features
+
+- Add the endpoints `/<collection>/records/` and `/<collection>/records/p/`,
+  which return all records in a store for which the token authorizes.
+
+- Add `CURATOR`-token mode. This mode allows access to individual incoming
+  areas.
+
+
 # 3.4.0 (2025-09-25)
 
 ## New features

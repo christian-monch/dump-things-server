@@ -160,6 +160,10 @@ class _ModelStore:
         Get all objects of a specific class.
 
         :param class_name: The name of the class to filter by.
+        :param matching: Return only records with a value that matches `matching`.
+        :param include_subclasses: If `True`, return records of class `class_name`
+            and its subclasses, if `False` return only records of class
+            `class_name`.
         :return: A lazy list of objects of the specified class and its subclasses.
         """
         if include_subclasses:
@@ -168,6 +172,17 @@ class _ModelStore:
             class_names = [class_name]
         return self.backend.get_records_of_classes(class_names, matching)
 
+    def get_all_objects(
+            self,
+            matching: str | None,
+    ) -> LazyList[RecordInfo]:
+        """
+        Get all objects of a specific class.
+
+        :param matching: Return only records with a value that matches `matching`.
+        :return: A lazy list of all objects in the store.
+        """
+        return self.backend.get_all_records(matching)
 
 _existing_model_stores = {}
 

@@ -43,6 +43,24 @@ def test_search_by_pid(fastapi_client_simple):
         }
 
 
+def test_get_all(fastapi_client_simple):
+    test_client, _ = fastapi_client_simple
+    for i in range(1, 9):
+        response = test_client.get(
+            f'/collection_{i}/records/',
+            headers={'x-dumpthings-token': 'basic_access'},
+        )
+        assert response.status_code == HTTP_200_OK
+        assert len(response.json()) in (1, 3)
+    for i in range(1, 9):
+        response = test_client.get(
+            f'/collection_{i}/records/p/',
+            headers={'x-dumpthings-token': 'basic_access'},
+        )
+        assert response.status_code == HTTP_200_OK
+        assert response.json()['total'] in (1, 3)
+
+
 def test_hashed_token(fastapi_client_simple):
     test_client, _ = fastapi_client_simple
     response = test_client.get(
