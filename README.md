@@ -1,5 +1,6 @@
-
 ### Dump Things Service
+
+[![PyPI version fury.io](https://badge.fury.io/py/dump-things-service.svg)](https://pypi.python.org/pypi/dump-things-service/)
 
 This is an implementation of a service that allows to store and retrieve data that is structured according to given schemata.
 
