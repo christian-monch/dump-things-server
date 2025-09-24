@@ -12,8 +12,6 @@ from typing import (
 
 from starlette.status import HTTP_413_REQUEST_ENTITY_TOO_LARGE
 
-from dump_things_service.lazy_list import PriorityList, ModifierList
-
 # Perform the patching before importing any third-party libraries
 from dump_things_service.patches import enabled  # noqa: F401
 
@@ -27,7 +25,6 @@ from fastapi import (
     Response,  # noqa F401 -- used by generated code
 )
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.security import APIKeyHeader
 from fastapi_pagination import (
     Page,
     add_pagination,
@@ -52,13 +49,9 @@ from dump_things_service import (
     config_file_name,
 )
 from dump_things_service.__about__ import __version__
+from dump_things_service.api_key import api_key_header_scheme
 from dump_things_service.config import (
     ConfigError,
-    TokenPermission,
-    InstanceConfig,
-    get_default_token_name,
-    get_token_store,
-    join_default_token_permissions,
     process_config,
 )
 from dump_things_service.converter import (
@@ -67,18 +60,26 @@ from dump_things_service.converter import (
 )
 from dump_things_service.dynamic_endpoints import create_endpoints
 from dump_things_service.export import exporter_info
+from dump_things_service.lazy_list import (
+    PriorityList,
+    ModifierList,
+)
 from dump_things_service.model import (
     get_classes,
     get_subclasses,
 )
 from dump_things_service.utils import (
+    check_collection,
     combine_ttl,
+    get_default_token_name,
+    get_token_store,
+    join_default_token_permissions,
+    process_token,
     wrap_http_exception,
 )
 
 if TYPE_CHECKING:
     from dump_things_service.lazy_list import LazyList
-    from dump_things_service.store.model_store import ModelStore
 
 
 class TokenCapabilityRequest(BaseModel):
@@ -220,15 +221,6 @@ if g_error:
     sys.exit(1)
 
 
-api_key_header_scheme = APIKeyHeader(
-    name='X-DumpThings-Token',
-    # authentication is generally optional
-    auto_error=False,
-    scheme_name='submission',
-    description='Presenting a valid token enables record submission, and retrieval of records submitted with this token prior curation.',
-)
-
-
 def store_record(
     collection: str,
     data: BaseModel | str,
@@ -247,7 +239,7 @@ def store_record(
             status_code=HTTP_400_BAD_REQUEST, detail='Invalid ttl data provided.'
         )
 
-    _check_collection(g_instance_config, collection)
+    check_collection(g_instance_config, collection)
 
     token = (
         get_default_token_name(g_instance_config, collection)
@@ -310,17 +302,6 @@ def store_record(
     return JSONResponse([record for _, record in stored_records])
 
 
-def _check_collection(
-    instance_config: InstanceConfig,
-    collection: str,
-):
-    if collection not in instance_config.collections:
-        raise HTTPException(
-            status_code=HTTP_404_NOT_FOUND,
-            detail=f'No such collection: "{collection}".',
-        )
-
-
 @app.get('/server', tags=['server'])
 async def get_server() -> ServerResponse:
     return ServerResponse(
@@ -335,7 +316,7 @@ async def read_record_with_pid(
     format: Format = Format.json,  # noqa A002
     api_key: str = Depends(api_key_header_scheme),
 ):
-    _check_collection(g_instance_config, collection)
+    check_collection(g_instance_config, collection)
 
     final_permissions, token_store = await process_token(
         g_instance_config, api_key, collection
@@ -462,7 +443,7 @@ async def _read_all_records(
             detail=f'Conversion error: {e}',
         ) from e
 
-    _check_collection(g_instance_config, collection)
+    check_collection(g_instance_config, collection)
     final_permissions, token_store = await process_token(
         g_instance_config, api_key, collection
     )
@@ -526,7 +507,7 @@ async def _read_records_of_type(
             detail=f'Conversion error: {e}',
         ) from e
 
-    _check_collection(g_instance_config, collection)
+    check_collection(g_instance_config, collection)
     model = g_instance_config.model_info[collection][0]
     if class_name not in get_classes(model):
         raise HTTPException(
@@ -586,7 +567,7 @@ async def delete_record(
     pid: str,
     api_key: str = Depends(api_key_header_scheme),
 ):
-    _check_collection(g_instance_config, collection)
+    check_collection(g_instance_config, collection)
     final_permissions, token_store = await process_token(
         g_instance_config, api_key, collection
     )
@@ -598,33 +579,6 @@ async def delete_record(
         )
 
     return token_store.delete_object(pid)
-
-
-async def process_token(
-    instance_config: InstanceConfig,
-    api_key: str,
-    collection: str,
-) -> tuple[TokenPermission, ModelStore]:
-    token = (
-        get_default_token_name(instance_config, collection)
-        if api_key is None
-        else api_key
-    )
-
-    token_store, token, token_permissions, _ = get_token_store(
-        instance_config,
-        collection,
-        token,
-    )
-    final_permissions = join_default_token_permissions(
-        instance_config, token_permissions, collection
-    )
-    if not final_permissions.incoming_read and not final_permissions.curated_read:
-        raise HTTPException(
-            status_code=HTTP_403_FORBIDDEN,
-            detail=f'No read access to curated or incoming data in collection "{collection}".',
-        )
-    return final_permissions, token_store
 
 
 # If we have a valid configuration, create dynamic endpoints and rebuild the
