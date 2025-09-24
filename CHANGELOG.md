@@ -1,3 +1,11 @@
+# 3.3.2 (2025-09-24)
+
+## Bugfixes
+
+- Read user ID from authentication information and not from the config file.
+  This fixes an error when posting with a non-config authentication source.
+
+
 # 3.3.1 (2025-09-22)
 
 ## Bugfixes
