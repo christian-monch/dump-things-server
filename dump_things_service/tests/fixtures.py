@@ -33,8 +33,8 @@ version: 1
 collections:
   collection_1:
     default_token: basic_access
-    curated: {curated}/collection_1
-    incoming: {incoming}/collection_1
+    curated: {curated}/in_token_1
+    incoming: {incoming}
     backend:
       type: record_dir+stl
       schema: {schema_path}
@@ -222,6 +222,9 @@ tokens:
       collection_1:
         mode: CURATOR
         incoming_label: modes
+      collection_8:
+        mode: CURATOR
+        incoming_label: modes
   token-2:
     user_id: test_user_2
     collections:
@@ -245,16 +248,17 @@ def dump_stores_simple(tmp_path_factory):
     default_entries = {
         f'collection_{i}': [('Person', pid, test_record)] for i in range(1, 9)
     }
-    default_entries['collection_1'].extend(
-        [
-            ('Person', pid_curated, test_record_curated),
-            (
-                'Person',
-                'abc:mode_test',
-                'pid: abc:mode_test\ngiven_name: mode_curated\nschema_type: abc:Person\n',
-            ),
-        ]
-    )
+    for collection_id in (1, 8):
+        default_entries[f'collection_{collection_id}'].extend(
+            [
+                ('Person', pid_curated, test_record_curated),
+                (
+                    'Person',
+                    'abc:mode_test',
+                    'pid: abc:mode_test\ngiven_name: mode_curated\nschema_type: abc:Person\n',
+                ),
+            ]
+        )
     default_entries['collection_dlflatsocial-1'] = [('Person', pid_trr, test_record_trr)]
     default_entries['collection_dlflatsocial-2'] = [('Person', pid_trr, test_record_trr)]
     create_store(

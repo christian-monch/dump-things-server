@@ -87,7 +87,7 @@ def test_token_modes(fastapi_client_simple):
     # flag: ooxoo  SUBMIT_ONLY (write staging)
     # flag: xoooo  READ_CURATED (read_curated)
     # flag: ooooo  NOTHING ()
-    # flag: xxxxx  CURATED (curator_token)
+    # flag: xxxxx  CURATED (read curated, read staging, write staging, write curated, zones_access)
 
     # Because the default token permits read access to curated, all tokens,
     # except the curator token, will at least have this access. The curator

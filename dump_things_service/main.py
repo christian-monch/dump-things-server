@@ -52,12 +52,14 @@ from dump_things_service.__about__ import __version__
 from dump_things_service.api_key import api_key_header_scheme
 from dump_things_service.config import (
     ConfigError,
+    get_config,
     process_config,
 )
 from dump_things_service.converter import (
     FormatConverter,
     ConvertingList,
 )
+from dump_things_service.curated import router as curated_router
 from dump_things_service.dynamic_endpoints import create_endpoints
 from dump_things_service.export import exporter_info
 from dump_things_service.lazy_list import (
@@ -156,13 +158,16 @@ g_error = None
 config_path = (
     Path(arguments.config) if arguments.config else store_path / config_file_name
 )
+
+g_instance_config = None
 try:
-    g_instance_config = process_config(
+    process_config(
         store_path=store_path,
         config_file=config_path,
         order_by=['pid'],
         globals_dict=globals(),
     )
+    g_instance_config = get_config()
 except ConfigError as e:
     logger.error(
         'ERROR: invalid configuration `%s`: %s',
@@ -170,7 +175,6 @@ except ConfigError as e:
         e,
     )
     g_error = 'Server runs in error mode due to an invalid configuration. See server error-log for details.'
-    g_instance_config = None
 
 
 for switch in ('json', 'tree'):
@@ -188,6 +192,7 @@ for switch in ('json', 'tree'):
 disable_installed_extensions_check()
 
 app = FastAPI()
+app.include_router(curated_router)
 
 
 def handle_global_error():

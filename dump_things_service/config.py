@@ -21,11 +21,7 @@ from pydantic import (
 )
 from yaml.scanner import ScannerError
 
-from dump_things_service import (
-    HTTP_401_UNAUTHORIZED,
-    HTTP_404_NOT_FOUND,
-)
-from dump_things_service.auth import AuthenticationError
+from dump_things_service import HTTP_404_NOT_FOUND
 from dump_things_service.backends.record_dir import RecordDirStore
 from dump_things_service.backends.schema_type_layer import SchemaTypeLayer
 from dump_things_service.backends.sqlite import SQLiteBackend
@@ -49,6 +45,9 @@ logger = logging.getLogger('dump_things_service')
 
 config_file_name = '.dumpthings.yaml'
 ignored_files = {'.', '..', config_file_name}
+
+
+_global_config_instance = None
 
 
 class ConfigError(Exception):
@@ -287,13 +286,19 @@ def process_config(
     order_by: list[str],
     globals_dict: dict[str, Any],
 ) -> InstanceConfig:
+    global global_config_instance
+
     config_object = Config.get_config_from_file(config_file)
-    return process_config_object(
+    global_config_instance = process_config_object(
         store_path=store_path,
         config_object=config_object,
         order_by=order_by,
         globals_dict=globals_dict,
     )
+
+
+def get_config():
+    return global_config_instance
 
 
 def process_config_object(
