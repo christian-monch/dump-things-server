@@ -569,7 +569,7 @@ def get_token_store(
     instance_config: InstanceConfig,
     collection_name: str,
     plain_token: str
-) -> tuple[ModelStore, str, TokenPermission] | tuple[None, None]:
+) -> tuple[ModelStore, str, TokenPermission, str] | tuple[None, None, None, None]:
     check_collection(instance_config, collection_name)
 
     # If the token is hashed, get the hashed value. This is required because
@@ -614,8 +614,8 @@ def get_token_store(
     # If the token has no incoming-read or incoming-write permissions, we do not
     # need to create a store.
     if not permissions.incoming_read and not permissions.incoming_write:
-        instance_config.token_stores[collection_name][plain_token] = None
-        return None, hashed_token, permissions
+        instance_config.token_stores[collection_name][plain_token] = None, None, None, None
+        return instance_config.token_stores[collection_name][plain_token]
 
     # Check whether the collection has an incoming definition
     incoming = instance_config.incoming.get(collection_name)
@@ -638,9 +638,9 @@ def get_token_store(
         token_store,
         hashed_token,
         permissions,
+        auth_info.user_id,
     )
-
-    return token_store, hashed_token, permissions
+    return instance_config.token_stores[collection_name][plain_token]
 
 
 def resolve_hashed_token(

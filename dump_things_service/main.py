@@ -260,7 +260,7 @@ def store_record(
     # the token, if the token is hashed. This is necessary because we do not
     # store the plaintext token, so all token-information is associated with
     # the hashed representation of the token.
-    store, token, token_permissions = get_token_store(
+    store, token, token_permissions, user_id = get_token_store(
         g_instance_config,
         collection,
         token,
@@ -286,10 +286,7 @@ def store_record(
     else:
         record = data
 
-    stored_records = store.store_object(
-        obj=record,
-        submitter=g_instance_config.tokens[collection][token]['user_id'],
-    )
+    stored_records = store.store_object(obj=record, submitter=user_id)
 
     if input_format == Format.ttl:
         format_converter = FormatConverter(
@@ -496,7 +493,7 @@ async def process_token(
         else api_key
     )
 
-    token_store, token, token_permissions = get_token_store(
+    token_store, token, token_permissions, _ = get_token_store(
         instance_config,
         collection,
         token,
