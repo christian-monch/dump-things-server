@@ -158,11 +158,14 @@ mode_mapping = {
         incoming_read=True,
     ),
     TokenModes.WRITE_COLLECTION: TokenPermission(
-        curated_read=True, incoming_read=True, incoming_write=True
+        curated_read=True,
+        incoming_read=True,
+        incoming_write=True,
     ),
     TokenModes.READ_SUBMISSIONS: TokenPermission(incoming_read=True),
     TokenModes.WRITE_SUBMISSIONS: TokenPermission(
-        incoming_read=True, incoming_write=True
+        incoming_read=True,
+        incoming_write=True,
     ),
     TokenModes.SUBMIT: TokenPermission(curated_read=True, incoming_write=True),
     TokenModes.SUBMIT_ONLY: TokenPermission(incoming_write=True),
@@ -171,7 +174,8 @@ mode_mapping = {
         curated_read=True,
         incoming_read=True,
         incoming_write=True,
-        curator_token=True,
+        curated_write=True,
+        zones_access=True,
     ),
 }
 

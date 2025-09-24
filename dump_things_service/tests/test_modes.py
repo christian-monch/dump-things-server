@@ -66,7 +66,7 @@ def test_token_modes(fastapi_client_simple):
     # id, i.e. `abc:mode_test` exists in the default curated test store.
     response = test_client.post(
         '/collection_1/record/Person',
-        headers={'x-dumpthings-token': 'token_1_xxx'},
+        headers={'x-dumpthings-token': 'token_1_xxxoo'},
         json={'pid': 'abc:mode_test', 'given_name': 'mode_incoming'},
     )
     assert response.status_code == HTTP_200_OK
@@ -74,20 +74,20 @@ def test_token_modes(fastapi_client_simple):
     # The modes we check are described below. Flags (o: False, x: True) indicate
     # which read, write permissions are given. They are in the order:
     #
-    #   read curated, read staging, write staging.
+    #   read curated, read staging, write staging, write curated, zones_access
     #
     # The test store contains `token_1_{flag}' for collection `collection_1`
     # the following flags:
     #
-    # flag: xxo  READ_COLLECTION (read staging, read curated)
-    # flag: xxx  WRITE_COLLECTION (read staging, read curated, write staging)
-    # flag: oxo  READ_SUBMISSIONS (read staging)
-    # flag: oxx  WRITE_SUBMISSIONS (read staging, write staging)
-    # flag: xox  SUBMIT (read_curated, write staging)
-    # flag: oox  SUBMIT_ONLY (write staging)
-    # flag: xoo  READ_CURATED (read_curated)
-    # flag: ooo  NOTHING ()
-    # flag: c    CURATED (curator_token)
+    # flag: xxooo  READ_COLLECTION (read staging, read curated)
+    # flag: xxxoo  WRITE_COLLECTION (read staging, read curated, write staging)
+    # flag: oxooo  READ_SUBMISSIONS (read staging)
+    # flag: oxxoo  WRITE_SUBMISSIONS (read staging, write staging)
+    # flag: xoxoo  SUBMIT (read_curated, write staging)
+    # flag: ooxoo  SUBMIT_ONLY (write staging)
+    # flag: xoooo  READ_CURATED (read_curated)
+    # flag: ooooo  NOTHING ()
+    # flag: xxxxx  CURATED (curator_token)
 
     # Because the default token permits read access to curated, all tokens,
     # except the curator token, will at least have this access. The curator
@@ -96,62 +96,62 @@ def test_token_modes(fastapi_client_simple):
         test_client=test_client,
         write_expectations=[
             # READ_COLLECTION | READ_CURATED
-            ('collection_1', 'token_1_xxo', HTTP_403_FORBIDDEN),
+            ('collection_1', 'token_1_xxooo', HTTP_403_FORBIDDEN),
             # WRITE_COLLECTION | READ_CURATED
-            ('collection_1', 'token_1_xxx', HTTP_200_OK),
+            ('collection_1', 'token_1_xxxoo', HTTP_200_OK),
             # READ_SUBMISSION | READ_CURATED
-            ('collection_1', 'token_1_oxo', HTTP_403_FORBIDDEN),
+            ('collection_1', 'token_1_oxooo', HTTP_403_FORBIDDEN),
             # WRITE_SUBMISSIONS | READ_CURATED
-            ('collection_1', 'token_1_oxx', HTTP_200_OK),
+            ('collection_1', 'token_1_oxxoo', HTTP_200_OK),
             # SUBMIT | READ_CURATED
-            ('collection_1', 'token_1_xox', HTTP_200_OK),
+            ('collection_1', 'token_1_xoxoo', HTTP_200_OK),
             # SUBMIT_ONLY | READ_CURATED
-            ('collection_1', 'token_1_oox', HTTP_200_OK),
+            ('collection_1', 'token_1_ooxoo', HTTP_200_OK),
             # READ_CURATED | READ_CURATED
-            ('collection_1', 'token_1_xoo', HTTP_403_FORBIDDEN),
+            ('collection_1', 'token_1_xoooo', HTTP_403_FORBIDDEN),
             # NOTHING | READ_CURATED
-            ('collection_1', 'token_1_ooo', HTTP_403_FORBIDDEN),
-            # CURATOR
-            ('collection_1', 'token_1_c', HTTP_200_OK),
+            ('collection_1', 'token_1_ooooo', HTTP_403_FORBIDDEN),
+            # CURATOR | READ_CURATED
+            ('collection_1', 'token_1_xxxxx', HTTP_200_OK),
         ],
         read_class_expectations=[
             # READ_COLLECTION | READ_CURATED
-            ('collection_1', 'token_1_xxo', HTTP_200_OK, (1, 1)),
+            ('collection_1', 'token_1_xxooo', HTTP_200_OK, (1, 1)),
             # WRITE_COLLECTION | READ_CURATED
-            ('collection_1', 'token_1_xxx', HTTP_200_OK, (1, 1)),
+            ('collection_1', 'token_1_xxxoo', HTTP_200_OK, (1, 1)),
             # READ_SUBMISSIONS | READ_CURATED
-            ('collection_1', 'token_1_oxo', HTTP_200_OK, (1, 1)),
+            ('collection_1', 'token_1_oxooo', HTTP_200_OK, (1, 1)),
             # WRITE_SUBMISSIONS | READ_CURATED
-            ('collection_1', 'token_1_oxx', HTTP_200_OK, (1, 1)),
+            ('collection_1', 'token_1_oxxoo', HTTP_200_OK, (1, 1)),
             # SUBMIT | READ_CURATED
-            ('collection_1', 'token_1_xox', HTTP_200_OK, (1, 0)),
+            ('collection_1', 'token_1_xoxoo', HTTP_200_OK, (1, 0)),
             # SUBMIT_ONLY | READ_CURATED
-            ('collection_1', 'token_1_oox', HTTP_200_OK, (1, 0)),
+            ('collection_1', 'token_1_ooxoo', HTTP_200_OK, (1, 0)),
             # READ_CURATED | READ_CURATED
-            ('collection_1', 'token_1_xoo', HTTP_200_OK, (1, 0)),
+            ('collection_1', 'token_1_xoooo', HTTP_200_OK, (1, 0)),
             # NOTHING | READ_CURATED
-            ('collection_1', 'token_1_ooo', HTTP_200_OK, (1, 0)),
-            # CURATOR
-            ('collection_1', 'token_1_c', HTTP_200_OK, (1, 1)),
+            ('collection_1', 'token_1_ooooo', HTTP_200_OK, (1, 0)),
+            # CURATOR | READ_CURATED
+            ('collection_1', 'token_1_xxxxx', HTTP_200_OK, (1, 1)),
         ],
         read_pid_expectations=[
             # READ_COLLECTION | READ_CURATED
-            ('collection_1', 'token_1_xxo', HTTP_200_OK, 'mode_incoming'),
+            ('collection_1', 'token_1_xxooo', HTTP_200_OK, 'mode_incoming'),
             # WRITE_COLLECTION | READ_CURATED
-            ('collection_1', 'token_1_xxx', HTTP_200_OK, 'mode_incoming'),
+            ('collection_1', 'token_1_xxxoo', HTTP_200_OK, 'mode_incoming'),
             # READ_SUBMISSIONS | READ_CURATED
-            ('collection_1', 'token_1_oxo', HTTP_200_OK, 'mode_incoming'),
+            ('collection_1', 'token_1_oxooo', HTTP_200_OK, 'mode_incoming'),
             # WRITE_SUBMISSIONS | READ_CURATED
-            ('collection_1', 'token_1_oxx', HTTP_200_OK, 'mode_incoming'),
+            ('collection_1', 'token_1_oxxoo', HTTP_200_OK, 'mode_incoming'),
             # SUBMIT | READ_CURATED
-            ('collection_1', 'token_1_xox', HTTP_200_OK, 'mode_curated'),
+            ('collection_1', 'token_1_xoxoo', HTTP_200_OK, 'mode_curated'),
             # SUBMIT_ONLY | READ_CURATED
-            ('collection_1', 'token_1_oox', HTTP_200_OK, 'mode_curated'),
+            ('collection_1', 'token_1_ooxoo', HTTP_200_OK, 'mode_curated'),
             # READ_CURATED | READ_CURATED
-            ('collection_1', 'token_1_xoo', HTTP_200_OK, 'mode_curated'),
+            ('collection_1', 'token_1_xoooo', HTTP_200_OK, 'mode_curated'),
             # NOTHING | READ_CURATED
-            ('collection_1', 'token_1_ooo', HTTP_200_OK, 'mode_curated'),
-            # CURATOR
-            ('collection_1', 'token_1_c', HTTP_200_OK, 'mode_incoming'),
+            ('collection_1', 'token_1_ooooo', HTTP_200_OK, 'mode_curated'),
+            # CURATOR | READ_CURATED
+            ('collection_1', 'token_1_xxxxx', HTTP_200_OK, 'mode_incoming'),
         ],
     )

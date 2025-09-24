@@ -162,61 +162,61 @@ tokens:
       collection_dlflatsocial-2:
         mode: WRITE_COLLECTION
         incoming_label: in_token_1
-  token_1_xxo:
+  token_1_xxooo:
     user_id: test_user_1_read_collection
     collections:
       collection_1:
         mode: READ_COLLECTION
         incoming_label: modes
-  token_1_xxx:
+  token_1_xxxoo:
     user_id: test_user_1_write_collection
     collections:
       collection_1:
         mode: WRITE_COLLECTION
         incoming_label: modes
-  token_1_oxo:
+  token_1_oxooo:
     user_id: test_user_1_read_submissions
     collections:
       collection_1:
         mode: READ_SUBMISSIONS
         incoming_label: modes
-  token_1_oxx:
+  token_1_oxxoo:
     user_id: test_user_1_write_submissions
     collections:
       collection_1:
         mode: WRITE_SUBMISSIONS
         incoming_label: modes
-  token_1_xox:
+  token_1_xoxoo:
     user_id: test_user_1_submit
     collections:
       collection_1:
         mode: SUBMIT
         incoming_label: modes
-  token_1_oox:
+  token_1_ooxoo:
     user_id: test_user_1_submit_only
     collections:
       collection_1:
         mode: SUBMIT_ONLY
         incoming_label: modes
-  token_1_oox:
+  token_1_ooxoo:
     user_id: test_user_1_submit_only
     collections:
       collection_1:
         mode: SUBMIT_ONLY
         incoming_label: modes
-  token_1_xoo:
+  token_1_xoooo:
     user_id: test_user_1_read_curated
     collections:
       collection_1:
         mode: READ_CURATED
         incoming_label: modes
-  token_1_ooo:
+  token_1_ooooo:
     user_id: test_user_1_nothing
     collections:
       collection_1:
         mode: NOTHING
         incoming_label: modes
-  token_1_c:
+  token_1_xxxxx:
     user_id: test_user_1_curated
     collections:
       collection_1:
