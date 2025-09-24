@@ -1,3 +1,10 @@
+# 3.3.3 (2025-09-24)
+
+## Bugfixes
+
+- Fix an error in token processing that caused server crashes.
+
+
 # 3.3.2 (2025-09-24)
 
 ## Bugfixes

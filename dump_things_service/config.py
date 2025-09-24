@@ -614,7 +614,12 @@ def get_token_store(
     # If the token has no incoming-read or incoming-write permissions, we do not
     # need to create a store.
     if not permissions.incoming_read and not permissions.incoming_write:
-        instance_config.token_stores[collection_name][plain_token] = None, None, None, None
+        instance_config.token_stores[collection_name][plain_token] = (
+            None,
+            hashed_token,
+            permissions,
+            auth_info.user_id,
+        )
         return instance_config.token_stores[collection_name][plain_token]
 
     # Check whether the collection has an incoming definition
