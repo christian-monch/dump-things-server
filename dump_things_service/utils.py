@@ -135,18 +135,42 @@ def check_collection(
         )
 
 
+def check_label(
+    instance_config: InstanceConfig,
+    collection: str,
+    label: str,
+):
+    if label not in get_labels(instance_config, collection):
+        raise HTTPException(
+            status_code=HTTP_404_NOT_FOUND,
+            detail=f'No incoming label: "{label}" in collection: "{collection}".',
+        )
+
+
+def get_labels(
+    instance_config: InstanceConfig,
+    collection: str,
+) -> set[str]:
+    check_collection(instance_config, collection)
+    return {
+        token['incoming_label']
+        for token in instance_config.tokens[collection].values()
+        if token['incoming_label'] != ''
+    }
+
+
 def get_default_token_name(
-        instance_config: InstanceConfig,
-        collection: str
+    instance_config: InstanceConfig,
+    collection: str
 ) -> str:
     check_collection(instance_config, collection)
     return instance_config.collections[collection].default_token
 
 
 async def process_token(
-        instance_config: InstanceConfig,
-        api_key: str,
-        collection: str,
+    instance_config: InstanceConfig,
+    api_key: str,
+    collection: str,
 ) -> tuple[TokenPermission, ModelStore]:
     token = (
         get_default_token_name(instance_config, collection)

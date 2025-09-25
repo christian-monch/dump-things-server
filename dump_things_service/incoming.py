@@ -16,6 +16,7 @@ from fastapi_pagination import (
     paginate,
 )
 from pydantic import BaseModel
+from starlette.status import HTTP_404_NOT_FOUND
 
 from dump_things_service import (
     HTTP_401_UNAUTHORIZED,
@@ -29,26 +30,32 @@ from dump_things_service.lazy_list import ModifierList
 from dump_things_service.store.model_store import ModelStore
 from dump_things_service.utils import (
     check_collection,
+    check_label,
     cleaned_json,
+    create_token_store,
+    get_labels,
     resolve_hashed_token,
 )
 
 if TYPE_CHECKING:
     from dump_things_service.lazy_list import LazyList
 
-_endpoint_curated_template = """
+_endpoint_incoming_template = """
 async def {name}(
     data: {model_var_name}.{class_name},
+    label: str,
     response: Response,
     api_key: str = Depends(api_key_header_scheme),
 ) -> JSONResponse:
     logger.info(
-        '{name}(%s, %s)',
+        '{name}(%s, %s, %s)',
         repr(data),
+        repr(label),
         repr({model_var_name}),
     )
-    return await store_curated_record(
+    return await store_incoming_record(
         '{collection}',
+        label,
         data,
         '{class_name}',
         api_key,
@@ -62,10 +69,10 @@ add_pagination(router)
 
 
 def check_bounds(
-    length: int | None,
-    max_length: int,
-    collection: str,
-    alternative_url: str
+        length: int | None,
+        max_length: int,
+        collection: str,
+        alternative_url: str
 ):
     if length > max_length:
         raise HTTPException(
@@ -76,17 +83,32 @@ def check_bounds(
 
 
 @router.get(
-    '/{collection}/curated/records/{class_name}',
-    tags=['Curator read records'],
+    '/{collection}/incoming/',
+    tags=['Incoming read labels'],
 )
-async def read_curated_records_of_type(
+async def incoming_read_labels(
     collection: str,
+    api_key: str | None = Depends(api_key_header_scheme),
+):
+    # Authorize api_key
+    await authorize_zones(collection, api_key)
+    return list(get_labels(get_config(), collection))
+
+
+@router.get(
+    '/{collection}/incoming/{label}/records/{class_name}',
+    tags=['Incoming read records'],
+)
+async def incoming_read_records_of_type(
+    collection: str,
+    label: str,
     class_name: str,
     matching: str | None = None,
     api_key: str | None = Depends(api_key_header_scheme),
 ):
-    return await _read_curated_records(
+    return await _incoming_read_records(
         collection=collection,
+        label=label,
         class_name=class_name,
         pid=None,
         matching=matching,
@@ -96,17 +118,19 @@ async def read_curated_records_of_type(
 
 
 @router.get(
-    '/{collection}/curated/records/p/{class_name}',
-    tags=['Curator read records'],
+    '/{collection}/incoming/{label}/records/p/{class_name}',
+    tags=['Incoming read records'],
 )
-async def read_curated_records_of_type_paginated(
+async def incoming_read_records_of_type_paginated(
     collection: str,
+    label: str,
     class_name: str,
     matching: str | None = None,
     api_key: str | None = Depends(api_key_header_scheme),
 ) -> Page[dict]:
-    record_list = await _read_curated_records(
+    record_list = await _incoming_read_records(
         collection=collection,
+        label=label,
         class_name=class_name,
         pid=None,
         matching=matching,
@@ -116,16 +140,18 @@ async def read_curated_records_of_type_paginated(
 
 
 @router.get(
-    '/{collection}/curated/records/',
-    tags=['Curator read records'],
+    '/{collection}/incoming/{label}/records/',
+    tags=['Incoming read records'],
 )
-async def read_curated_all_records(
+async def incoming_read_all_records(
     collection: str,
+    label: str,
     matching: str | None = None,
     api_key: str | None = Depends(api_key_header_scheme),
 ):
-    return await _read_curated_records(
+    return await _incoming_read_records(
         collection=collection,
+        label=label,
         class_name=None,
         pid=None,
         matching=matching,
@@ -135,16 +161,18 @@ async def read_curated_all_records(
 
 
 @router.get(
-    '/{collection}/curated/records/p/',
-    tags=['Curator read records'],
+    '/{collection}/incoming/{label}/records/p/',
+    tags=['Incoming read records'],
 )
-async def read_curated_all_records_paginated(
-    collection: str,
-    matching: str | None = None,
-    api_key: str | None = Depends(api_key_header_scheme),
+async def incoming_read_all_records_paginated(
+        collection: str,
+        label: str,
+        matching: str | None = None,
+        api_key: str | None = Depends(api_key_header_scheme),
 ) -> Page[dict]:
-    record_list = await _read_curated_records(
+    record_list = await _incoming_read_records(
         collection=collection,
+        label=label,
         class_name=None,
         pid=None,
         matching=matching,
@@ -154,16 +182,18 @@ async def read_curated_all_records_paginated(
 
 
 @router.get(
-    '/{collection}/curated/record',
-    tags=['Curator read records'],
+    '/{collection}/incoming/{label}/record',
+    tags=['Incoming read records'],
 )
-async def read_curated_record_with_pid(
-    collection: str,
-    pid: str,
-    api_key: str = Depends(api_key_header_scheme),
+async def incoming_read_record_with_pid(
+        collection: str,
+        label: str,
+        pid: str,
+        api_key: str = Depends(api_key_header_scheme),
 ):
-    return await _read_curated_records(
+    return await _incoming_read_records(
         collection=collection,
+        label=label,
         class_name=None,
         pid=pid,
         api_key=api_key,
@@ -171,31 +201,34 @@ async def read_curated_record_with_pid(
 
 
 @router.get(
-    '/{collection}/curated/delete',
-    tags=['Curator delete records'],
+    '/{collection}/incoming/{label}/delete',
+    tags=['Incoming delete records'],
 )
-async def delete_curated_record_with_pid(
+async def incoming_delete_record_with_pid(
     collection: str,
+    label: str,
     pid: str,
     api_key: str = Depends(api_key_header_scheme),
 ):
-    return await _delete_curated_record(
+    return await _incoming_delete_record(
         collection=collection,
+        label=label,
         pid=pid,
         api_key=api_key,
     )
 
 
-async def _read_curated_records(
-    collection: str,
-    class_name: str | None,
-    pid: str | None,
-    matching: str | None = None,
-    api_key: str | None = None,
-    upper_bound: int = 1000,
+async def _incoming_read_records(
+        collection: str,
+        label: str,
+        class_name: str | None,
+        pid: str | None,
+        matching: str | None = None,
+        api_key: str | None = None,
+        upper_bound: int = 1000,
 ) -> LazyList | dict | None:
 
-    model_store, backend = await _get_store_and_backend(collection, api_key)
+    model_store, backend = await _get_store_and_backend(collection, label, api_key)
 
     if pid:
         return backend.get_record_by_iri(model_store.pid_to_iri(pid))
@@ -209,7 +242,7 @@ async def _read_curated_records(
             len(result_list),
             upper_bound,
             collection,
-            f'/curated/records/p/{class_name}',
+            f'/incoming/records/p/{class_name}',
         )
 
     return ModifierList(
@@ -218,20 +251,83 @@ async def _read_curated_records(
     )
 
 
-async def _delete_curated_record(
-        collection: str,
-        pid: str | None,
-        api_key: str | None = None,
+async def _incoming_delete_record(
+    collection: str,
+    label: str,
+    pid: str | None,
+    api_key: str | None = None,
 ) -> bool:
-    model_store, backend = await _get_store_and_backend(collection, api_key)
+    model_store, backend = await _get_store_and_backend(collection, label, api_key)
     return backend.remove_record(model_store.pid_to_iri(pid))
 
 
 async def _get_store_and_backend(
     collection: str,
-    api_key: str | None,
+    label: str,
+    plain_token: str | None,
 ) -> tuple[ModelStore, StorageBackend]:
 
+    # Authorize api_key
+    await authorize_zones(collection, plain_token)
+
+    # Check that the incoming zone exists
+    instance_config = get_config()
+    check_label(instance_config, collection, label)
+
+    # Find a store that writes to zone `label` of collection `collection`.
+    matching_tokens = [
+        token
+        for token, token_info in instance_config.tokens[collection].items()
+        if token_info['incoming_label'] == label
+    ]
+    matching_model_stores = []
+    if matching_tokens:
+        matching_model_stores = [
+            store_info[0]
+            for token, store_info in instance_config.token_stores[collection].items()
+            if token in matching_tokens
+        ]
+
+    if matching_model_stores:
+        model_store = matching_model_stores[0]
+    else:
+        # Create a store. That only makes sense if there is a token that has
+        # the incoming label `label` in collection `collection`.
+        if not matching_tokens:
+            raise HTTPException(
+                status_code=HTTP_404_NOT_FOUND,
+                detail=f'no incoming label "{label}" for collection "{collection}"',
+            )
+        matching_token = matching_tokens[0]
+        store_dir = (
+            instance_config.store_path
+            / instance_config.incoming[collection]
+            / label
+        )
+        store_dir.mkdir(parents=True, exist_ok=True)
+        model_store = create_token_store(
+            instance_config=instance_config,
+            collection_name=collection,
+            store_dir=store_dir,
+        )
+        token_info = instance_config.tokens[collection][matching_token]
+        instance_config.token_stores[collection][matching_token] = (
+            model_store,
+            matching_token,
+            token_info['permissions'],
+            token_info['user_id'],
+        )
+
+    backend = model_store.backend
+    if isinstance(backend, _SchemaTypeLayer):
+        return model_store, backend.backend
+    return model_store, backend
+
+
+async def authorize_zones(
+    collection: str,
+    api_key: str | None,
+):
     # A token is required
     if api_key is None:
         raise HTTPException(
@@ -253,7 +349,7 @@ async def _get_store_and_backend(
         api_key,
     )
 
-    # A curator token can only come from the configuration
+    # A token with zone access can only come from the configuration
     if hashed_token not in instance_config.tokens[collection]:
         raise HTTPException(
             status_code=HTTP_401_UNAUTHORIZED,
@@ -262,21 +358,14 @@ async def _get_store_and_backend(
         )
 
     permissions = instance_config.tokens[collection][hashed_token]['permissions']
-    if permissions.curated_write is False:
+    if permissions.zones_access is False:
         raise HTTPException(
             status_code=HTTP_401_UNAUTHORIZED,
-            detail=f'no write access to curated area of collection `{collection}`',
+            detail=f'no access to incoming zones of collection `{collection}`',
         )
 
-    # Get the curated model store
-    model_store = instance_config.curated_stores[collection]
-    backend = model_store.backend
-    if isinstance(backend, _SchemaTypeLayer):
-        return model_store, backend.backend
-    return model_store, backend
 
-
-def create_curated_endpoints(
+def create_incoming_endpoints(
     app: FastAPI,
     global_dict: dict,
 ):
@@ -297,10 +386,10 @@ def create_curated_endpoints(
 
         for class_name in classes:
             # Create an endpoint to dump data of type `class_name` of schema
-            # `application`.
-            endpoint_name = f'_endpoint_curated_{next(serial_number)}'
+            # `model`.
+            endpoint_name = f'_endpoint_incoming_{next(serial_number)}'
 
-            endpoint_source = _endpoint_curated_template.format(
+            endpoint_source = _endpoint_incoming_template.format(
                 name=endpoint_name,
                 model_var_name=model_var_name,
                 class_name=class_name,
@@ -311,29 +400,34 @@ def create_curated_endpoints(
 
             # Create an API route for the endpoint
             app.add_api_route(
-                path=f'/{collection}/curated/record/{class_name}',
+                path=f'/{collection}/incoming/{{label}}/record/{class_name}',
                 endpoint=global_dict[endpoint_name],
                 methods=['POST'],
-                name=f'curated store of "{class_name}" object (schema: {model.linkml_meta["id"]})',
+                name=f'incoming store for "{class_name}" object (schema: {model.linkml_meta["id"]})',
                 response_model=None,
-                tags=[f'Curator write records to "{collection}"']
+                tags=[f'Incoming write records to "{collection}"']
             )
 
     logger.info(
-        'Creation of %d curated endpoints completed.',
+        'Creation of %d incoming endpoints completed.',
         next(serial_number),
     )
 
 
-async def store_curated_record(
-    collection: str,
-    data: BaseModel,
-    class_name: str,
-    api_key: str | None = Depends(api_key_header_scheme),
+async def store_incoming_record(
+        collection: str,
+        label: str,
+        data: BaseModel,
+        class_name: str,
+        api_key: str | None = Depends(api_key_header_scheme),
 ):
 
     pid = data.pid
-    model_store, backend = await _get_store_and_backend(collection, api_key)
+    model_store, backend = await _get_store_and_backend(
+        collection,
+        label,
+        api_key,
+    )
 
     json_object = cleaned_json(
         data.model_dump(exclude_none=True, mode='json'),

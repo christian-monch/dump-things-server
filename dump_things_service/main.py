@@ -62,7 +62,12 @@ from dump_things_service.converter import (
 from dump_things_service.curated import (
     create_curated_endpoints,
     router as curated_router,
-    store_curated_record,
+    store_curated_record,  # noqa F401 -- used by generated code
+)
+from dump_things_service.incoming import (
+    create_incoming_endpoints,
+    router as incoming_router,
+    store_incoming_record,  # noqa F401 -- used by generated code
 )
 from dump_things_service.dynamic_endpoints import create_endpoints
 from dump_things_service.export import exporter_info
@@ -197,7 +202,7 @@ disable_installed_extensions_check()
 
 app = FastAPI()
 app.include_router(curated_router)
-
+app.include_router(incoming_router)
 
 def handle_global_error():
     if g_error:
@@ -595,6 +600,7 @@ async def delete_record(
 if g_instance_config:
     create_endpoints(app, g_instance_config, globals())
     create_curated_endpoints(app, globals())
+    create_incoming_endpoints(app, globals())
     app.openapi_schema = None
     app.setup()
 

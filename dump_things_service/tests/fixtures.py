@@ -44,7 +44,7 @@ collections:
   collection_2:
     default_token: basic_access
     curated: {curated}/collection_2
-    incoming: {incoming}/collection_2
+    incoming: incoming_2
     backend:
       type: record_dir+stl
       schema: {schema_path}
@@ -52,6 +52,7 @@ collections:
   collection_3:
     default_token: basic_access
     curated: {curated}/collection_3
+    incoming: incoming_3
     backend:
       type: record_dir+stl
       schema: {schema_path}
@@ -59,6 +60,7 @@ collections:
   collection_4:
     default_token: basic_access
     curated: {curated}/collection_4
+    incoming: incoming_4
     backend:
       type: record_dir+stl
       schema: {schema_path}
@@ -66,6 +68,7 @@ collections:
   collection_5:
     default_token: basic_access
     curated: {curated}/collection_5
+    incoming: incoming_5
     backend:
       type: record_dir+stl
       schema: {schema_path}
@@ -73,6 +76,7 @@ collections:
   collection_6:
     default_token: basic_access
     curated: {curated}/collection_6
+    incoming: incoming_6
     backend:
       type: record_dir+stl
       schema: {schema_path}
@@ -80,6 +84,7 @@ collections:
   collection_7:
     default_token: basic_access
     curated: {curated}/collection_7
+    incoming: incoming_7
     backend:
       type: record_dir+stl
       schema: {schema_path}
@@ -225,6 +230,33 @@ tokens:
       collection_8:
         mode: CURATOR
         incoming_label: modes
+  token_admin:
+    user_id: test_admin
+    collections:
+      collection_1:
+        mode: CURATOR
+        incoming_label: admin_1
+      collection_2:
+        mode: CURATOR
+        incoming_label: admin_2
+      collection_3:
+        mode: CURATOR
+        incoming_label: admin_3
+      collection_4:
+        mode: CURATOR
+        incoming_label: admin_4
+      collection_5:
+        mode: CURATOR
+        incoming_label: admin_common
+      collection_6:
+        mode: CURATOR
+        incoming_label: admin_common
+      collection_7:
+        mode: CURATOR
+        incoming_label: admin_common
+      collection_8:
+        mode: CURATOR
+        incoming_label: admin_common
   token-2:
     user_id: test_user_2
     collections:

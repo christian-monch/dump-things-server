@@ -447,7 +447,6 @@ def process_config_object(
             # incoming write-permissions. If a token store exists, we ensure
             # that an incoming path is set and an incoming label exists.
             if permissions.incoming_read or permissions.incoming_write:
-
                 # Check that the incoming label is set for a token that has
                 # access rights to incoming records.
                 if not token_collection_info.incoming_label:
@@ -469,6 +468,14 @@ def process_config_object(
                         f'with write access'
                     )
                     raise ConfigError(msg)
+
+                # Create all incoming zones
+                incoming_location = (
+                    store_path
+                    / instance_config.collections[collection_name].incoming
+                    / token_collection_info.incoming_label
+                )
+                incoming_location.mkdir(parents=True, exist_ok=True)
 
     # Check that default tokens are defined
     for collection_name, collection_info in config_object.collections.items():
