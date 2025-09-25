@@ -589,24 +589,30 @@ def get_token_store(
     # Try to authenticate the token with the authentication providers that
     # are associated with the collection.
     auth_info = None
+    messages = []
     for auth_provider in instance_config.auth_providers[collection_name]:
         try:
             logger.debug('trying to authenticate with %s', auth_provider)
             auth_info = auth_provider.authenticate(plain_token)
             break
-        except AuthenticationError:
+        except AuthenticationError as ae:
             logger.debug(
                 'Authentication provider %s could not '
-                'authenticate token for collection %s.',
+                'authenticate token for collection %s: %s',
                 auth_provider,
                 collection_name,
+                str(ae),
             )
+            messages.append(f'{auth_provider.__class__.__name__} failed with: {ae}')
             continue
 
     if not auth_info:
+        detail = f'invalid token for collection {collection_name}: ' + ', '.join(
+            messages,
+        )
         raise HTTPException(
             status_code=HTTP_401_UNAUTHORIZED,
-            detail='Invalid token for collection ' + collection_name,
+            detail=detail,
         )
 
     permissions = auth_info.token_permission

@@ -120,6 +120,12 @@ class ForgejoAuthenticationSource(AuthenticationSource, MethodCache):
                 status=HTTP_401_UNAUTHORIZED,
                 message=msg,
             ) from e
+        except requests.exceptions.RequestException as e:
+            msg = f'could not read from {self.api_url}/{endpoint}'
+            raise RemoteAuthenticationError(
+                status=HTTP_401_UNAUTHORIZED,
+                message=msg,
+            ) from e
 
         if r.status_code >= HTTP_300_MULTIPLE_CHOICES:
             msg = f'invalid token: ({r.status_code}): {r.text}'
