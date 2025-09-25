@@ -48,7 +48,7 @@ def check_bounds(
         )
 
 
-@router.get('/{collection}/curated/records/{class_name}')
+@router.get('/{collection}/curated/records/{class_name}', tags=['Curator read records'])
 async def read_curated_records_of_type(
     collection: str,
     class_name: str,
@@ -56,15 +56,16 @@ async def read_curated_records_of_type(
     api_key: str | None = Depends(api_key_header_scheme),
 ):
     return await _read_curated_records(
-        collection,
-        class_name,
-        matching,
-        api_key,
-        500,
+        collection=collection,
+        class_name=class_name,
+        pid=None,
+        matching=matching,
+        api_key=api_key,
+        upper_bound=500,
     )
 
 
-@router.get('/{collection}/curated/records/p/{class_name}')
+@router.get('/{collection}/curated/records/p/{class_name}', tags=['Curator read records'])
 async def read_curated_records_of_type_paginated(
     collection: str,
     class_name: str,
@@ -72,53 +73,71 @@ async def read_curated_records_of_type_paginated(
     api_key: str | None = Depends(api_key_header_scheme),
 ) -> Page[dict]:
     record_list = await _read_curated_records(
-        collection,
-        class_name,
-        matching,
-        api_key,
-        500,
+        collection=collection,
+        class_name=class_name,
+        pid=None,
+        matching=matching,
+        api_key=api_key,
+        upper_bound=500,
     )
     return paginate(record_list)
 
 
-@router.get('/{collection}/curated/records/')
+@router.get('/{collection}/curated/records/', tags=['Curator read records'])
 async def read_curated_all_records(
-        collection: str,
-        matching: str | None = None,
-        api_key: str | None = Depends(api_key_header_scheme),
+    collection: str,
+    matching: str | None = None,
+    api_key: str | None = Depends(api_key_header_scheme),
 ):
     return await _read_curated_records(
-        collection,
-        None,
-        matching,
-        api_key,
-        500,
+        collection=collection,
+        class_name=None,
+        pid=None,
+        matching=matching,
+        api_key=api_key,
+        upper_bound=500,
     )
 
 
-@router.get('/{collection}/curated/records/p/')
+@router.get('/{collection}/curated/records/p/', tags=['Curator read records'])
 async def read_curated_all_records_paginated(
-        collection: str,
-        matching: str | None = None,
-        api_key: str | None = Depends(api_key_header_scheme),
+    collection: str,
+    matching: str | None = None,
+    api_key: str | None = Depends(api_key_header_scheme),
 ) -> Page[dict]:
     record_list = await _read_curated_records(
-        collection,
-        None,
-        matching,
-        api_key,
-        500,
+        collection=collection,
+        class_name=None,
+        pid=None,
+        matching=matching,
+        api_key=api_key,
+        upper_bound=500,
     )
     return paginate(record_list)
+
+
+@router.get('/{collection}/curated/record', tags=['Curator read records'])
+async def read_curated_record_with_pid(
+    collection: str,
+    pid: str,
+    api_key: str = Depends(api_key_header_scheme),
+):
+    return await _read_curated_records(
+        collection=collection,
+        class_name=None,
+        pid=pid,
+        api_key=api_key,
+    )
 
 
 async def _read_curated_records(
     collection: str,
     class_name: str | None,
+    pid: str | None,
     matching: str | None = None,
     api_key: str | None = None,
     upper_bound: int = 1000,
-) -> LazyList:
+) -> LazyList | dict | None:
     # This can only be used with a token
     if api_key is None:
         raise HTTPException(
@@ -156,11 +175,14 @@ async def _read_curated_records(
         )
 
     # Get the curated model store
-    backend = instance_config.curated_stores[collection].backend
+    model_store = instance_config.curated_stores[collection]
+    backend = model_store.backend
     if isinstance(backend, _SchemaTypeLayer):
         backend = backend.backend
 
-    if class_name:
+    if pid:
+        return backend.get_record_by_iri(model_store.pid_to_iri(pid))
+    elif class_name:
         result_list = backend.get_records_of_classes([class_name], matching)
     else:
         result_list = backend.get_all_records(matching)

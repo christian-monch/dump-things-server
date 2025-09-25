@@ -4,6 +4,7 @@ import pytest
 
 from dump_things_service import (
     HTTP_200_OK,
+    HTTP_404_NOT_FOUND,
 )
 
 
@@ -40,3 +41,27 @@ def test_read_curated_records(
             assert len(json_object['items']) == count
         else:
             assert len(json_object) == count
+
+
+pytest.mark.parametrize(
+    'pid',
+    ('abc:mode_test', 'abc:some_timee@x.com', 'abc:curated'),
+)
+def test_read_curated_records_by_pid(fastapi_client_simple):
+    test_client, _ = fastapi_client_simple
+
+    response = test_client.get(
+        f'/no_such_collection/curated/records/',
+        headers={'x-dumpthings-token': 'token_1_xxxxx'},
+    )
+    assert response.status_code == HTTP_404_NOT_FOUND
+
+
+def test_unknown_collection(fastapi_client_simple):
+    test_client, _ = fastapi_client_simple
+
+    response = test_client.get(
+        f'/no_such_collection/curated/records/',
+        headers={'x-dumpthings-token': 'token_1_xxxxx'},
+    )
+    assert response.status_code == HTTP_404_NOT_FOUND

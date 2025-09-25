@@ -58,12 +58,18 @@ class _ModelStore:
             for obj in self.extract_inlined(obj)
         ]
 
+    def pid_to_iri(
+        self,
+        pid: str,
+    ):
+        return resolve_curie(self.model, pid)
+
     def _store_flat_object(
         self,
         obj: BaseModel,
         submitter: str,
     ) -> dict:
-        iri = resolve_curie(self.model, obj.pid)
+        iri = self.pid_to_iri(obj.pid)
         class_name = obj.__class__.__name__
 
         json_object = cleaned_json(
@@ -138,7 +144,7 @@ class _ModelStore:
         self,
         pid: str,
     ) -> tuple[str, dict] | tuple[None, None]:
-        return self.get_object_by_iri(resolve_curie(self.model, pid))
+        return self.get_object_by_iri(self.pid_to_iri(pid))
 
     def get_object_by_iri(
         self,
@@ -188,7 +194,7 @@ class _ModelStore:
         self,
         pid: str,
     ) -> bool:
-        return self.backend.remove_record(resolve_curie(self.model, pid))
+        return self.backend.remove_record(self.pid_to_iri(pid))
 
 
 _existing_model_stores = {}
