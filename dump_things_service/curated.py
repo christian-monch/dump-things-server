@@ -55,7 +55,7 @@ async def read_curated_records_of_type(
     matching: str | None = None,
     api_key: str | None = Depends(api_key_header_scheme),
 ):
-    return await _read_curated_records_of_type(
+    return await _read_curated_records(
         collection,
         class_name,
         matching,
@@ -71,7 +71,7 @@ async def read_curated_records_of_type_paginated(
     matching: str | None = None,
     api_key: str | None = Depends(api_key_header_scheme),
 ) -> Page[dict]:
-    record_list = await _read_curated_records_of_type(
+    record_list = await _read_curated_records(
         collection,
         class_name,
         matching,
@@ -81,9 +81,40 @@ async def read_curated_records_of_type_paginated(
     return paginate(record_list)
 
 
-async def _read_curated_records_of_type(
+@router.get('/{collection}/curated/records/')
+async def read_curated_all_records(
+        collection: str,
+        matching: str | None = None,
+        api_key: str | None = Depends(api_key_header_scheme),
+):
+    return await _read_curated_records(
+        collection,
+        None,
+        matching,
+        api_key,
+        500,
+    )
+
+
+@router.get('/{collection}/curated/records/p/')
+async def read_curated_all_records_paginated(
+        collection: str,
+        matching: str | None = None,
+        api_key: str | None = Depends(api_key_header_scheme),
+) -> Page[dict]:
+    record_list = await _read_curated_records(
+        collection,
+        None,
+        matching,
+        api_key,
+        500,
+    )
+    return paginate(record_list)
+
+
+async def _read_curated_records(
     collection: str,
-    class_name: str,
+    class_name: str | None,
     matching: str | None = None,
     api_key: str | None = None,
     upper_bound: int = 1000,
@@ -129,7 +160,10 @@ async def _read_curated_records_of_type(
     if isinstance(backend, _SchemaTypeLayer):
         backend = backend.backend
 
-    result_list = backend.get_records_of_classes([class_name], matching)
+    if class_name:
+        result_list = backend.get_records_of_classes([class_name], matching)
+    else:
+        result_list = backend.get_all_records(matching)
 
     if upper_bound is not None:
         check_bounds(
