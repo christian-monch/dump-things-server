@@ -321,14 +321,14 @@ def _check_collection(
         )
 
 
-@app.get('/server')
+@app.get('/server', tags=['server'])
 async def get_server() -> ServerResponse:
     return ServerResponse(
         version = __version__,
     )
 
 
-@app.get('/{collection}/record')
+@app.get('/{collection}/record', tags=['Read records'])
 async def read_record_with_pid(
     collection: str,
     pid: str,
@@ -365,7 +365,7 @@ async def read_record_with_pid(
     return json_object
 
 
-@app.get('/{collection}/records/{class_name}')
+@app.get('/{collection}/records/{class_name}', tags=['Read records'])
 async def read_records_of_type(
     collection: str,
     class_name: str,
@@ -386,7 +386,7 @@ async def read_records_of_type(
     )
 
 
-@app.get('/{collection}/records/p/{class_name}')
+@app.get('/{collection}/records/p/{class_name}', tags=['Read records'])
 async def read_records_of_type_paginated(
     collection: str,
     class_name: str,

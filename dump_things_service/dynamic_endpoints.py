@@ -57,6 +57,7 @@ def create_endpoints(
                 methods=['POST'],
                 name=f'handle "{class_name}" of schema "{model.linkml_meta["id"]}" objects',
                 response_model=None,
+                tags=[f'Write records to "{collection}"']
             )
 
     logger.info('Creation of %d endpoints completed.', next(serial_number))
