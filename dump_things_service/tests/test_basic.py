@@ -76,6 +76,14 @@ def test_delete(fastapi_client_simple):
     )
     assert response.status_code == HTTP_200_OK
 
+    # Check that the record exists
+    response = test_client.get(
+        '/collection_1/record?pid=abc:delete-me',
+        headers={'x-dumpthings-token': 'token-1'},
+    )
+    assert response.status_code == HTTP_200_OK
+    assert response.json()['pid'] == 'abc:delete-me'
+
     response = test_client.get(
         '/collection_1/delete?pid=abc:delete-me',
         headers={'x-dumpthings-token': 'token-1'},

@@ -7,6 +7,12 @@ from dump_things_service import (
     HTTP_404_NOT_FOUND,
 )
 
+delete_record = {
+    'schema_type': 'abc:Person',
+    'pid': 'abc:delete-me',
+    'given_name': 'Detlef',
+}
+
 
 @pytest.mark.parametrize('paginate', ('', 'p/'))
 @pytest.mark.parametrize('class_name', ('', 'Person'))
@@ -65,3 +71,35 @@ def test_unknown_collection(fastapi_client_simple):
         headers={'x-dumpthings-token': 'token_1_xxxxx'},
     )
     assert response.status_code == HTTP_404_NOT_FOUND
+
+
+def test_curated_delete(fastapi_client_simple):
+    test_client, _ = fastapi_client_simple
+
+    response = test_client.post(
+        '/collection_8/curated/record/Person',
+        headers={'x-dumpthings-token': 'token_1_xxxxx'},
+        json=delete_record,
+    )
+    assert response.status_code == HTTP_200_OK
+
+    response = test_client.get(
+        '/collection_8/curated/record?pid=abc:delete-me',
+        headers={'x-dumpthings-token': 'token_1_xxxxx'},
+    )
+    assert response.status_code == HTTP_200_OK
+    assert response.json()['json_object']['pid'] == 'abc:delete-me'
+
+    response = test_client.get(
+        '/collection_8/curated/delete?pid=abc:delete-me',
+        headers={'x-dumpthings-token': 'token_1_xxxxx'},
+    )
+    assert response.status_code == HTTP_200_OK
+    assert response.json() is True
+
+    response = test_client.get(
+        '/collection_8/curated/record?pid=abc:delete-me',
+        headers={'x-dumpthings-token': 'token_1_xxxxx'},
+    )
+    assert response.status_code == HTTP_200_OK
+    assert response.json() is None

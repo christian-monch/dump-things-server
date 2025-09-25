@@ -59,7 +59,11 @@ from dump_things_service.converter import (
     FormatConverter,
     ConvertingList,
 )
-from dump_things_service.curated import router as curated_router
+from dump_things_service.curated import (
+    create_curated_endpoints,
+    router as curated_router,
+    store_curated_record,
+)
 from dump_things_service.dynamic_endpoints import create_endpoints
 from dump_things_service.export import exporter_info
 from dump_things_service.lazy_list import (
@@ -307,7 +311,7 @@ def store_record(
     return JSONResponse([record for _, record in stored_records])
 
 
-@app.get('/server', tags=['server'])
+@app.get('/server', tags=['Server'])
 async def get_server() -> ServerResponse:
     return ServerResponse(
         version = __version__,
@@ -351,7 +355,7 @@ async def read_record_with_pid(
     return json_object
 
 
-@app.get('/{collection}/records/')
+@app.get('/{collection}/records/', tags=['Read records'])
 async def read_all_records(
         collection: str,
         matching: str | None = None,
@@ -370,7 +374,7 @@ async def read_all_records(
     )
 
 
-@app.get('/{collection}/records/p/')
+@app.get('/{collection}/records/p/', tags=['Read records'])
 async def read_all_records(
         collection: str,
         matching: str | None = None,
@@ -566,7 +570,7 @@ async def _read_records_of_type(
     return result_list
 
 
-@app.get('/{collection}/delete')
+@app.get('/{collection}/delete', tags=['Delete records'])
 async def delete_record(
     collection: str,
     pid: str,
@@ -590,6 +594,7 @@ async def delete_record(
 # app to include all dynamically created endpoints.
 if g_instance_config:
     create_endpoints(app, g_instance_config, globals())
+    create_curated_endpoints(app, globals())
     app.openapi_schema = None
     app.setup()
 
