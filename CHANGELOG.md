@@ -1,3 +1,12 @@
+# 3.4.0 (2025-09-25)
+
+## New features
+
+- Return detailed information on authentication failures
+
+- Add tags to OpenAPI definition to improve api documentation
+
+
 # 3.3.3 (2025-09-24)
 
 ## Bugfixes
