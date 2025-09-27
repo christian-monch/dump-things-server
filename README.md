@@ -485,7 +485,7 @@ dump-things-service /data-storage/store --host 127.0.0.1 --port 8000
 
 Most endpoints require a *collection*. These correspond to the names of the "data record collection"-directories (for example `myschema-v3-fmta` in [Dump Things Service](https://concepts.datalad.org/dump-things/)) in the stores.
 
-The service provides the following endpoints:
+The service provides the following user endpoints (in addition to user-endpoints there exist endpoints for curators, to view them check the `/docs`-path in an installed service):
 
 - `POST /<collection>/record/<class>`: an object of type `<class>` (defined by the schema associated with `<collection>`) can be posted to this endpoint.
  The object-content must be JSON-encoded.
@@ -500,7 +500,7 @@ The service provides the following endpoints:
   
 
 - `GET /<collection>/records/<class>`: retrieve all readable objects from collection `<collection>` that are of type `<class>` or any of its subclasses.
- Objects are readable, if the default token for the collection allows reading of objects or if a token is provided that allows reading of objects in the collection.
+ Objects are readable if the default token for the collection allows reading of objects or if a token is provided that allows reading of objects in the collection.
  Objects from incoming spaces will take precedence over objects from curated spaces, i.e. if there are two objects with identical `pid` in the curated space and in the incoming space, the object from the incoming space will be returned.
  The endpoint supports the query parameter `format`, which determines the format of the query result.
  It can be set to `json` (the default) or to `ttl`,
@@ -530,13 +530,46 @@ The service provides the following endpoints:
   The endpoint supports the query parameter `format`, which determines the format of the query result.
   It can be set to `json` (the default) or to `ttl`,
 
+
 - `GET /server`: this endpoint provides information about the server.
   The response is a JSON object with the following structure:
 ```json
 {
   "version": "<version of the server>"
 }
- ```
+```
+
+
+- `GET /<collection>/records/`:  retrieve all readable objects from collection `<collection>`.
+  Objects are readable if the default token for the collection allows reading of objects or if a token is provided that allows reading of objects in the collection.
+  Objects from incoming spaces will take precedence over objects from curated spaces, i.e. if there are two objects with identical `pid` in the curated space and in the incoming space, the object from the incoming space will be returned.
+  The endpoint supports the query parameter `format`, which determines the format of the query result.
+  It can be set to `json` (the default) or to `ttl`,
+  The endpoint supports the query parameter `matching`, which is interpreted by `sqlite`-backends and ignored by `record_dir`-backends.
+  If given, the endpoint will only return records for which the JSON-string representation matches the `matching` parameter.
+  The result is a list of JSON-records or ttl-strings, depending on the selected format.
+
+
+- `GET /<collection>/records/p/`: this endpoint (ending on `.../p/`) provides the same functionality as the endpoint `GET /<collection>/records/` (without `.../p/`) but supports result pagination. In addition to the query parameters `format` and `matching`, it supports the query parameters `page` and `size`.
+ The `page`-parameter defines the page number to retrieve, starting with 1.
+ The `size`-parameter defines how many records should be returned per page.
+ If no `size`-parameter is given, the default value of 50 is used.
+ Each response will also contain the total number of records and the total number of pages in the result.
+ The response is a JSON object with the following structure:
+ ```json
+{
+  "items": [ <JSON-record or ttl-string> ],
+  "total": <total number of records in the result>,
+  "page": <current page number>,
+  "size": <number of records per page>,
+  "pages": <number of pages in the result>
+}
+```
+
+
+- `GET /<collection>/delete?pid=<pid>`: delete an object with the pid `<pid>` from the incoming area of the collection `<collection>`, if the provided token allows writing to the incoming area.
+ The result is either `True` if the object was deleted or `False` if the object did not exists or was not deleted.
+
 
 - `GET /docs`: provides information about the API of the service, i.e. about all endpoints.
 

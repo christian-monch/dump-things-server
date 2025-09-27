@@ -35,6 +35,7 @@ from sqlalchemy import (
     JSON,
     String,
     create_engine,
+    delete,
     select,
     text,
 )
@@ -42,7 +43,6 @@ from sqlalchemy.orm import (
     DeclarativeBase,
     Mapped,
     Session,
-    load_only,
     mapped_column,
 )
 
@@ -152,6 +152,15 @@ class _SQLiteBackend(StorageBackend):
                     json_object=record_info.json_object,
                 )
 
+    def remove_record(
+        self,
+        iri: str,
+    ) -> bool:
+        statement = delete(Thing).where(Thing.iri == iri)
+        with Session(self.engine) as session, session.begin():
+            result = session.execute(statement)
+            return result.rowcount == 1
+
     def _add_record_with_session(
         self,
         session: Session,
@@ -228,13 +237,24 @@ class _SQLiteBackend(StorageBackend):
 
     def get_all_records(
         self,
+        pattern: str | None = None,
     ) -> SQLResultList:
-        statement = select(Thing)
-        for attribute in self.order_by:
-            statement = statement.order_by(Thing.object[attribute]).options(
-                load_only(Thing.id)
+        if pattern is None:
+            statement = text(
+                'select distinct thing.iri, thing.class_name, thing.sort_key, thing.id '
+                'from thing '
+                "ORDER BY thing.sort_key"
             )
-        with Session(self.engine) as session, session.begin():
+        else:
+            statement = text(
+                'select distinct thing.iri, thing.class_name, thing.sort_key, thing.id '
+                'from thing, json_tree(thing.object) '
+                'where lower(json_tree.value) like lower(:pattern) '
+                "and json_tree.type = 'text' ORDER BY thing.sort_key"
+            )
+
+        with self.engine.connect() as connection:
+            rs = connection.execute(statement, parameters={'pattern': pattern})
             return SQLResultList(self.engine).add_info(
                 ResultListInfo(
                     iri=thing.iri,
@@ -242,7 +262,7 @@ class _SQLiteBackend(StorageBackend):
                     sort_key=thing.sort_key,
                     private=thing.id,
                 )
-                for thing in session.scalars(statement).all()
+                for thing in rs
             )
 
 

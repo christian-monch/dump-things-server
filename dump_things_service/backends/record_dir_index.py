@@ -154,11 +154,20 @@ class RecordDirIndex:
     def get_info_for_all_classes(
         self,
     ) -> Generator[IndexEntry]:
+        statement = select(IndexEntry)
         with Session(self.engine) as session, session.begin():
-            statement = select(IndexEntry)
             result = session.execute(statement)
             for row in result:
                 yield row[0]
+
+    def remove_iri_info(
+        self,
+        iri: str,
+    ) -> bool:
+        statement = delete(IndexEntry).where(IndexEntry.iri == iri)
+        with Session(self.engine) as session, session.begin():
+            result = session.execute(statement)
+            return result.rowcount == 1
 
     def rebuild_index(
         self,

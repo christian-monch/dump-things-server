@@ -12,8 +12,6 @@ from typing import (
 
 from starlette.status import HTTP_413_REQUEST_ENTITY_TOO_LARGE
 
-from dump_things_service.lazy_list import PriorityList, ModifierList
-
 # Perform the patching before importing any third-party libraries
 from dump_things_service.patches import enabled  # noqa: F401
 
@@ -24,10 +22,9 @@ from fastapi import (
     FastAPI,
     HTTPException,
     Request,
-    Response,
+    Response,  # noqa F401 -- used by generated code
 )
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.security import APIKeyHeader
 from fastapi_pagination import (
     Page,
     add_pagination,
@@ -52,33 +49,48 @@ from dump_things_service import (
     config_file_name,
 )
 from dump_things_service.__about__ import __version__
+from dump_things_service.api_key import api_key_header_scheme
 from dump_things_service.config import (
     ConfigError,
-    TokenPermission,
-    InstanceConfig,
-    get_default_token_name,
-    get_token_store,
-    join_default_token_permissions,
+    get_config,
     process_config,
 )
 from dump_things_service.converter import (
     FormatConverter,
     ConvertingList,
 )
+from dump_things_service.curated import (
+    create_curated_endpoints,
+    router as curated_router,
+    store_curated_record,  # noqa F401 -- used by generated code
+)
+from dump_things_service.incoming import (
+    create_incoming_endpoints,
+    router as incoming_router,
+    store_incoming_record,  # noqa F401 -- used by generated code
+)
 from dump_things_service.dynamic_endpoints import create_endpoints
 from dump_things_service.export import exporter_info
+from dump_things_service.lazy_list import (
+    PriorityList,
+    ModifierList,
+)
 from dump_things_service.model import (
     get_classes,
     get_subclasses,
 )
 from dump_things_service.utils import (
+    check_collection,
     combine_ttl,
+    get_default_token_name,
+    get_token_store,
+    join_default_token_permissions,
+    process_token,
     wrap_http_exception,
 )
 
 if TYPE_CHECKING:
     from dump_things_service.lazy_list import LazyList
-    from dump_things_service.store.model_store import ModelStore
 
 
 class TokenCapabilityRequest(BaseModel):
@@ -155,13 +167,16 @@ g_error = None
 config_path = (
     Path(arguments.config) if arguments.config else store_path / config_file_name
 )
+
+g_instance_config = None
 try:
-    g_instance_config = process_config(
+    process_config(
         store_path=store_path,
         config_file=config_path,
         order_by=['pid'],
         globals_dict=globals(),
     )
+    g_instance_config = get_config()
 except ConfigError as e:
     logger.error(
         'ERROR: invalid configuration `%s`: %s',
@@ -169,7 +184,6 @@ except ConfigError as e:
         e,
     )
     g_error = 'Server runs in error mode due to an invalid configuration. See server error-log for details.'
-    g_instance_config = None
 
 
 for switch in ('json', 'tree'):
@@ -187,7 +201,8 @@ for switch in ('json', 'tree'):
 disable_installed_extensions_check()
 
 app = FastAPI()
-
+app.include_router(curated_router)
+app.include_router(incoming_router)
 
 def handle_global_error():
     if g_error:
@@ -220,15 +235,6 @@ if g_error:
     sys.exit(1)
 
 
-api_key_header_scheme = APIKeyHeader(
-    name='X-DumpThings-Token',
-    # authentication is generally optional
-    auto_error=False,
-    scheme_name='submission',
-    description='Presenting a valid token enables record submission, and retrieval of records submitted with this token prior curation.',
-)
-
-
 def store_record(
     collection: str,
     data: BaseModel | str,
@@ -247,7 +253,7 @@ def store_record(
             status_code=HTTP_400_BAD_REQUEST, detail='Invalid ttl data provided.'
         )
 
-    _check_collection(g_instance_config, collection)
+    check_collection(g_instance_config, collection)
 
     token = (
         get_default_token_name(g_instance_config, collection)
@@ -310,18 +316,7 @@ def store_record(
     return JSONResponse([record for _, record in stored_records])
 
 
-def _check_collection(
-    instance_config: InstanceConfig,
-    collection: str,
-):
-    if collection not in instance_config.collections:
-        raise HTTPException(
-            status_code=HTTP_404_NOT_FOUND,
-            detail=f'No such collection: "{collection}".',
-        )
-
-
-@app.get('/server', tags=['server'])
+@app.get('/server', tags=['Server'])
 async def get_server() -> ServerResponse:
     return ServerResponse(
         version = __version__,
@@ -335,7 +330,7 @@ async def read_record_with_pid(
     format: Format = Format.json,  # noqa A002
     api_key: str = Depends(api_key_header_scheme),
 ):
-    _check_collection(g_instance_config, collection)
+    check_collection(g_instance_config, collection)
 
     final_permissions, token_store = await process_token(
         g_instance_config, api_key, collection
@@ -363,6 +358,42 @@ async def read_record_with_pid(
             ttl_record = converter.convert(json_object, class_name)
         return PlainTextResponse(ttl_record, media_type='text/turtle')
     return json_object
+
+
+@app.get('/{collection}/records/', tags=['Read records'])
+async def read_all_records(
+        collection: str,
+        matching: str | None = None,
+        format: Format = Format.json,  # noqa A002
+        api_key: str = Depends(api_key_header_scheme),
+):
+    return await _read_all_records(
+        collection=collection,
+        matching=matching,
+        format=format,
+        api_key=api_key,
+        # Set an upper limit for the number of non-paginated result records to
+        # keep processing time for individual requests short and avoid
+        # overloading the server.
+        bound=1000,
+    )
+
+
+@app.get('/{collection}/records/p/', tags=['Read records'])
+async def read_all_records(
+        collection: str,
+        matching: str | None = None,
+        format: Format = Format.json,  # noqa A002
+        api_key: str = Depends(api_key_header_scheme),
+) -> Page[dict | str]:
+    result_list = await _read_all_records(
+        collection=collection,
+        matching=matching,
+        format=format,
+        api_key=api_key,
+        bound=None,
+    )
+    return paginate(result_list)
 
 
 @app.get('/{collection}/records/{class_name}', tags=['Read records'])
@@ -405,6 +436,68 @@ async def read_records_of_type_paginated(
     return paginate(result_list)
 
 
+async def _read_all_records(
+        collection: str,
+        matching: str | None = None,
+        format: Format = Format.json,  # noqa A002
+        api_key: str = Depends(api_key_header_scheme),
+        bound: int | None = None,
+) -> LazyList:
+    def check_bounds(length: int, max_length: int):
+        if length > max_length:
+            raise HTTPException(
+                status_code=HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+                detail=f'Too many records found in collection "{collection}". '
+                       f'Please use pagination (/{collection}/records/p/).',
+            )
+
+    def convert_to_http_exception(e: BaseException):
+        raise HTTPException(
+            status_code=HTTP_400_BAD_REQUEST,
+            detail=f'Conversion error: {e}',
+        ) from e
+
+    check_collection(g_instance_config, collection)
+    final_permissions, token_store = await process_token(
+        g_instance_config, api_key, collection
+    )
+
+    result_list = PriorityList()
+    if final_permissions.incoming_read:
+        token_store_list = token_store.get_all_objects(matching=matching)
+        if bound:
+            check_bounds(len(token_store_list), bound)
+        result_list.add_list(token_store_list)
+
+    if final_permissions.curated_read:
+        curated_store_list = g_instance_config.curated_stores[
+            collection
+        ].get_all_objects(
+            matching=matching,
+        )
+        if bound:
+            check_bounds(len(curated_store_list), bound)
+        result_list.add_list(curated_store_list)
+
+    # Sort the result list.
+    result_list.sort(key=result_list.sort_key)
+
+    if format == Format.ttl:
+        result_list = ConvertingList(
+            result_list,
+            g_instance_config.schemas[collection],
+            input_format=Format.json,
+            output_format=format,
+            exception_handler=convert_to_http_exception,
+        )
+    else:
+        result_list = ModifierList(
+            result_list,
+            lambda record_info: record_info.json_object,
+        )
+    return result_list
+
+
 async def _read_records_of_type(
     collection: str,
     class_name: str,
@@ -428,7 +521,7 @@ async def _read_records_of_type(
             detail=f'Conversion error: {e}',
         ) from e
 
-    _check_collection(g_instance_config, collection)
+    check_collection(g_instance_config, collection)
     model = g_instance_config.model_info[collection][0]
     if class_name not in get_classes(model):
         raise HTTPException(
@@ -482,37 +575,32 @@ async def _read_records_of_type(
     return result_list
 
 
-async def process_token(
-    instance_config: InstanceConfig,
-    api_key: str,
+@app.get('/{collection}/delete', tags=['Delete records'])
+async def delete_record(
     collection: str,
-) -> tuple[TokenPermission, ModelStore]:
-    token = (
-        get_default_token_name(instance_config, collection)
-        if api_key is None
-        else api_key
+    pid: str,
+    api_key: str = Depends(api_key_header_scheme),
+):
+    check_collection(g_instance_config, collection)
+    final_permissions, token_store = await process_token(
+        g_instance_config, api_key, collection
     )
 
-    token_store, token, token_permissions, _ = get_token_store(
-        instance_config,
-        collection,
-        token,
-    )
-    final_permissions = join_default_token_permissions(
-        instance_config, token_permissions, collection
-    )
-    if not final_permissions.incoming_read and not final_permissions.curated_read:
+    if not final_permissions.incoming_write:
         raise HTTPException(
             status_code=HTTP_403_FORBIDDEN,
-            detail=f'No read access to curated or incoming data in collection "{collection}".',
+            detail=f'No write access to incoming data in collection "{collection}".',
         )
-    return final_permissions, token_store
+
+    return token_store.delete_object(pid)
 
 
 # If we have a valid configuration, create dynamic endpoints and rebuild the
 # app to include all dynamically created endpoints.
 if g_instance_config:
     create_endpoints(app, g_instance_config, globals())
+    create_curated_endpoints(app, globals())
+    create_incoming_endpoints(app, globals())
     app.openapi_schema = None
     app.setup()
 

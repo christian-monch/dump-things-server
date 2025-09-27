@@ -33,8 +33,8 @@ version: 1
 collections:
   collection_1:
     default_token: basic_access
-    curated: {curated}/collection_1
-    incoming: {incoming}/collection_1
+    curated: {curated}/in_token_1
+    incoming: {incoming}
     backend:
       type: record_dir+stl
       schema: {schema_path}
@@ -44,7 +44,7 @@ collections:
   collection_2:
     default_token: basic_access
     curated: {curated}/collection_2
-    incoming: {incoming}/collection_2
+    incoming: incoming_2
     backend:
       type: record_dir+stl
       schema: {schema_path}
@@ -52,6 +52,7 @@ collections:
   collection_3:
     default_token: basic_access
     curated: {curated}/collection_3
+    incoming: incoming_3
     backend:
       type: record_dir+stl
       schema: {schema_path}
@@ -59,6 +60,7 @@ collections:
   collection_4:
     default_token: basic_access
     curated: {curated}/collection_4
+    incoming: incoming_4
     backend:
       type: record_dir+stl
       schema: {schema_path}
@@ -66,6 +68,7 @@ collections:
   collection_5:
     default_token: basic_access
     curated: {curated}/collection_5
+    incoming: incoming_5
     backend:
       type: record_dir+stl
       schema: {schema_path}
@@ -73,6 +76,7 @@ collections:
   collection_6:
     default_token: basic_access
     curated: {curated}/collection_6
+    incoming: incoming_6
     backend:
       type: record_dir+stl
       schema: {schema_path}
@@ -80,6 +84,7 @@ collections:
   collection_7:
     default_token: basic_access
     curated: {curated}/collection_7
+    incoming: incoming_7
     backend:
       type: record_dir+stl
       schema: {schema_path}
@@ -162,60 +167,96 @@ tokens:
       collection_dlflatsocial-2:
         mode: WRITE_COLLECTION
         incoming_label: in_token_1
-  token_1_xxo:
+  token_1_xxooo:
     user_id: test_user_1_read_collection
     collections:
       collection_1:
         mode: READ_COLLECTION
         incoming_label: modes
-  token_1_xxx:
+  token_1_xxxoo:
     user_id: test_user_1_write_collection
     collections:
       collection_1:
         mode: WRITE_COLLECTION
         incoming_label: modes
-  token_1_oxo:
+  token_1_oxooo:
     user_id: test_user_1_read_submissions
     collections:
       collection_1:
         mode: READ_SUBMISSIONS
         incoming_label: modes
-  token_1_oxx:
+  token_1_oxxoo:
     user_id: test_user_1_write_submissions
     collections:
       collection_1:
         mode: WRITE_SUBMISSIONS
         incoming_label: modes
-  token_1_xox:
+  token_1_xoxoo:
     user_id: test_user_1_submit
     collections:
       collection_1:
         mode: SUBMIT
         incoming_label: modes
-  token_1_oox:
+  token_1_ooxoo:
     user_id: test_user_1_submit_only
     collections:
       collection_1:
         mode: SUBMIT_ONLY
         incoming_label: modes
-  token_1_oox:
+  token_1_ooxoo:
     user_id: test_user_1_submit_only
     collections:
       collection_1:
         mode: SUBMIT_ONLY
         incoming_label: modes
-  token_1_xoo:
+  token_1_xoooo:
     user_id: test_user_1_read_curated
     collections:
       collection_1:
         mode: READ_CURATED
         incoming_label: modes
-  token_1_ooo:
+  token_1_ooooo:
     user_id: test_user_1_nothing
     collections:
       collection_1:
         mode: NOTHING
         incoming_label: modes
+  token_1_xxxxx:
+    user_id: test_user_1_curated
+    collections:
+      collection_1:
+        mode: CURATOR
+        incoming_label: modes
+      collection_8:
+        mode: CURATOR
+        incoming_label: modes
+  token_admin:
+    user_id: test_admin
+    collections:
+      collection_1:
+        mode: CURATOR
+        incoming_label: admin_1
+      collection_2:
+        mode: CURATOR
+        incoming_label: admin_2
+      collection_3:
+        mode: CURATOR
+        incoming_label: admin_3
+      collection_4:
+        mode: CURATOR
+        incoming_label: admin_4
+      collection_5:
+        mode: CURATOR
+        incoming_label: admin_common
+      collection_6:
+        mode: CURATOR
+        incoming_label: admin_common
+      collection_7:
+        mode: CURATOR
+        incoming_label: admin_common
+      collection_8:
+        mode: CURATOR
+        incoming_label: admin_common
   token-2:
     user_id: test_user_2
     collections:
@@ -239,16 +280,17 @@ def dump_stores_simple(tmp_path_factory):
     default_entries = {
         f'collection_{i}': [('Person', pid, test_record)] for i in range(1, 9)
     }
-    default_entries['collection_1'].extend(
-        [
-            ('Person', pid_curated, test_record_curated),
-            (
-                'Person',
-                'abc:mode_test',
-                'pid: abc:mode_test\ngiven_name: mode_curated\nschema_type: abc:Person\n',
-            ),
-        ]
-    )
+    for collection_id in (1, 8):
+        default_entries[f'collection_{collection_id}'].extend(
+            [
+                ('Person', pid_curated, test_record_curated),
+                (
+                    'Person',
+                    'abc:mode_test',
+                    'pid: abc:mode_test\ngiven_name: mode_curated\nschema_type: abc:Person\n',
+                ),
+            ]
+        )
     default_entries['collection_dlflatsocial-1'] = [('Person', pid_trr, test_record_trr)]
     default_entries['collection_dlflatsocial-2'] = [('Person', pid_trr, test_record_trr)]
     create_store(

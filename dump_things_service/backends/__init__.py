@@ -132,6 +132,13 @@ class StorageBackend(metaclass=ABCMeta):
             )
 
     @abstractmethod
+    def remove_record(
+        self,
+        iri: str,
+    ) -> bool:
+        raise NotImplementedError
+
+    @abstractmethod
     def get_record_by_iri(
         self,
         iri: str,
@@ -142,13 +149,14 @@ class StorageBackend(metaclass=ABCMeta):
     def get_records_of_classes(
         self,
         class_names: Iterable[str],
-        matching: str | None = None,
+        pattern: str | None = None,
     ) -> BackendResultList:
         raise NotImplementedError
 
     @abstractmethod
     def get_all_records(
         self,
+        pattern: str | None = None,
     ) -> BackendResultList:
         raise NotImplementedError
 

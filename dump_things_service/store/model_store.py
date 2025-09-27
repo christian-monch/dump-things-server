@@ -58,12 +58,18 @@ class _ModelStore:
             for obj in self.extract_inlined(obj)
         ]
 
+    def pid_to_iri(
+        self,
+        pid: str,
+    ):
+        return resolve_curie(self.model, pid)
+
     def _store_flat_object(
         self,
         obj: BaseModel,
         submitter: str,
     ) -> dict:
-        iri = resolve_curie(self.model, obj.pid)
+        iri = self.pid_to_iri(obj.pid)
         class_name = obj.__class__.__name__
 
         json_object = cleaned_json(
@@ -138,7 +144,7 @@ class _ModelStore:
         self,
         pid: str,
     ) -> tuple[str, dict] | tuple[None, None]:
-        return self.get_object_by_iri(resolve_curie(self.model, pid))
+        return self.get_object_by_iri(self.pid_to_iri(pid))
 
     def get_object_by_iri(
         self,
@@ -160,6 +166,10 @@ class _ModelStore:
         Get all objects of a specific class.
 
         :param class_name: The name of the class to filter by.
+        :param matching: Return only records with a value that matches `matching`.
+        :param include_subclasses: If `True`, return records of class `class_name`
+            and its subclasses, if `False` return only records of class
+            `class_name`.
         :return: A lazy list of objects of the specified class and its subclasses.
         """
         if include_subclasses:
@@ -167,6 +177,24 @@ class _ModelStore:
         else:
             class_names = [class_name]
         return self.backend.get_records_of_classes(class_names, matching)
+
+    def get_all_objects(
+        self,
+        matching: str | None,
+    ) -> LazyList[RecordInfo]:
+        """
+        Get all objects of a specific class.
+
+        :param matching: Return only records with a value that matches `matching`.
+        :return: A lazy list of all objects in the store.
+        """
+        return self.backend.get_all_records(matching)
+
+    def delete_object(
+        self,
+        pid: str,
+    ) -> bool:
+        return self.backend.remove_record(self.pid_to_iri(pid))
 
 
 _existing_model_stores = {}

@@ -162,7 +162,7 @@ class _RecordDirStore(StorageBackend):
     def get_records_of_classes(
         self,
         class_names: list[str],
-        matching: str | None = None,
+        pattern: str | None = None,
     ) -> RecordDirResultList:
         return RecordDirResultList().add_info(
             sorted(
@@ -182,6 +182,7 @@ class _RecordDirStore(StorageBackend):
 
     def get_all_records(
         self,
+        pattern: str | None = None,
     ) -> RecordDirResultList:
         return RecordDirResultList().add_info(
             sorted(
@@ -197,6 +198,21 @@ class _RecordDirStore(StorageBackend):
                 key=lambda result_list_info: result_list_info.sort_key,
             )
         )
+
+    def remove_record(
+        self,
+        iri: str,
+    ) -> bool:
+        index_entry = self.index.get_info_for_iri(iri)
+        if index_entry is None:
+            return False
+
+        if self.index.remove_iri_info(iri) is False:
+            return False
+
+        _, path, _ = index_entry
+        Path(path).unlink()
+        return True
 
 
 # Ensure that there is only one store per root directory.

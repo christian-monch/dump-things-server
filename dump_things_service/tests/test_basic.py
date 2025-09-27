@@ -18,7 +18,11 @@ extra_record = {
     'pid': 'abc:aaaa',
     'given_name': 'DavidÖÄÜ',
 }
-
+delete_record = {
+    'schema_type': 'abc:Person',
+    'pid': 'abc:delete-me',
+    'given_name': 'Detlef',
+}
 unicode_name = 'AlienÖÄÜ-ß👽'
 unicode_bytes = unicode_name.encode('utf-8')
 unicode_record = {
@@ -41,6 +45,57 @@ def test_search_by_pid(fastapi_client_simple):
             'pid': pid,
             'given_name': given_name,
         }
+
+
+def test_get_all(fastapi_client_simple):
+    test_client, _ = fastapi_client_simple
+    for i in range(1, 9):
+        response = test_client.get(
+            f'/collection_{i}/records/',
+            headers={'x-dumpthings-token': 'basic_access'},
+        )
+        assert response.status_code == HTTP_200_OK
+        assert len(response.json()) in (1, 3)
+    for i in range(1, 9):
+        response = test_client.get(
+            f'/collection_{i}/records/p/',
+            headers={'x-dumpthings-token': 'basic_access'},
+        )
+        assert response.status_code == HTTP_200_OK
+        assert response.json()['total'] in (1, 3)
+
+
+def test_delete(fastapi_client_simple):
+    test_client, _ = fastapi_client_simple
+
+    response = test_client.post(
+        '/collection_1/record/Person',
+        headers={'x-dumpthings-token': 'token-1'},
+        json=delete_record,
+    )
+    assert response.status_code == HTTP_200_OK
+
+    # Check that the record exists
+    response = test_client.get(
+        '/collection_1/record?pid=abc:delete-me',
+        headers={'x-dumpthings-token': 'token-1'},
+    )
+    assert response.status_code == HTTP_200_OK
+    assert response.json()['pid'] == 'abc:delete-me'
+
+    response = test_client.get(
+        '/collection_1/delete?pid=abc:delete-me',
+        headers={'x-dumpthings-token': 'token-1'},
+    )
+    assert response.status_code == HTTP_200_OK
+    assert response.json() is True
+
+    response = test_client.get(
+        '/collection_1/record?pid=abc:delete-me',
+        headers={'x-dumpthings-token': 'token-1'},
+    )
+    assert response.status_code == HTTP_200_OK
+    assert response.json() is None
 
 
 def test_hashed_token(fastapi_client_simple):
