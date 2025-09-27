@@ -57,7 +57,7 @@ def test_read_curated_records_by_pid(fastapi_client_simple):
     test_client, _ = fastapi_client_simple
 
     response = test_client.get(
-        f'/no_such_collection/curated/records/',
+        '/no_such_collection/curated/records/',
         headers={'x-dumpthings-token': 'token_1_xxxxx'},
     )
     assert response.status_code == HTTP_404_NOT_FOUND
@@ -67,7 +67,7 @@ def test_unknown_collection(fastapi_client_simple):
     test_client, _ = fastapi_client_simple
 
     response = test_client.get(
-        f'/no_such_collection/curated/records/',
+        '/no_such_collection/curated/records/',
         headers={'x-dumpthings-token': 'token_1_xxxxx'},
     )
     assert response.status_code == HTTP_404_NOT_FOUND

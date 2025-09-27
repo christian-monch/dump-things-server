@@ -121,7 +121,7 @@ def test_read_incoming_records_by_pid(fastapi_client_simple):
     test_client, _ = fastapi_client_simple
 
     response = test_client.get(
-        f'/no_such_collection/curated/records/',
+        '/no_such_collection/curated/records/',
         headers={'x-dumpthings-token': 'token_1_xxxxx'},
     )
     assert response.status_code == HTTP_404_NOT_FOUND
@@ -131,7 +131,7 @@ def test_incoming_unknown_collection(fastapi_client_simple):
     test_client, _ = fastapi_client_simple
 
     response = test_client.get(
-        f'/no_such_collection/incoming/no_such_label/records/',
+        '/no_such_collection/incoming/no_such_label/records/',
         headers={'x-dumpthings-token': 'token_admin'},
     )
     assert response.status_code == HTTP_404_NOT_FOUND
@@ -141,7 +141,7 @@ def test_incoming_unknown_label(fastapi_client_simple):
     test_client, _ = fastapi_client_simple
 
     response = test_client.get(
-        f'/collection_1/incoming/no_such_label/records/',
+        '/collection_1/incoming/no_such_label/records/',
         headers={'x-dumpthings-token': 'token_admin'},
     )
     assert response.status_code == HTTP_404_NOT_FOUND

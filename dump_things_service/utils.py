@@ -5,8 +5,8 @@ import sys
 from contextlib import contextmanager
 from functools import reduce
 from typing import (
-    Callable,
     TYPE_CHECKING,
+    Callable,
 )
 
 import fsspec
@@ -28,8 +28,8 @@ if TYPE_CHECKING:
     from pathlib import Path
 
     from dump_things_service import (
-        JSON,
         HTTP_403_FORBIDDEN,
+        JSON,
     )
     from dump_things_service.backends.record_dir import RecordDirStore
     from dump_things_service.backends.sqlite import SQLiteBackend
@@ -304,12 +304,12 @@ def create_token_store(
         collection_name: str,
         store_dir: Path,
 ) -> ModelStore:
+    from dump_things_service.backends.schema_type_layer import SchemaTypeLayer
     from dump_things_service.config import (
         ConfigError,
         get_backend_and_extension,
     )
     from dump_things_service.store.model_store import ModelStore
-    from dump_things_service.backends.schema_type_layer import SchemaTypeLayer
 
     schema_uri = instance_config.schemas[collection_name]
 
@@ -357,11 +357,6 @@ def create_record_dir_token_store(
         suffix: str,
 ) -> RecordDirStore:
     from dump_things_service.backends.record_dir import RecordDirStore
-    from dump_things_service.backends.sqlite import (
-        SQLiteBackend,
-        record_file_name as sqlite_record_file_name,
-    )
-    from dump_things_service.backends.schema_type_layer import SchemaTypeLayer
 
     store_backend = RecordDirStore(
         root=store_dir,
@@ -377,10 +372,11 @@ def create_sqlite_token_store(
         store_dir: Path,
         order_by: list[str],
 )  -> SQLiteBackend:
+    from dump_things_service.backends.sqlite import SQLiteBackend
     from dump_things_service.backends.sqlite import (
-        SQLiteBackend,
         record_file_name as sqlite_record_file_name,
     )
+
     return SQLiteBackend(
         db_path=store_dir / sqlite_record_file_name,
         order_by=order_by,

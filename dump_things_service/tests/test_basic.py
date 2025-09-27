@@ -1,5 +1,4 @@
 import pytest  # F401
-from starlette.status import HTTP_404_NOT_FOUND
 
 from .. import (
     HTTP_200_OK,
