@@ -485,7 +485,7 @@ dump-things-service /data-storage/store --host 127.0.0.1 --port 8000
 
 Most endpoints require a *collection*. These correspond to the names of the "data record collection"-directories (for example `myschema-v3-fmta` in [Dump Things Service](https://concepts.datalad.org/dump-things/)) in the stores.
 
-The service provides the following endpoints:
+The service provides the following user endpoints (in addition to user-endpoints there exist endpoints for curators, to view them check the `/docs`-path in an installed service):
 
 - `POST /<collection>/record/<class>`: an object of type `<class>` (defined by the schema associated with `<collection>`) can be posted to this endpoint.
  The object-content must be JSON-encoded.

@@ -1,4 +1,4 @@
-# x.x.x (2025-09-xx)
+# 3.5.0 (2025-09-27)
 
 ## New features
 
@@ -11,8 +11,35 @@
   - `GET /<collection>/delete?pid=<pid>`
   which deletes the record with pid `<pid>`
 
-- Add `CURATOR`-token mode. This mode allows access to individual incoming
-  areas.
+- Add `CURATOR`-token mode. This mode allows:
+  - read/write access to the curated part of a collection 
+  - read/write access to individual incoming areas of a collection
+  if the token has access to the respective collection.
+  The access is low-level, i.e., there is no annotation and no inlined
+  extraction.
+
+- Add endpoints for curated area access.
+  See https://github.com/christian-monch/dump-things-server/issues/118 for a
+  description:
+  - `POST /<collection>/curated/record/<class>`
+  - `GET /<collection>/curated/records/<class>`
+  - `GET /<collection>/curated/records/p/<class>`
+  - `GET /<collection>/curated/records/`
+  - `GET /<collection>/curated/records/p/`
+  - `GET /<collection>/curated/record?pid=<pid>`
+  - `GET /<collection>/curated/delete?pid=<pid>`
+
+- Add endpoints to access incoming areas of a collection. See
+  https://github.com/christian-monch/dump-things-server/issues/118 for a
+  description:
+  - `POST /<collection>/incoming/<label>/record/<class>`
+  - `GET /<collection>/incoming/`
+  - `GET /<collection>/incoming/<label>/records/<class>`
+  - `GET /<collection>/incoming/<label>/records/p/<class>`
+  - `GET /<collection>/incoming/<label>/records/`
+  - `GET /<collection>/incoming/<label>/records/p/`
+  - `GET /<collection>/incoming/<label>/record?pid=<pid>`
+  - `GET /<collection>/incoming/<label>/delete?pid=<pid>`
 
 
 # 3.4.0 (2025-09-25)
