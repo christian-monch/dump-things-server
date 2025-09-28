@@ -136,7 +136,7 @@ class GlobalConfig(BaseModel):
 class InstanceConfig:
     store_path: Path
     collections: dict = dataclasses.field(default_factory=dict)
-    stores: dict = dataclasses.field(default_factory=dict)
+    all_stores: dict = dataclasses.field(default_factory=dict)
     curated_stores: dict = dataclasses.field(default_factory=dict)
     incoming: dict = dataclasses.field(default_factory=dict)
     zones: dict = dataclasses.field(default_factory=dict)
