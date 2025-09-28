@@ -1,3 +1,10 @@
+# 3.6.1 (2025-09-28)
+
+## Bugfixes
+
+- Fix a missing definition error that lead to server crahes.
+
+
 # 3.6.0 (2025-09-28)
 
 ## New features
