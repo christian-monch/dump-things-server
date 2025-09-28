@@ -12,6 +12,7 @@ from typing import (
 import fsspec
 from fastapi import HTTPException
 from rdflib import Graph
+from starlette.status import HTTP_500_INTERNAL_SERVER_ERROR
 
 from dump_things_service import (
     HTTP_400_BAD_REQUEST,
@@ -140,14 +141,18 @@ def check_label(
     collection: str,
     label: str,
 ):
-    if label not in get_labels(instance_config, collection):
+    # Get the on-disk labels for the collection
+    if (
+            label not in get_config_labels(instance_config, collection)
+            and label not in get_on_disk_labels(instance_config, collection)
+    ):
         raise HTTPException(
             status_code=HTTP_404_NOT_FOUND,
             detail=f'No incoming label: "{label}" in collection: "{collection}".',
         )
 
 
-def get_labels(
+def get_config_labels(
     instance_config: InstanceConfig,
     collection: str,
 ) -> set[str]:
@@ -156,6 +161,23 @@ def get_labels(
         token['incoming_label']
         for token in instance_config.tokens[collection].values()
         if token['incoming_label'] != ''
+    }
+
+
+def get_on_disk_labels(
+    instance_config: InstanceConfig,
+    collection: str,
+) -> set[str]:
+    check_collection(instance_config, collection)
+
+    incoming_path = instance_config.collections[collection].incoming
+    if not incoming_path or not incoming_path.exists():
+        return set()
+
+    return {
+        path.name
+        for path in incoming_path.iterdir()
+        if path.is_dir()
     }
 
 
@@ -282,8 +304,6 @@ def get_token_store(
         )
 
     store_dir = instance_config.store_path / incoming / auth_info.incoming_label
-    store_dir.mkdir(parents=True, exist_ok=True)
-
     token_store = create_token_store(
         instance_config=instance_config,
         collection_name=collection_name,
@@ -310,6 +330,23 @@ def create_token_store(
         get_backend_and_extension,
     )
     from dump_things_service.store.model_store import ModelStore
+
+    # Check if the store was already created and if it was created for the
+    # same collection.
+    if store_dir in instance_config.all_stores:
+        existing_collection_name, existing_model_store = instance_config.all_stores[store_dir]
+        if existing_collection_name != collection_name:
+            msg = (
+                f'collections "{existing_collection_name}" and {collection_name}"'
+                f'map onto the same storage directory: ".../{store_dir.name}"'
+            )
+            raise HTTPException(
+                status_code=HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=msg,
+            )
+        return existing_model_store
+
+    store_dir.mkdir(parents=True, exist_ok=True)
 
     schema_uri = instance_config.schemas[collection_name]
 
@@ -346,7 +383,10 @@ def create_token_store(
     if extension == 'stl':
         token_store = SchemaTypeLayer(backend=token_store, schema=schema_uri)
 
-    return ModelStore(backend=token_store, schema=schema_uri)
+    model_store = ModelStore(backend=token_store, schema=schema_uri)
+    instance_config.all_stores[store_dir] = (collection_name, model_store)
+
+    return model_store
 
 
 def create_record_dir_token_store(

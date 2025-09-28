@@ -33,7 +33,8 @@ from dump_things_service.utils import (
     check_label,
     cleaned_json,
     create_token_store,
-    get_labels,
+    get_config_labels,
+    get_on_disk_labels,
     resolve_hashed_token,
 )
 
@@ -89,10 +90,12 @@ def check_bounds(
 async def incoming_read_labels(
     collection: str,
     api_key: str | None = Depends(api_key_header_scheme),
-):
+) -> list[str]:
     # Authorize api_key
     await authorize_zones(collection, api_key)
-    return list(get_labels(get_config(), collection))
+    configured_labels = get_config_labels(get_config(), collection)
+    on_disk_labels = get_on_disk_labels(get_config(), collection)
+    return list(configured_labels.union(on_disk_labels))
 
 
 @router.get(
@@ -274,42 +277,33 @@ async def _get_store_and_backend(
     instance_config = get_config()
     check_label(instance_config, collection, label)
 
-    # Find a store that writes to zone `label` of collection `collection`.
+    # Create a store (or get an already created store) for collection
+    # `collection` and storage dir `store_dir`.
+    store_dir = (
+            instance_config.store_path
+            / instance_config.incoming[collection]
+            / label
+    )
+    # `create_token_store` will cache and return already created stores with
+    # the same collection and storage dir.
+    model_store = create_token_store(
+        instance_config=instance_config,
+        collection_name=collection,
+        store_dir=store_dir,
+    )
+
+    # For consistency, associate the store with all matching tokens from the
+    # configuration file.
     matching_tokens = [
         token
         for token, token_info in instance_config.tokens[collection].items()
         if token_info['incoming_label'] == label
     ]
-    matching_model_stores = []
-    if matching_tokens:
-        matching_model_stores = [
-            store_info[0]
-            for token, store_info in instance_config.token_stores[collection].items()
-            if token in matching_tokens
-        ]
-
-    if matching_model_stores:
-        model_store = matching_model_stores[0]
-    else:
-        # Create a store. That only makes sense if there is a token that has
-        # the incoming label `label` in collection `collection`.
-        if not matching_tokens:
-            raise HTTPException(
-                status_code=HTTP_404_NOT_FOUND,
-                detail=f'no incoming label "{label}" for collection "{collection}"',
-            )
-        matching_token = matching_tokens[0]
-        store_dir = (
-            instance_config.store_path
-            / instance_config.incoming[collection]
-            / label
-        )
-        store_dir.mkdir(parents=True, exist_ok=True)
-        model_store = create_token_store(
-            instance_config=instance_config,
-            collection_name=collection,
-            store_dir=store_dir,
-        )
+    for matching_token in matching_tokens:
+        # Associate the store with all matching tokens in the configuration.
+        # Note: there are stores that are not associated with a token in
+        # the configuration. These are stores that belong to a token that
+        # are authenticated with an external authentication source.
         token_info = instance_config.tokens[collection][matching_token]
         instance_config.token_stores[collection][matching_token] = (
             model_store,
