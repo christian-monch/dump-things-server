@@ -17,6 +17,7 @@ from starlette.status import HTTP_500_INTERNAL_SERVER_ERROR
 from dump_things_service import (
     HTTP_400_BAD_REQUEST,
     HTTP_401_UNAUTHORIZED,
+    HTTP_403_FORBIDDEN,
     HTTP_404_NOT_FOUND,
 )
 from dump_things_service.auth import AuthenticationError
@@ -28,10 +29,7 @@ from dump_things_service.token import (
 if TYPE_CHECKING:
     from pathlib import Path
 
-    from dump_things_service import (
-        HTTP_403_FORBIDDEN,
-        JSON,
-    )
+    from dump_things_service import JSON
     from dump_things_service.backends.record_dir import RecordDirStore
     from dump_things_service.backends.sqlite import SQLiteBackend
     from dump_things_service.config import InstanceConfig
