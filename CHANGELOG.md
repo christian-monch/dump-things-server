@@ -1,3 +1,12 @@
+# 3.6.0 (2025-09-28)
+
+## New features
+
+- Support incoming labels from external authentication sources. This
+  will, for example, give access to forgejo-authenticated incoming
+  areas in the `/<collection>/incoming/...`-endpoints.
+
+
 # 3.5.0 (2025-09-27)
 
 ## New features
