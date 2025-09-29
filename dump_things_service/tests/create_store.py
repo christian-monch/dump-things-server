@@ -39,7 +39,7 @@ given_name: {given_name}
 schema_type: abc:Person
 """
 
-pid_trr = 'flatsocial:amadeus'
+pid_trr = 'dlflatsocial:amadeus'
 given_name_trr = 'AmadeusÜÄß'
 test_record_trr = f"""pid: {pid_trr}
 given_name: {given_name_trr}

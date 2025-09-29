@@ -1,3 +1,11 @@
+# x.x.x (2025-xx-xx)
+
+## New features
+
+- Report an error if a `pid` in CURIE format, i.e., with a prefix, cannot be
+  resolved because the prefix is unknown.
+
+
 # 3.6.1 (2025-09-28)
 
 ## Bugfixes

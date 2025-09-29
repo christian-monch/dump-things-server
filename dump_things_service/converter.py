@@ -25,7 +25,6 @@ from dump_things_service.model import (
     get_model_for_schema,
     get_schema_model_for_schema,
 )
-from dump_things_service.resolve_curie import resolve_curie
 from dump_things_service.utils import cleaned_json
 
 if TYPE_CHECKING:
@@ -83,7 +82,7 @@ def get_conversion_objects(schema: str):
         }
         # Add types to support explicit type clauses in TTL
         for type_definition in schema_view.all_types().values():
-            uri = resolve_curie(model, type_definition.uri)
+            uri = schema_view.expand_curie(type_definition.uri)
             add_type_validator(
                 uri_ref=uri,
                 regex=type_definition.pattern,

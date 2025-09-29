@@ -26,6 +26,7 @@ from dump_things_service.api_key import api_key_header_scheme
 from dump_things_service.backends import StorageBackend
 from dump_things_service.backends.schema_type_layer import _SchemaTypeLayer
 from dump_things_service.config import get_config
+from dump_things_service.exceptions import CurieResolutionError
 from dump_things_service.lazy_list import ModifierList
 from dump_things_service.store.model_store import ModelStore
 from dump_things_service.utils import (
@@ -35,7 +36,7 @@ from dump_things_service.utils import (
     create_token_store,
     get_config_labels,
     get_on_disk_labels,
-    resolve_hashed_token,
+    resolve_hashed_token, wrap_http_exception,
 )
 
 if TYPE_CHECKING:
@@ -428,8 +429,9 @@ async def store_incoming_record(
         remove_keys=('@type',),
     )
 
-    backend.add_record(
-        model_store.pid_to_iri(pid),
-        class_name,
-        json_object,
-    )
+    with wrap_http_exception(CurieResolutionError):
+        backend.add_record(
+            model_store.pid_to_iri(pid),
+            class_name,
+            json_object,
+        )

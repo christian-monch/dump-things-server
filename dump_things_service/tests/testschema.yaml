@@ -2,9 +2,13 @@ id: http://example.org/person-schema
 name: person_schema
 prefixes:
   abc: http://example.org/person-schema/abc/
+  dlflatsocial: https://concepts.datalad.org/s/flat-social/unreleased/
   linkml: https://w3id.org/linkml/
   oxo: http://purl.obolibrary.org/obo/
+  shex: http://www.w3.org/ns/shex#
+  schema: http://schema.org/
   trr379: http://example.org/person-schema/trr379/
+  xsd: http://www.w3.org/2001/XMLSchema#
   xyz: http://example.org/person-schema/xyz/
 imports:
   - linkml:types
