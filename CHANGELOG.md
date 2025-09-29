@@ -10,7 +10,7 @@
 
 ## Bugfixes
 
-- Fix a missing definition error that lead to server crahes.
+- Fix a missing definition error that lead to server crashes.
 
 
 # 3.6.0 (2025-09-28)
