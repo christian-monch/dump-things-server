@@ -1,8 +1,16 @@
+# x.x.x (2025-xx-xx)
+
+## New features
+
+- Report an error if a `pid` in CURIE format, i.e., with a prefix, cannot be
+  resolved because the prefix is unknown.
+
+
 # 3.6.1 (2025-09-28)
 
 ## Bugfixes
 
-- Fix a missing definition error that lead to server crahes.
+- Fix a missing definition error that lead to server crashes.
 
 
 # 3.6.0 (2025-09-28)

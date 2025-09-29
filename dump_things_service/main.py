@@ -64,6 +64,7 @@ from dump_things_service.curated import (
     router as curated_router,
     store_curated_record,  # noqa F401 -- used by generated code
 )
+from dump_things_service.exceptions import CurieResolutionError
 from dump_things_service.incoming import (
     create_incoming_endpoints,
     router as incoming_router,
@@ -292,7 +293,8 @@ def store_record(
     else:
         record = data
 
-    stored_records = store.store_object(obj=record, submitter=user_id)
+    with wrap_http_exception(CurieResolutionError):
+        stored_records = store.store_object(obj=record, submitter=user_id)
 
     if input_format == Format.ttl:
         format_converter = FormatConverter(

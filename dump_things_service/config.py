@@ -29,6 +29,7 @@ from dump_things_service.backends.sqlite import (
     record_file_name as sqlite_record_file_name,
 )
 from dump_things_service.converter import get_conversion_objects
+from dump_things_service.exceptions import ConfigError
 from dump_things_service.model import get_model_for_schema
 from dump_things_service.store.model_store import ModelStore
 from dump_things_service.token import (
@@ -48,10 +49,6 @@ ignored_files = {'.', '..', config_file_name}
 
 
 _global_config_instance = None
-
-
-class ConfigError(Exception):
-    pass
 
 
 class MappingMethod(enum.Enum):
