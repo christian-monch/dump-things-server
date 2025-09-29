@@ -172,8 +172,8 @@ async def read_curated_record_with_pid(
     )
 
 
-@router.get(
-    '/{collection}/curated/delete',
+@router.delete(
+    '/{collection}/curated/record',
     tags=['Curator delete records'],
 )
 async def delete_curated_record_with_pid(

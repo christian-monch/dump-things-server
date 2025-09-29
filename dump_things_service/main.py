@@ -123,26 +123,9 @@ parser.add_argument(
     help="Set the ASGI 'root_path' for applications submounted below a given URL path.",
 )
 parser.add_argument(
-    '--error-mode',
-    action='store_true',
-    help="Don't exit with non-zero status on errors that prevent the service from proper operation, instead return the error on every request.",
-)
-parser.add_argument(
     '--log-level',
     default='WARNING',
     help="Set the log level for the service, allowed values are 'ERROR', 'WARNING', 'INFO', 'DEBUG'. Default is 'warning'.",
-)
-parser.add_argument(
-    '--export-json',
-    default='',
-    metavar='FILE_NAME',
-    help="Export the store to the file FILE_NAME and exit the process. If FILE_NAME is `-', the data is written to stdout.",
-)
-parser.add_argument(
-    '--export-tree',
-    default='',
-    metavar='DIRECTORY_NAME',
-    help='Export the store to a dumpthings-conformant tree at DIRECTORY_NAME and exit the process. If DIRECTORY_NAME does not exist, the service will try to create it.',
 )
 parser.add_argument(
     'store',
@@ -161,42 +144,22 @@ if not isinstance(numeric_level, int):
 else:
     logger.setLevel(level=numeric_level)
 
+
 store_path = Path(arguments.store)
 
-g_error = None
 
 config_path = (
     Path(arguments.config) if arguments.config else store_path / config_file_name
 )
 
-g_instance_config = None
-try:
-    process_config(
-        store_path=store_path,
-        config_file=config_path,
-        order_by=['pid'],
-        globals_dict=globals(),
-    )
-    g_instance_config = get_config()
-except ConfigError as e:
-    logger.error(
-        'ERROR: invalid configuration `%s`: %s',
-        config_path,
-        e,
-    )
-    g_error = 'Server runs in error mode due to an invalid configuration. See server error-log for details.'
 
-
-for switch in ('json', 'tree'):
-    argument = getattr(arguments, 'export_' + switch)
-    if argument:
-        if g_error:
-            sys.stderr.write(
-                'ERROR: Configuration errors detected, cannot export store.'
-            )
-            sys.exit(1)
-        exporter_info[switch](g_instance_config, argument)
-        sys.exit(0)
+process_config(
+    store_path=store_path,
+    config_file=config_path,
+    order_by=['pid'],
+    globals_dict=globals(),
+)
+g_instance_config = get_config()
 
 
 disable_installed_extensions_check()
@@ -204,36 +167,6 @@ disable_installed_extensions_check()
 app = FastAPI()
 app.include_router(curated_router)
 app.include_router(incoming_router)
-
-def handle_global_error():
-    if g_error:
-        raise HTTPException(status_code=HTTP_400_BAD_REQUEST, detail=g_error)
-
-
-# If a global error exists, it does not make sense to activate the defined
-# endpoints because we don't have a working configuration. Instead, we signal
-# the error to any request that is made to the server.
-if g_error:
-    if __name__ == '__main__' and arguments.error_mode:
-        logger.warning(
-            'Server runs in error mode, all endpoints will return error information.'
-        )
-
-        @app.post('/{full_path:path}')
-        def post_global_error(request: Request, full_path: str):  # noqa: ARG001
-            handle_global_error()
-
-        @app.get('/{full_path:path}')
-        def get_global_error(request: Request, full_path: str):  # noqa: ARG001
-            handle_global_error()
-
-        uvicorn.run(
-            app,
-            host=arguments.host,
-            port=arguments.port,
-            root_path=arguments.root_path,
-        )
-    sys.exit(1)
 
 
 def store_record(
@@ -577,7 +510,7 @@ async def _read_records_of_type(
     return result_list
 
 
-@app.get('/{collection}/delete', tags=['Delete records'])
+@app.delete('/{collection}/record', tags=['Delete records'])
 async def delete_record(
     collection: str,
     pid: str,

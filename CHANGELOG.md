@@ -1,9 +1,17 @@
-# x.x.x (2025-xx-xx)
+# 4.0.0 (2025-09-29)
 
-## New features
+## Breaking changes
 
 - Report an error if a `pid` in CURIE format, i.e., with a prefix, cannot be
-  resolved because the prefix is unknown.
+  resolved because the prefix is unknown. Depending on the schema, this might
+  break storing of records.
+
+- Remove the error mode. This is not used and no longer needed.
+
+- Remove export functionality. Export can be implemented via the curator API.
+
+- Use DELETE to remove records
+  ([issue #138](https://github.com/christian-monch/dump-things-server/issues/138)).
 
 
 # 3.6.1 (2025-09-28)
