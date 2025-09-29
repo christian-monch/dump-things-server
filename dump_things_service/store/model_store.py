@@ -180,7 +180,7 @@ class _ModelStore:
 
     def get_all_objects(
         self,
-        matching: str | None,
+        matching: str | None = None,
     ) -> LazyList[RecordInfo]:
         """
         Get all objects of a specific class.
