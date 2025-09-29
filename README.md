@@ -656,6 +656,45 @@ If any backend is a `record_dir+stl` backend, a schema has to be supplied via th
   Note: when records are copied from a `record-dir` store, the index is used to locate the records in the source store. If the index is not up-to-date, the copied records might not be complete. In this case, it is recommended to run `dump-things-rebuild-index` on the source store before copying.
 
 
+### If things go wrong
+
+#### Delete a record manually
+
+If a schema was changed, for example a prefix-definition changed, the service might not be able anymore to delete a record.
+In this case the record can be deleted manually if you have access to the storage root.
+
+To delete the record, open a shell and navigate (`cd`) to the directory where the store is located.
+The location can be determined from the configuration file.
+Depending on the storage backend, the next steps are different.
+
+##### `record-dir` backend
+
+Delete the record from disk by removing it, e.g. `rm -f <path-to-record>`
+
+Run the command `dump-things-rebuild-index`
+
+##### `sqlite` backend
+
+Run the command:
+
+```bash
+> sqlite3 .sqlite-records.db
+```
+
+If you know the pid of the record you want to delete, enter the following on the prompt to delete the record with pid `some-pid`:
+
+```sql
+> delete from thing where json_extract(thing.object, '$.pid') = 'some-pid';
+```
+
+If you know the IRI of the record you want to delete, enter the following on the prompt to delete the record with IRI `some-iri`:
+
+```sql
+> delete from thing where iri = 'some-iri';
+```
+
+
+
 ### Requirements
 
 The service requires sqlite3.
