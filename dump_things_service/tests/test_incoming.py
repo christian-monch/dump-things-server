@@ -164,8 +164,8 @@ def test_incoming_delete(fastapi_client_simple):
     assert response.status_code == HTTP_200_OK
     assert response.json()['json_object']['pid'] == 'abc:delete-me'
 
-    response = test_client.get(
-        '/collection_7/incoming/admin_common/delete?pid=abc:delete-me',
+    response = test_client.delete(
+        '/collection_7/incoming/admin_common/record?pid=abc:delete-me',
         headers={'x-dumpthings-token': 'token_admin'},
     )
     assert response.status_code == HTTP_200_OK

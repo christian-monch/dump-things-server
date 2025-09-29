@@ -577,7 +577,7 @@ async def _read_records_of_type(
     return result_list
 
 
-@app.get('/{collection}/delete', tags=['Delete records'])
+@app.delete('/{collection}/record', tags=['Delete records'])
 async def delete_record(
     collection: str,
     pid: str,

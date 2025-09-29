@@ -463,9 +463,6 @@ The service supports the following command line parameters:
 - `--export-tree`: export all data in `<storage root>` as file tree at the given path. The tree confirms to the [dumpthings-specification](https://concepts.datalad.org/dump-things/).
 
 
-- `--error-mode`: if set, the service will run even if an error prevents it from starting properly. It will report that it executes in error mode on every request. This can be useful if the service is deployed automatically and no other monitoring method is available.
-
-
 - `--root-path`: set the ASGI `root_path` for applications sub-mounted below a given URL path.
 
 

@@ -204,8 +204,8 @@ async def incoming_read_record_with_pid(
     )
 
 
-@router.get(
-    '/{collection}/incoming/{label}/delete',
+@router.delete(
+    '/{collection}/incoming/{label}/record',
     tags=['Incoming delete records'],
 )
 async def incoming_delete_record_with_pid(
