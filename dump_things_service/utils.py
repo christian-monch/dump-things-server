@@ -330,13 +330,17 @@ def create_token_store(
     from dump_things_service.store.model_store import ModelStore
 
     # Check if the store was already created and if it was created for the
-    # same collection.
+    # same schema.
     if store_dir in instance_config.all_stores:
         existing_collection_name, existing_model_store = instance_config.all_stores[store_dir]
-        if existing_collection_name != collection_name:
+        if (
+            existing_collection_name != collection_name
+            and instance_config.schemas[existing_collection_name] != instance_config.schemas[collection_name]
+        ):
             msg = (
                 f'collections "{existing_collection_name}" and {collection_name}"'
-                f'map onto the same storage directory: ".../{store_dir.name}"'
+                f' with different schemas map onto the same storage directory: '
+                f'"<incoming_path>/{store_dir.name}"'
             )
             raise HTTPException(
                 status_code=HTTP_500_INTERNAL_SERVER_ERROR,
