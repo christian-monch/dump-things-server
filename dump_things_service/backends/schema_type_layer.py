@@ -80,6 +80,11 @@ class _SchemaTypeLayer(StorageBackend):
         self.backend = backend
         self.schema_model = get_schema_model_for_schema(schema)
 
+    def get_uri(
+            self
+    ) -> str:
+        return self.backend.get_uri()
+
     def add_record(
         self,
         iri: str,

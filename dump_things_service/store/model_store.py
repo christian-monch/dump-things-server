@@ -36,6 +36,9 @@ class _ModelStore:
         self.model = get_model_for_schema(self.schema)[0]
         self.backend = backend
 
+    def get_uri(self) -> str:
+        return self.backend.get_uri()
+
     def store_object(
         self,
         obj: BaseModel,
@@ -180,7 +183,7 @@ class _ModelStore:
 
     def get_all_objects(
         self,
-        matching: str | None,
+        matching: str | None = None,
     ) -> LazyList[RecordInfo]:
         """
         Get all objects of a specific class.

@@ -1,3 +1,11 @@
+# 4.1.0 (2025-09-30)
+
+## New features
+
+- Add the command `dump-things-pid-check` which verifies that all pids in a
+  store which are in CURIE form can be resolved with the given schema.
+
+
 # 4.0.0 (2025-09-29)
 
 ## Breaking changes

@@ -457,12 +457,6 @@ The service supports the following command line parameters:
 - `--log-level`: set the log level for the service, allowed values are `ERROR`, `WARNING`, `INFO`, `DEBUG`. The default-level is `WARNING`.
 
 
-- `--export-json`: export all data in `<storage root>` as JSON to the given path and exit. If the path is `-`, the data will be written to `stdout`. The data in `<storage root>` will not be modified. This is useful to export the data for backup or migration purposes. The file will contain all records in all collections. NOTE: the resulting file might be large.
-
-
-- `--export-tree`: export all data in `<storage root>` as file tree at the given path. The tree confirms to the [dumpthings-specification](https://concepts.datalad.org/dump-things/).
-
-
 - `--root-path`: set the ASGI `root_path` for applications sub-mounted below a given URL path.
 
 
@@ -565,7 +559,7 @@ The service provides the following user endpoints (in addition to user-endpoints
 ```
 
 
-- `GET /<collection>/delete?pid=<pid>`: delete an object with the pid `<pid>` from the incoming area of the collection `<collection>`, if the provided token allows writing to the incoming area.
+- `DELETE /<collection>/record?pid=<pid>`: delete an object with the pid `<pid>` from the incoming area of the collection `<collection>`, if the provided token allows writing to the incoming area.
  The result is either `True` if the object was deleted or `False` if the object did not exists or was not deleted.
 
 
@@ -651,6 +645,9 @@ If any backend is a `record_dir+stl` backend, a schema has to be supplied via th
   ```
   The copy command will add the copied records to any existing record in the destination store.
   Note: when records are copied from a `record-dir` store, the index is used to locate the records in the source store. If the index is not up-to-date, the copied records might not be complete. In this case, it is recommended to run `dump-things-rebuild-index` on the source store before copying.
+
+- `dump-things-pid-check`: this command checks the pids in all collections of a store to verify that they can be resolved (if they are in CURIE form).
+  This is useful to validate the proper definition of prefixes after schema-changes.
 
 
 ### If things go wrong

@@ -125,6 +125,11 @@ class _SQLiteBackend(StorageBackend):
         self.engine = create_engine('sqlite:///' + str(db_path), echo=echo)
         Base.metadata.create_all(self.engine)
 
+    def get_uri(
+            self
+    ) -> str:
+        return f'sqlite://{self.db_path}'
+
     def add_record(
         self,
         iri: str,
