@@ -6,7 +6,7 @@ import logging
 from importlib import import_module
 from typing import Any
 
-lgr = logging.getLogger('dump_things_service.patches')
+lgr = logging.getLogger('dump_things_service')
 
 
 def apply_patch(

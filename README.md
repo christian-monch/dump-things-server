@@ -204,7 +204,7 @@ tokens:
 The service currently supports the following backends for storing records:
 - `record_dir`: this backend stores records as YAML-files in a directory structure that is defined [here](https://concepts.datalad.org/dump-things-storage-v0/). It reads the backend configuration from a "record collection configuration file" as described [here](https://concepts.datalad.org/dump-things-storage-v0/).
 
-- `sqlite`: this backend stores records in a SQLite database. There is an individual database file, named `.sqlite-records.db`, for each curated area and incoming area.
+- `sqlite`: this backend stores records in a SQLite database. There is an individual database file, named `__sqlite-records.db`, for each curated area and incoming area.
 
 - `record_dir+stl`: here `stl` stands for "schema-type-layer".
   This backend stores records in the same format as `record_dir`, but adds special treatment for the `schema_type` attribute in records.
@@ -672,7 +672,7 @@ Run the command `dump-things-rebuild-index`
 Run the command:
 
 ```bash
-> sqlite3 .sqlite-records.db
+> sqlite3 __sqlite-records.db
 ```
 
 If you know the pid of the record you want to delete, enter the following on the prompt to delete the record with pid `some-pid`:

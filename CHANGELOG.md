@@ -1,3 +1,13 @@
+# 4.2.0 (2025-09-30)
+
+## New features
+
+- Use the name `__sqlite-records.db` for SQLite-backends.
+  Convert databases that use the old name to the new name.
+  This is not considered a breaking change, since the SQL DB-name is not
+  considered part of the public API/interface.
+
+
 # 4.1.1 (2025-09-30)
 
 ## Bugfixes
