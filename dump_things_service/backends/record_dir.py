@@ -91,6 +91,11 @@ class _RecordDirStore(StorageBackend):
         self.suffix = suffix
         self.index = RecordDirIndex(root, suffix)
 
+    def get_uri(
+        self
+    ) -> str:
+        return f'file://{str(self.root)}'
+
     def build_index(
         self,
         schema: str,

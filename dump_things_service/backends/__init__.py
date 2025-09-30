@@ -111,6 +111,12 @@ class StorageBackend(metaclass=ABCMeta):
         self.order_by = order_by or ['pid']
 
     @abstractmethod
+    def get_uri(
+        self
+    ) -> str:
+        raise NotImplementedError
+
+    @abstractmethod
     def add_record(
         self,
         iri: str,
