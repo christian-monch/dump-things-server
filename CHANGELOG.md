@@ -1,3 +1,11 @@
+# 4.1.1 (2025-09-30)
+
+## Bugfixes
+
+- Allow two collections to share a store, if the collections use the same
+  schema.
+
+
 # 4.1.0 (2025-09-30)
 
 ## New features
