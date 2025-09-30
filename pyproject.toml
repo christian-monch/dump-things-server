@@ -48,6 +48,7 @@ Source = "https://github.com/christian-monch/dump-things-server"
 dump-things-service = "dump_things_service.main:main"
 dump-things-rebuild-index = "dump_things_service.commands.rebuild_index:main"
 dump-things-copy-store = "dump_things_service.commands.copy_store:main"
+dump-things-pid-check = "dump_things_service.commands.check_pids:main"
 
 [tool.hatch.build.targets.wheel]
 exclude = [
