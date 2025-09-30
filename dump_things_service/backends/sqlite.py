@@ -26,6 +26,8 @@ Presumably, 180 bytes + JSON string size per record.
 
 from __future__ import annotations
 
+import logging
+import shutil
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -58,8 +60,10 @@ if TYPE_CHECKING:
     from collections.abc import Iterable
     from pathlib import Path
 
+logger = logging.getLogger('dump_things_service')
 
-record_file_name = '.sqlite-records.db'
+old_record_file_name = '.sqlite-records.db'
+record_file_name = '__sqlite-records.db'
 
 
 class Base(DeclarativeBase):
@@ -122,6 +126,7 @@ class _SQLiteBackend(StorageBackend):
     ) -> None:
         super().__init__(order_by=order_by)
         self.db_path = db_path
+        self.perform_file_name_conversion()
         self.engine = create_engine('sqlite:///' + str(db_path), echo=echo)
         Base.metadata.create_all(self.engine)
 
@@ -129,6 +134,22 @@ class _SQLiteBackend(StorageBackend):
             self
     ) -> str:
         return f'sqlite://{self.db_path}'
+
+    def perform_file_name_conversion(self):
+        # If an old-style named database exists, create a backup copy and
+        # move it to the new name
+        old_path = (self.db_path.parent / old_record_file_name).absolute()
+        if old_path.exists():
+            logger.info('converting old style name %s', str(old_path))
+
+            # Create a backup copy
+            old_backup_path = (self.db_path.parent / (old_record_file_name + '.backup')).absolute()
+            logger.info('copying %s to %s', old_path, old_backup_path)
+            shutil.copyfile(str(old_path), str(old_backup_path))
+
+            # Move the old db tp the new path
+            logger.info('moving %s to %s', old_path, self.db_path)
+            shutil.move(str(old_path), str(self.db_path))
 
     def add_record(
         self,
