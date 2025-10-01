@@ -9,7 +9,8 @@ from typing import (
     TYPE_CHECKING,
 )
 
-from starlette.status import HTTP_413_REQUEST_ENTITY_TOO_LARGE
+from starlette.status import HTTP_413_REQUEST_ENTITY_TOO_LARGE, \
+    HTTP_422_UNPROCESSABLE_ENTITY
 
 # Perform the patching before importing any third-party libraries
 from dump_things_service.patches import enabled  # noqa: F401
@@ -291,18 +292,18 @@ def validate_record(
         )
 
     if input_format == Format.ttl:
-        with wrap_http_exception(ValueError, header='Conversion error'):
+        with wrap_http_exception(ValueError, status_code=HTTP_422_UNPROCESSABLE_ENTITY, header='Conversion error'):
             json_object = FormatConverter(
                 g_instance_config.schemas[collection],
                 input_format=Format.ttl,
                 output_format=Format.json,
             ).convert(data, class_name)
-        with wrap_http_exception(ValidationError, header='Validation error'):
+        with wrap_http_exception(ValidationError, status_code=HTTP_422_UNPROCESSABLE_ENTITY, header='Validation error'):
             TypeAdapter(getattr(model, class_name)).validate_python(json_object)
     else:
         # Try to convert it into TTL to detect potential errors before storing
         # the record
-        with wrap_http_exception(ValueError, header='Validation error'):
+        with wrap_http_exception(ValueError, status_code=HTTP_422_UNPROCESSABLE_ENTITY, header='Validation error'):
             FormatConverter(
                 g_instance_config.schemas[collection],
                 input_format=Format.json,

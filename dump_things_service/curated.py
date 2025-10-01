@@ -282,7 +282,7 @@ def create_curated_endpoints(
     global_dict: dict,
 ):
     # Create endpoints for all classes in all collections
-    logger.info('Creating dynamic endpoints...')
+    logger.info('Creating dynamic curated endpoints...')
     serial_number = count()
 
     instance_config = get_config()

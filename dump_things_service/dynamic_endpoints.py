@@ -8,25 +8,14 @@ from dump_things_service.config import InstanceConfig
 logger = logging.getLogger('dump_things_service')
 
 
-_store_endpoint_template = """
+_endpoint_template = """
 async def {name}(
         data: {model_var_name}.{class_name} | Annotated[str, Body(media_type='text/plain')],
         api_key: str = Depends(api_key_header_scheme),
         format: Format = Format.json,
 ) -> JSONResponse | PlainTextResponse:
     logger.info('{name}(%s, %s, %s, %s)', repr(data), repr('{class_name}'), repr({model_var_name}), repr(format))
-    return store_record('{collection}', data, '{class_name}', {model_var_name}, format, api_key)
-"""
-
-
-_validate_endpoint_template = """
-async def {name}(
-        data: {model_var_name}.{class_name} | Annotated[str, Body(media_type='text/plain')],
-        api_key: str = Depends(api_key_header_scheme),
-        format: Format = Format.json,
-) -> JSONResponse | PlainTextResponse:
-    logger.info('{name}(%s, %s, %s, %s)', repr(data), repr('{class_name}'), repr({model_var_name}), repr(format))
-    return validate_record('{collection}', data, '{class_name}', {model_var_name}, format, api_key)
+    return {handler}('{collection}', data, '{class_name}', {model_var_name}, format, api_key)
 """
 
 
@@ -36,7 +25,7 @@ def create_store_endpoints(
     global_dict: dict,
 ):
     # Create endpoints for all classes in all collections
-    logger.info('Creating dynamic endpoints...')
+    logger.info('Creating dynamic store_record endpoints...')
     serial_number = count()
 
     for collection, (
@@ -50,12 +39,13 @@ def create_store_endpoints(
             # `version` of schema `application`.
             endpoint_name = f'_endpoint_{next(serial_number)}'
 
-            endpoint_source = _store_endpoint_template.format(
+            endpoint_source = _endpoint_template.format(
                 name=endpoint_name,
                 model_var_name=model_var_name,
                 class_name=class_name,
                 collection=collection,
                 info=f"'store {collection}/{class_name} objects'",
+                handler='store_record',
             )
             exec(endpoint_source, global_dict)  # noqa S102
 
@@ -78,7 +68,7 @@ def create_validate_endpoints(
         global_dict: dict,
 ):
     # Create endpoints for all classes in all collections
-    logger.info('Creating dynamic endpoints...')
+    logger.info('Creating dynamic validate_record endpoints...')
     serial_number = count()
 
     for collection, (
@@ -92,12 +82,13 @@ def create_validate_endpoints(
             # `version` of schema `application`.
             endpoint_name = f'_endpoint_validate_{next(serial_number)}'
 
-            endpoint_source = _validate_endpoint_template.format(
+            endpoint_source = _endpoint_template.format(
                 name=endpoint_name,
                 model_var_name=model_var_name,
                 class_name=class_name,
                 collection=collection,
                 info=f"'validate {collection}/{class_name} objects'",
+                handler='validate_record',
             )
             exec(endpoint_source, global_dict)  # noqa S102
 
