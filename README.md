@@ -480,16 +480,26 @@ Most endpoints require a *collection*. These correspond to the names of the "dat
 The service provides the following user endpoints (in addition to user-endpoints there exist endpoints for curators, to view them check the `/docs`-path in an installed service):
 
 - `POST /<collection>/record/<class>`: an object of type `<class>` (defined by the schema associated with `<collection>`) can be posted to this endpoint.
- The object-content must be JSON-encoded.
- In order to `POST` an object to the service, you MUST provide a valid token in the HTTP-header `X-DumpThings-Token`. This token has to correspond to a token value defined in the configuration file.
- In addition, the `content-type`-header must be set to `application/json`.
+ It will be stored in the incoming area for this collection and the user defined by the provided token.
+ In order to `POST` an object to the service, you MUST provide a valid token in the HTTP-header `X-DumpThings-Token` with write permissions.
  The endpoint supports the query parameter `format`, to select the format of the posted data.
  It can be set to `json` (the default) or to `ttl` (Terse RDF Triple Language, a.k.a. Turtle).
+ If the `json`-format is selected, the content-type should be `application/json`.
  If the `ttl`-format is selected, the content-type should be `text/turtle`.  
  The service supports extraction of inlined records as described in [Dump Things Service](https://concepts.datalad.org/dump-things/).
  On success, the endpoint will return a list of all stored records.
  This might be more than one record if the posted object contains inlined records.
-  
+
+- `POST /<collection>/validate/record/<class>`: an object of type `<class>` (defined by the schema associated with `<collection>`) can be posted to this endpoint.
+  It will validate the posted data.
+  In order to `POST` an object to the service, you MUST provide a valid token in the HTTP-header `X-DumpThings-Token` with write permissions.
+  The endpoint supports the query parameter `format`, to select the format of the posted data.
+  It can be set to `json` (the default) or to `ttl` (Terse RDF Triple Language, a.k.a. Turtle).
+  If the `json`-format is selected, the content-type should be `application/json`.
+  If the `ttl`-format is selected, the content-type should be `text/turtle`.  
+  The service supports extraction of inlined records as described in [Dump Things Service](https://concepts.datalad.org/dump-things/).
+  On success, the endpoint will return a list of all stored records.
+  This might be more than one record if the posted object contains inlined records.
 
 - `GET /<collection>/records/<class>`: retrieve all readable objects from collection `<collection>` that are of type `<class>` or any of its subclasses.
  Objects are readable if the default token for the collection allows reading of objects or if a token is provided that allows reading of objects in the collection.
