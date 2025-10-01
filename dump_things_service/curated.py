@@ -41,7 +41,6 @@ if TYPE_CHECKING:
 _endpoint_curated_template = """
 async def {name}(
     data: {model_var_name}.{class_name},
-    response: Response,
     api_key: str = Depends(api_key_header_scheme),
 ) -> JSONResponse:
     logger.info(
@@ -283,7 +282,7 @@ def create_curated_endpoints(
     global_dict: dict,
 ):
     # Create endpoints for all classes in all collections
-    logger.info('Creating dynamic endpoints...')
+    logger.info('Creating dynamic curated endpoints...')
     serial_number = count()
 
     instance_config = get_config()

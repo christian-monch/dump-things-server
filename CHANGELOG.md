@@ -1,3 +1,10 @@
+# 4.3.0 (2025-10-01)
+
+## New features
+
+- Add validation endpoints: `/<collection>/validate/record/<class>`.
+
+
 # 4.2.0 (2025-09-30)
 
 ## New features

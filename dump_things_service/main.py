@@ -2,7 +2,6 @@ from __future__ import annotations  # noqa: I001 -- the patches have to be impor
 
 import argparse
 import logging
-import sys
 from pathlib import Path
 from typing import (
     Annotated,  # noqa F401 -- used by generated code
@@ -10,7 +9,8 @@ from typing import (
     TYPE_CHECKING,
 )
 
-from starlette.status import HTTP_413_REQUEST_ENTITY_TOO_LARGE
+from starlette.status import HTTP_413_REQUEST_ENTITY_TOO_LARGE, \
+    HTTP_422_UNPROCESSABLE_ENTITY
 
 # Perform the patching before importing any third-party libraries
 from dump_things_service.patches import enabled  # noqa: F401
@@ -21,7 +21,6 @@ from fastapi import (
     Depends,
     FastAPI,
     HTTPException,
-    Request,
     Response,  # noqa F401 -- used by generated code
 )
 from fastapi.middleware.cors import CORSMiddleware
@@ -51,7 +50,6 @@ from dump_things_service import (
 from dump_things_service.__about__ import __version__
 from dump_things_service.api_key import api_key_header_scheme
 from dump_things_service.config import (
-    ConfigError,
     get_config,
     process_config,
 )
@@ -70,8 +68,10 @@ from dump_things_service.incoming import (
     router as incoming_router,
     store_incoming_record,  # noqa F401 -- used by generated code
 )
-from dump_things_service.dynamic_endpoints import create_endpoints
-from dump_things_service.export import exporter_info
+from dump_things_service.dynamic_endpoints import (
+    create_store_endpoints,
+    create_validate_endpoints,
+)
 from dump_things_service.lazy_list import (
     PriorityList,
     ModifierList,
@@ -249,6 +249,68 @@ def store_record(
                 media_type='text/turtle',
             )
     return JSONResponse([record for _, record in stored_records])
+
+
+def validate_record(
+        collection: str,
+        data: BaseModel | str,
+        class_name: str,
+        model: Any,
+        input_format: Format,
+        api_key: str | None = Depends(api_key_header_scheme),
+) -> JSONResponse:
+    if input_format == Format.json and isinstance(data, str):
+        raise HTTPException(
+            status_code=HTTP_400_BAD_REQUEST, detail='Invalid JSON data provided.'
+        )
+
+    if input_format == Format.ttl and not isinstance(data, str):
+        raise HTTPException(
+            status_code=HTTP_400_BAD_REQUEST, detail='Invalid ttl data provided.'
+        )
+
+    check_collection(g_instance_config, collection)
+
+    token = (
+        get_default_token_name(g_instance_config, collection)
+        if api_key is None
+        else api_key
+    )
+
+    store, token, token_permissions, user_id = get_token_store(
+        g_instance_config,
+        collection,
+        token,
+    )
+    final_permissions = join_default_token_permissions(
+        g_instance_config, token_permissions, collection
+    )
+    if not final_permissions.incoming_write:
+        raise HTTPException(
+            status_code=HTTP_403_FORBIDDEN,
+            detail=f'Not authorized to validate records for collection "{collection}".',
+        )
+
+    if input_format == Format.ttl:
+        with wrap_http_exception(ValueError, status_code=HTTP_422_UNPROCESSABLE_ENTITY, header='Conversion error'):
+            json_object = FormatConverter(
+                g_instance_config.schemas[collection],
+                input_format=Format.ttl,
+                output_format=Format.json,
+            ).convert(data, class_name)
+        with wrap_http_exception(ValidationError, status_code=HTTP_422_UNPROCESSABLE_ENTITY, header='Validation error'):
+            TypeAdapter(getattr(model, class_name)).validate_python(json_object)
+    else:
+        # Try to convert it into TTL to detect potential errors before storing
+        # the record
+        with wrap_http_exception(ValueError, status_code=HTTP_422_UNPROCESSABLE_ENTITY, header='Validation error'):
+            FormatConverter(
+                g_instance_config.schemas[collection],
+                input_format=Format.json,
+                output_format=Format.ttl,
+            ).convert(data.model_dump(mode='json', exclude_none=True), class_name)
+
+    return JSONResponse(True)
 
 
 @app.get('/server', tags=['Server'])
@@ -533,7 +595,8 @@ async def delete_record(
 # If we have a valid configuration, create dynamic endpoints and rebuild the
 # app to include all dynamically created endpoints.
 if g_instance_config:
-    create_endpoints(app, g_instance_config, globals())
+    create_store_endpoints(app, g_instance_config, globals())
+    create_validate_endpoints(app, g_instance_config, globals())
     create_curated_endpoints(app, globals())
     create_incoming_endpoints(app, globals())
     app.openapi_schema = None
