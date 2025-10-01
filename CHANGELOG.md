@@ -14,6 +14,10 @@
   This is not considered a breaking change, since the SQL DB-name is not
   considered part of the public API/interface.
 
+- Align CURIE resolution strategy with linkml's strategy: CURIE-resolution code
+  now interprets all strings that start with a scheme, colon, and two  slashes
+  as URI.
+
 
 # 4.1.1 (2025-09-30)
 
