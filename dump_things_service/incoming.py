@@ -16,7 +16,6 @@ from fastapi_pagination import (
     paginate,
 )
 from pydantic import BaseModel
-from starlette.status import HTTP_404_NOT_FOUND
 
 from dump_things_service import (
     HTTP_401_UNAUTHORIZED,
@@ -46,7 +45,6 @@ _endpoint_incoming_template = """
 async def {name}(
     data: {model_var_name}.{class_name},
     label: str,
-    response: Response,
     api_key: str = Depends(api_key_header_scheme),
 ) -> JSONResponse:
     logger.info(

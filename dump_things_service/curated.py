@@ -41,7 +41,6 @@ if TYPE_CHECKING:
 _endpoint_curated_template = """
 async def {name}(
     data: {model_var_name}.{class_name},
-    response: Response,
     api_key: str = Depends(api_key_header_scheme),
 ) -> JSONResponse:
     logger.info(
