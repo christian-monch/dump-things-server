@@ -335,12 +335,14 @@ async def read_record_with_pid(
 
     class_name, json_object = None, None
     if final_permissions.incoming_read:
-        class_name, json_object = token_store.get_object_by_pid(pid)
+        with wrap_http_exception(CurieResolutionError, header='CURIE error:'):
+            class_name, json_object = token_store.get_object_by_pid(pid)
 
     if not json_object and final_permissions.curated_read:
-        class_name, json_object = g_instance_config.curated_stores[
-            collection
-        ].get_object_by_pid(pid)
+        with wrap_http_exception(CurieResolutionError, header='CURIE error:'):
+            class_name, json_object = g_instance_config.curated_stores[
+                collection
+            ].get_object_by_pid(pid)
 
     if not json_object:
         return None

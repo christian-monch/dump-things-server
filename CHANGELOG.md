@@ -1,3 +1,11 @@
+# 4.3.1 (2025-10-06)
+
+## Bugfixes
+
+- report CURIE resolution bugs in HTTP 400 message instead of creating an
+  internal server error.
+
+
 # 4.3.0 (2025-10-01)
 
 ## New features
