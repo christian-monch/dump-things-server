@@ -37,58 +37,47 @@ collections:
     incoming: {incoming}
     backend:
       type: record_dir+stl
-      schema: {schema_path}
-      idfx: digest_md5
     auth_sources:
       - type: config
+    submission_tags:
+      submitter_id_tag: obo:NCIT_C54269
+      submission_time_tag: sso:SIO_001083
   collection_2:
     default_token: basic_access
     curated: {curated}/collection_2
     incoming: incoming_2
     backend:
       type: record_dir+stl
-      schema: {schema_path}
-      idfx: digest_md5
   collection_3:
     default_token: basic_access
     curated: {curated}/collection_3
     incoming: incoming_3
     backend:
       type: record_dir+stl
-      schema: {schema_path}
-      idfx: digest_md5
   collection_4:
     default_token: basic_access
     curated: {curated}/collection_4
     incoming: incoming_4
     backend:
       type: record_dir+stl
-      schema: {schema_path}
-      idfx: digest_md5
   collection_5:
     default_token: basic_access
     curated: {curated}/collection_5
     incoming: incoming_5
     backend:
       type: record_dir+stl
-      schema: {schema_path}
-      idfx: digest_md5
   collection_6:
     default_token: basic_access
     curated: {curated}/collection_6
     incoming: incoming_6
     backend:
       type: record_dir+stl
-      schema: {schema_path}
-      idfx: digest_md5
   collection_7:
     default_token: basic_access
     curated: {curated}/collection_7
     incoming: incoming_7
     backend:
       type: record_dir+stl
-      schema: {schema_path}
-      idfx: digest_md5
   collection_8:
     default_token: basic_access
     curated: {curated}/collection_8
@@ -102,8 +91,6 @@ collections:
     incoming: {incoming}/collection_dlflatsocial-1
     backend:
       type: record_dir+stl
-      schema: https://concepts.datalad.org/s/flat-social/unreleased.yaml
-      idfx: digest_md5
   collection_dlflatsocial-2:
     default_token: basic_access
     curated: {curated}/collection_dlflatsocial-2

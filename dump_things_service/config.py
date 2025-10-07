@@ -17,6 +17,8 @@ import yaml
 from fastapi import HTTPException
 from pydantic import (
     BaseModel,
+    ConfigDict,
+    Field,
     ValidationError,
 )
 from yaml.scanner import ScannerError
@@ -51,6 +53,10 @@ ignored_files = {'.', '..', config_file_name}
 _global_config_instance = None
 
 
+class StrictModel(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+
+
 class MappingMethod(enum.Enum):
     digest_md5 = 'digest-md5'
     digest_md5_p3 = 'digest-md5-p3'
@@ -61,7 +67,7 @@ class MappingMethod(enum.Enum):
     after_last_colon = 'after-last-colon'
 
 
-class CollectionDirConfig(BaseModel):
+class CollectionDirConfig(StrictModel):
     type: Literal['records']
     version: Literal[1]
     schema: str
@@ -82,26 +88,27 @@ class TokenModes(enum.Enum):
 
 
 class TokenCollectionConfig(BaseModel):
+    model_config = ConfigDict(extra='forbid')
     mode: TokenModes
-    incoming_label: str
+    incoming_label: str = Field(strict=True)
 
 
-class TokenConfig(BaseModel):
+class TokenConfig(StrictModel):
     user_id: str
     collections: dict[str, TokenCollectionConfig]
     hashed: bool = False
 
 
-class BackendConfigRecordDir(BaseModel):
+class BackendConfigRecordDir(StrictModel):
     type: Literal['record_dir', 'record_dir+stl']
 
 
-class BackendConfigSQLite(BaseModel):
+class BackendConfigSQLite(StrictModel):
     type: Literal['sqlite', 'sqlite+stl']
     schema: str
 
 
-class ForgejoAuthConfig(BaseModel):
+class ForgejoAuthConfig(StrictModel):
     type: Literal['forgejo']
     url: str
     organization: str
@@ -110,19 +117,27 @@ class ForgejoAuthConfig(BaseModel):
     repository: str | None = None
 
 
-class ConfigAuthConfig(BaseModel):
+class ConfigAuthConfig(StrictModel):
     type: Literal['config'] = 'config'
 
 
-class CollectionConfig(BaseModel):
+class TagConfig(StrictModel):
+    submitter_id_tag: str = 'http://purl.obolibrary.org/obo/NCIT_C54269'
+    submission_time_tag: str = 'http://semanticscience.org/resource/SIO_001083'
+
+
+class CollectionConfig(StrictModel):
     default_token: str
     curated: Path
     incoming: Path | None = None
     backend: BackendConfigRecordDir | BackendConfigSQLite | None = None
     auth_sources: list[ForgejoAuthConfig | ConfigAuthConfig] = [ConfigAuthConfig()]
+    submission_tags: TagConfig = TagConfig()
 
 
-class GlobalConfig(BaseModel):
+class GlobalConfig(StrictModel):
+    model_config = ConfigDict(strict=True)
+
     type: Literal['collections']
     version: Literal[1]
     collections: dict[str, CollectionConfig]
