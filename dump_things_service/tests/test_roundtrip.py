@@ -1,3 +1,4 @@
+import freezegun
 import pytest  # noqa F401
 
 from .. import HTTP_200_OK
@@ -19,14 +20,32 @@ xyz:HenryAdams a abc:Person ;
     abc:schema_type "abc:Person" .
 """
 
-ttl_result_record = """@prefix abc: <http://example.org/person-schema/abc/> .
+ttl_result_record_a = """@prefix abc: <http://example.org/person-schema/abc/> .
+@prefix oxo: <http://purl.obolibrary.org/obo/> .
+@prefix xyz: <http://example.org/person-schema/xyz/> .
+
+xyz:HenryAdams a abc:Person ;
+    abc:annotations [ a abc:Annotation ;
+            abc:annotation_tag <https://time> ;
+            abc:annotation_value "1970-01-01T00:00:00" ],
+        [ a abc:Annotation ;
+            abc:annotation_tag oxo:NCIT_C54269 ;
+            abc:annotation_value "test_user_1" ] ;
+    abc:given_name "Henryöäß" ;
+    abc:schema_type "abc:Person" .
+"""
+
+ttl_result_record_b = """@prefix abc: <http://example.org/person-schema/abc/> .
 @prefix oxo: <http://purl.obolibrary.org/obo/> .
 @prefix xyz: <http://example.org/person-schema/xyz/> .
 
 xyz:HenryAdams a abc:Person ;
     abc:annotations [ a abc:Annotation ;
             abc:annotation_tag oxo:NCIT_C54269 ;
-            abc:annotation_value "test_user_1" ] ;
+            abc:annotation_value "test_user_1" ],
+        [ a abc:Annotation ;
+            abc:annotation_tag <https://time> ;
+            abc:annotation_value "1970-01-01T00:00:00" ] ;
     abc:given_name "Henryöäß" ;
     abc:schema_type "abc:Person" .
 """
@@ -75,6 +94,7 @@ def test_json_ttl_json(fastapi_client_simple):
     assert json_object == json_record_out
 
 
+@freezegun.freeze_time('1970-01-01')
 def test_ttl_json_ttl(fastapi_client_simple):
     test_client, _ = fastapi_client_simple
 
@@ -115,5 +135,8 @@ def test_ttl_json_ttl(fastapi_client_simple):
     assert response.status_code == HTTP_200_OK
     assert (
         response.text.strip()
-        == ttl_result_record.replace('xyz:HenryAdams', new_json_pid).strip()
+        == ttl_result_record_a.replace('xyz:HenryAdams', new_json_pid).strip()
+    ) or (
+        response.text.strip()
+        == ttl_result_record_b.replace('xyz:HenryAdams', new_json_pid).strip()
     )

@@ -31,8 +31,12 @@ from dump_things_service.backends.sqlite import (
     record_file_name as sqlite_record_file_name,
 )
 from dump_things_service.converter import get_conversion_objects
-from dump_things_service.exceptions import ConfigError
+from dump_things_service.exceptions import (
+    ConfigError,
+    CurieResolutionError,
+)
 from dump_things_service.model import get_model_for_schema
+from dump_things_service.resolve_curie import resolve_curie
 from dump_things_service.store.model_store import ModelStore
 from dump_things_service.token import (
     TokenPermission,
@@ -414,6 +418,10 @@ def process_config_object(
         curated_store = ModelStore(
             schema=schema,
             backend=curated_store_backend,
+            tags={
+                'id': collection_info.submission_tags.submitter_id_tag,
+                'time': collection_info.submission_tags.submission_time_tag,
+            }
         )
 
         instance_config.curated_stores[collection_name] = curated_store
@@ -510,6 +518,14 @@ def process_config_object(
     if hashed_plain_tokens.intersection(hashed_tokens):
         msg = 'plain tokens clash with hashed tokens'
         raise ConfigError(msg)
+
+    # Check tags
+    for collection_name, collection_info in config_object.collections.items():
+        module = instance_config.model_info[collection_name][0]
+        try:
+            resolve_curie(module, collection_info.submission_tags.submission_time_tag)
+        except CurieResolutionError as e:
+            raise ConfigError(str(e)) from e
 
     return instance_config
 

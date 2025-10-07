@@ -385,7 +385,12 @@ def create_token_store(
     if extension == 'stl':
         token_store = SchemaTypeLayer(backend=token_store, schema=schema_uri)
 
-    model_store = ModelStore(backend=token_store, schema=schema_uri)
+    submission_tags = instance_config.collections[collection_name].submission_tags
+    tags = {
+        'id': submission_tags.submitter_id_tag,
+        'time': submission_tags.submission_time_tag,
+    }
+    model_store = ModelStore(backend=token_store, schema=schema_uri, tags=tags)
     instance_config.all_stores[store_dir] = (collection_name, model_store)
 
     return model_store

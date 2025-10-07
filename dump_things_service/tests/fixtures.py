@@ -40,8 +40,8 @@ collections:
     auth_sources:
       - type: config
     submission_tags:
-      submitter_id_tag: obo:NCIT_C54269
-      submission_time_tag: sso:SIO_001083
+      submitter_id_tag: oxo:NCIT_C54269
+      submission_time_tag: https://time
   collection_2:
     default_token: basic_access
     curated: {curated}/collection_2

@@ -102,6 +102,7 @@ run = "python -m dump_things_service.main {args}"
 default-args = ["dump_things_service"]
 extra-dependencies = [
     "dump_things_service",
+    "freezegun",
     "httpx",
     "pytest",
     "pytest-cov",

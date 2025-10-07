@@ -1,4 +1,9 @@
+import datetime
+from datetime import datetime as datetime_object
+
 import pytest  # noqa F401
+
+import freezegun
 
 from .. import HTTP_200_OK
 from ..utils import cleaned_json
@@ -33,7 +38,22 @@ dlflatsocial:test_john_ttl a dlflatsocial:Person ;
     dlsocialmx:given_name "Johnöüß" .
 """
 
-ttl_output_record = """@prefix dlflatsocial: <https://concepts.datalad.org/s/flat-social/unreleased/> .
+ttl_output_record_a = """@prefix dlflatsocial: <https://concepts.datalad.org/s/flat-social/unreleased/> .
+@prefix dlsocialmx: <https://concepts.datalad.org/s/social-mixin/unreleased/> .
+@prefix dlthings: <https://concepts.datalad.org/s/things/v1/> .
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+
+dlflatsocial:test_john_ttl a dlflatsocial:Person ;
+    dlsocialmx:given_name "Johnöüß" ;
+    dlthings:annotations [ a dlthings:Annotation ;
+            dlthings:annotation_tag <http://semanticscience.org/resource/SIO_001083> ;
+            dlthings:annotation_value "1970-01-01T00:00:00" ],
+        [ a dlthings:Annotation ;
+            dlthings:annotation_tag obo:NCIT_C54269 ;
+            dlthings:annotation_value "test_user_1" ] .
+"""
+
+ttl_output_record_b = """@prefix dlflatsocial: <https://concepts.datalad.org/s/flat-social/unreleased/> .
 @prefix dlsocialmx: <https://concepts.datalad.org/s/social-mixin/unreleased/> .
 @prefix dlthings: <https://concepts.datalad.org/s/things/v1/> .
 @prefix obo: <http://purl.obolibrary.org/obo/> .
@@ -42,7 +62,10 @@ dlflatsocial:test_john_ttl a dlflatsocial:Person ;
     dlsocialmx:given_name "Johnöüß" ;
     dlthings:annotations [ a dlthings:Annotation ;
             dlthings:annotation_tag obo:NCIT_C54269 ;
-            dlthings:annotation_value "test_user_1" ] .
+            dlthings:annotation_value "test_user_1" ],
+        [ a dlthings:Annotation ;
+            dlthings:annotation_tag <http://semanticscience.org/resource/SIO_001083> ;
+            dlthings:annotation_value "1970-01-01T00:00:00" ] .
 """
 
 new_json_pid = 'dlflatsocial:another_john_ttl'
@@ -90,6 +113,7 @@ def test_json_ttl_json_dlflatsocial(fastapi_client_simple):
         assert json_object == json_record_out
 
 
+@freezegun.freeze_time('1970-01-01')
 def test_ttl_json_ttl_dlflatsocial(fastapi_client_simple):
     test_client, _ = fastapi_client_simple
 
@@ -131,5 +155,8 @@ def test_ttl_json_ttl_dlflatsocial(fastapi_client_simple):
         assert response.status_code == HTTP_200_OK
         assert (
             response.text.strip()
-            == ttl_output_record.replace('dlflatsocial:test_john_ttl', new_json_pid).strip()
+            == ttl_output_record_a.replace('dlflatsocial:test_john_ttl', new_json_pid).strip()
+        ) or (
+            response.text.strip()
+            == ttl_output_record_b.replace('dlflatsocial:test_john_ttl', new_json_pid).strip()
         )
