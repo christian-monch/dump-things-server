@@ -17,6 +17,8 @@ import yaml
 from fastapi import HTTPException
 from pydantic import (
     BaseModel,
+    ConfigDict,
+    Field,
     ValidationError,
 )
 from yaml.scanner import ScannerError
@@ -29,8 +31,12 @@ from dump_things_service.backends.sqlite import (
     record_file_name as sqlite_record_file_name,
 )
 from dump_things_service.converter import get_conversion_objects
-from dump_things_service.exceptions import ConfigError
+from dump_things_service.exceptions import (
+    ConfigError,
+    CurieResolutionError,
+)
 from dump_things_service.model import get_model_for_schema
+from dump_things_service.resolve_curie import resolve_curie
 from dump_things_service.store.model_store import ModelStore
 from dump_things_service.token import (
     TokenPermission,
@@ -51,6 +57,10 @@ ignored_files = {'.', '..', config_file_name}
 _global_config_instance = None
 
 
+class StrictModel(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+
+
 class MappingMethod(enum.Enum):
     digest_md5 = 'digest-md5'
     digest_md5_p3 = 'digest-md5-p3'
@@ -61,7 +71,7 @@ class MappingMethod(enum.Enum):
     after_last_colon = 'after-last-colon'
 
 
-class CollectionDirConfig(BaseModel):
+class CollectionDirConfig(StrictModel):
     type: Literal['records']
     version: Literal[1]
     schema: str
@@ -82,26 +92,27 @@ class TokenModes(enum.Enum):
 
 
 class TokenCollectionConfig(BaseModel):
+    model_config = ConfigDict(extra='forbid')
     mode: TokenModes
-    incoming_label: str
+    incoming_label: str = Field(strict=True)
 
 
-class TokenConfig(BaseModel):
+class TokenConfig(StrictModel):
     user_id: str
     collections: dict[str, TokenCollectionConfig]
     hashed: bool = False
 
 
-class BackendConfigRecordDir(BaseModel):
+class BackendConfigRecordDir(StrictModel):
     type: Literal['record_dir', 'record_dir+stl']
 
 
-class BackendConfigSQLite(BaseModel):
+class BackendConfigSQLite(StrictModel):
     type: Literal['sqlite', 'sqlite+stl']
     schema: str
 
 
-class ForgejoAuthConfig(BaseModel):
+class ForgejoAuthConfig(StrictModel):
     type: Literal['forgejo']
     url: str
     organization: str
@@ -110,19 +121,27 @@ class ForgejoAuthConfig(BaseModel):
     repository: str | None = None
 
 
-class ConfigAuthConfig(BaseModel):
+class ConfigAuthConfig(StrictModel):
     type: Literal['config'] = 'config'
 
 
-class CollectionConfig(BaseModel):
+class TagConfig(StrictModel):
+    submitter_id_tag: str = 'http://purl.obolibrary.org/obo/NCIT_C54269'
+    submission_time_tag: str = 'http://semanticscience.org/resource/SIO_001083'
+
+
+class CollectionConfig(StrictModel):
     default_token: str
     curated: Path
     incoming: Path | None = None
     backend: BackendConfigRecordDir | BackendConfigSQLite | None = None
     auth_sources: list[ForgejoAuthConfig | ConfigAuthConfig] = [ConfigAuthConfig()]
+    submission_tags: TagConfig = TagConfig()
 
 
-class GlobalConfig(BaseModel):
+class GlobalConfig(StrictModel):
+    model_config = ConfigDict(strict=True)
+
     type: Literal['collections']
     version: Literal[1]
     collections: dict[str, CollectionConfig]
@@ -399,6 +418,10 @@ def process_config_object(
         curated_store = ModelStore(
             schema=schema,
             backend=curated_store_backend,
+            tags={
+                'id': collection_info.submission_tags.submitter_id_tag,
+                'time': collection_info.submission_tags.submission_time_tag,
+            }
         )
 
         instance_config.curated_stores[collection_name] = curated_store
@@ -495,6 +518,14 @@ def process_config_object(
     if hashed_plain_tokens.intersection(hashed_tokens):
         msg = 'plain tokens clash with hashed tokens'
         raise ConfigError(msg)
+
+    # Check tags
+    for collection_name, collection_info in config_object.collections.items():
+        module = instance_config.model_info[collection_name][0]
+        try:
+            resolve_curie(module, collection_info.submission_tags.submission_time_tag)
+        except CurieResolutionError as e:
+            raise ConfigError(str(e)) from e
 
     return instance_config
 

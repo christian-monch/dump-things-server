@@ -439,6 +439,142 @@ A Forgejo authentication source can authenticate Forgejo-tokens that have at lea
 - Repository (only if `repository` is set in the configuration): required to determine a team's access to the repository.
 
 
+#### Submission annotation tag
+
+The service annotates submitted records with a submitter id and a timestamp.
+Annotations consist of an annotation tag, defining the class of the annotation, and an annotation value.
+By default the service will use the class `http://purl.obolibrary.org/obo/NCIT_C54269` for the submitter id and the class `http://semanticscience.org/resource/SIO_001083` for submission time.
+(Both tags will be converted into CURIEs if the schema of the collection defines an appropriate prefix.)
+
+The default annotation tag classes can be overridden in the configuration on a per collection basis.
+To override the defaults tags, add a `submission_tags`-attribute to a collection definition.
+The `submission_tags`-attribute should contain a mapping that maps either `submitter_id_tag`, or `submitter_time_tag` or both to an IRI or a CURIE.
+If the schema defines a matching prefix, IRIs are automatically converted to CURIEs before storing the record.
+The service validates that the prefix of a CURIE is defined in the schema of the collection.
+
+```yaml
+type: collections
+version: 1
+collections:
+  collection_1:
+    default_token: basic_access
+    curated: curated
+    incoming: contributions
+    submission_tags:
+      submitter_id_tag: schema:user_id
+      submission_time_tag: schema:time
+
+  ...
+
+```
+
+The service currently supports the following backends for storing records:
+- `record_dir`: this backend stores records as YAML-files in a directory structure that is defined [here](https://concepts.datalad.org/dump-things-storage-v0/). It reads the backend configuration from a "record collection configuration file" as described [here](https://concepts.datalad.org/dump-things-storage-v0/).
+
+- `sqlite`: this backend stores records in a SQLite database. There is an individual database file, named `__sqlite-records.db`, for each curated area and incoming area.
+
+- `record_dir+stl`: here `stl` stands for "schema-type-layer".
+  This backend stores records in the same format as `record_dir`, but adds special treatment for the `schema_type` attribute in records.
+  It removes `schema_type`-attributes from the top-level mapping of a record before storing it as YAML-file. When records are read from this backend, a `schema_type` attribute is added back into the record, using a schema to determine the correct class-URI.
+  In other words, all records stored with this backend will have no `schema_type`-attribute in the top-level, and all records read with this backend will have a `schema_type` attribute in the top-level.
+
+- `sqlite+stl`: This backend stores records in the same format as `sqlite`, but adds the same special treatment for the `schema_type` attribute as `record_dir+stl`.
+
+Backends can be defined per collection in the configuration file.
+The backend will be used for the curated area and for the incoming areas of the collection.
+If no backend is defined for a collection, the `record_dir+stl`-backend is used by default.
+The `+stl`-backends can be useful if an endpoint returns records of multiple classes, because it allows clients to determine the class of each result record.
+
+The service guarantees that backends of all types can co-exist independently in the same directory, i.e., there are no name collisions in files that are used for different backends (as long as no class name starts with `.` or `_`)).
+
+The following configuration snippet shows how to define a backend for a collection:
+
+```yaml
+...
+collections:
+  collection_with_default_record_dir+stl_backend:
+    # This is a collection with the default backend, i.e. `record_dir+stl` and
+    # the default authentication, i.e. config-based authentication.
+    default_token: anon_read
+    curated: collection_1/curated
+
+  collection_with_forgejo_authentication_source:
+    # This is a collection with the default backend, i.e. `record_dir+stl` and
+    # a forgejo-based authentication source. That means it will use a forgejo
+    # instance to determine the permissions of a token for this collection.
+    # The instance is also used to determine the user-id and the incoming label.
+    # In the case of forgejo, the user-id and the incoming label are the
+    # forgejo login associated with the token.
+
+    # We still need the name of a default token. If the token is defined in this
+    # config file, its properties will be determined by the
+    # config file. If the token is not defined in the config file, its
+    # properties will be determined by the authentication sources. In this
+    # example by the forgejo-instance at `https://forgejo.example.com`.
+    # If there is more than one authentication source, they will be tried
+    # in the order they are defined in the config file.
+    default_token: anon_read    # We still need a default token
+    curated: collection_2/curated
+
+    # Token permissions, user-ids (for record annotations), and incoming
+    # label can be determined by multiple authentication sources.
+    # If no source is defined, `config` will be used, which reads token
+    # information from the config file.
+    # This example explicitly defines `config` and a second authentication
+    # source, a `forgejo` authentication source.
+    auth_sources:
+      - type: forgejo   # requires `user`-read and `organization`-read permissions on token
+        # The API-URL of the forgejo instance that should be used
+        url: https://forgejo.example.com/api/v1
+        # An organization
+        organization: data_handling
+        # A team in the organization. The authorization of the team
+        # determines the permissions of the token
+        team: data_entry_personal
+        # `label_type` determines how an incoming label is created for
+        # a Forgejo token. If `label_type` is `team`, the incoming label
+        # will be `forgejo-team-<organization>-<team>`. If `label_type`
+        # is `user`, the incoming label will be 
+        # `forgejo-user-<user-login>`
+        label_type: team
+        # An optional repository. The token will only be authorized
+        # if the team has access to the repository. Note: if `repo`
+        # is set, the token must have at least repository read
+        # permissions.
+        repo: reference-repository
+
+      # Fallback to the config file.
+      - type: config    # check tokens from the configuration file
+
+      # Multiple authorization sources are allowed. They will be tried in the
+      # order defined in the config file. If an authorization source returns
+      # permissions for a token, those permissions will be used and no other
+      # authorization sources will be queried.
+      # The default authorization source is `config`, which reads the token 
+      # permissions, user-id, and incoming
+  
+  collection_with_explicit_record_dir+stl_backend:
+    default_token: anon_read
+    curated: collection_3/curated
+    backend:
+      # The record_dir-backend is identified by the
+      # type: "record_dir". No more attributes are
+      # defined for this backend.
+      type: record_dir+stl
+
+  collection_with_sqlite_backend:
+    default_token: anon_read
+    curated: collection_4/curated
+    backend:
+      # The sqlite-backend is identified by the
+      # type: "sqlite". It requires a schema attribute
+      # that holds the URL of the schema that should
+      # be used in this backend.
+      type: sqlite
+      schema: https://concepts.inm7.de/s/flat-data/unreleased.yaml
+```
+
+
 ### Command line parameters:
 
 The service supports the following command line parameters:

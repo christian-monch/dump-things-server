@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import datetime
 from itertools import chain
 from typing import TYPE_CHECKING
 
@@ -7,7 +8,7 @@ from dump_things_service.model import (
     get_model_for_schema,
     get_subclasses,
 )
-from dump_things_service.resolve_curie import resolve_curie
+from dump_things_service.resolve_curie import resolve_curie, is_curie
 from dump_things_service.utils import cleaned_json
 
 if TYPE_CHECKING:
@@ -31,10 +32,12 @@ class _ModelStore:
         self,
         schema: str,
         backend: StorageBackend,
+        tags: dict[str, str]
     ):
         self.schema = schema
         self.model = get_model_for_schema(self.schema)[0]
         self.backend = backend
+        self.tags = tags
 
     def get_uri(self) -> str:
         return self.backend.get_uri()
@@ -95,25 +98,30 @@ class _ModelStore:
         submitter: str,
     ) -> None:
         """Add submitter IRI to the record annotations, use CURIE if possible"""
-        submitter_iri = self.get_curie(
-            submitter_namespace,
-            submitter_class,
-        )
         if 'annotations' not in json_object:
             json_object['annotations'] = {}
-        json_object['annotations'][submitter_iri] = submitter
+        submitter_curie_or_iri = self.get_curie(self.tags['id'])
+        time_curie_or_iri = self.get_curie(self.tags['time'])
+        json_object['annotations'][submitter_curie_or_iri] = submitter
+        json_object['annotations'][time_curie_or_iri] = datetime.now().isoformat()
 
     def get_curie(
         self,
-        name_space: str,
-        class_name: str,
+        curie_or_iri: str,
     ) -> str:
+        if is_curie(curie_or_iri):
+            return curie_or_iri
         prefixes = self.model.linkml_meta.root.get('prefixes')
         if prefixes:
             for prefix_info in prefixes.values():
-                if prefix_info['prefix_reference'] == name_space:
-                    return f'{prefix_info["prefix_prefix"]}:{class_name}'
-        return f'{name_space}{class_name}'
+                reference = prefix_info['prefix_reference']
+                if curie_or_iri.startswith(reference):
+                    return curie_or_iri.replace(
+                        reference,
+                        prefix_info['prefix_prefix'] + ':',
+                        1,
+                    )
+        return curie_or_iri
 
     def extract_inlined(
         self,
@@ -206,6 +214,7 @@ _existing_model_stores = {}
 def ModelStore(  # noqa: N802
     schema: str,
     backend: StorageBackend,
+    tags: dict[str, str],
 ) -> _ModelStore:
     """
     Create a unique model store for the given schema and backend.
@@ -216,7 +225,7 @@ def ModelStore(  # noqa: N802
     """
     existing_model_store, _ = _existing_model_stores.get(id(backend), (None, None))
     if not existing_model_store:
-        existing_model_store = _ModelStore(schema, backend)
+        existing_model_store = _ModelStore(schema, backend, tags)
         # We store a pointer to the backend in the value to ensure that the
         # backend object exists while we use its `id` as a key.
         _existing_model_stores[id(backend)] = existing_model_store, backend

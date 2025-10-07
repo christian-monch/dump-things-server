@@ -165,6 +165,10 @@ def test_inline_extraction_locally():
     store = ModelStore(
         schema=str(schema_path),
         backend=None,
+        tags = {
+            'id': 'abc:id',
+            'time': 'abc:time',
+        }
     )
     store.model = MockedModule()
     records = store.extract_inlined(inlined_object)
@@ -193,6 +197,10 @@ def test_dont_extract_empty_things_locally():
     store = ModelStore(
         schema=str(schema_path),
         backend=None,
+        tags={
+            'id': 'https://id',
+            'time': 'https://time',
+        }
     )
     store.model = MockedModule()
     records = store.extract_inlined(empty_inlined_object)
