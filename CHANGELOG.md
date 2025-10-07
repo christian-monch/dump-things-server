@@ -1,3 +1,15 @@
+# 4.4.0 (2025-10-07)
+
+## New features
+
+- Record submission time in stored records.
+
+- Add configuration option for submitter ID-class and the submitter time-class.
+
+- Improve configuration validation. Configurations with unknown keys are now
+  rejected.
+
+
 # 4.3.1 (2025-10-06)
 
 ## Bugfixes
