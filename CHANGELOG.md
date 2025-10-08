@@ -1,3 +1,13 @@
+# 4.5.0 (2025-10-08)
+
+## New features
+
+-  Add the command `dump-things-create-merged-schema`.
+   This command creates a new schema that contains all schemas that the original schema imported.
+   The new schema is fully self-contained and does not reference any other schemas.
+   This is useful to freeze a version of a schema and make it independent of changes in imported schemas.
+
+
 # 4.4.0 (2025-10-07)
 
 ## New features
