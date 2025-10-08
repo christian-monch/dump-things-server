@@ -1,0 +1,2794 @@
+name: demo-research-assets-schema
+description: 'This schema is using the FLAT approach (Flexbile Low-complexity
+
+  Annotation Technique) and is geared toward metadata entry and
+
+  submission for pooling information across consortium sites and
+
+  partners.
+
+
+  It is to be taken as a demonstrator rather than a schema
+
+  building block.
+
+
+  More information may be available on the schema''s [about page](about).
+
+
+  The schema definition is available as
+
+
+  - [JSON-LD context](../unreleased.context.jsonld)
+
+  - [LinkML YAML](../unreleased.yaml)
+
+  - [LinkML YAML (static/resolved)](../unreleased.static.yaml)
+
+  - [OWL TTL](../unreleased.owl.ttl)
+
+  - [SHACL TTL](../unreleased.shacl.ttl)
+
+  '
+title: Data models for an organization's research assets
+comments:
+- ALL CONTENT HERE IS UNRELEASED AND MAY CHANGE ANY TIME
+status: eunal:concept-status/DRAFT
+id: https://concepts.datalad.org/s/demo-research-assets
+version: UNRELEASED
+license: MIT
+prefixes:
+  ADMS:
+    prefix_prefix: ADMS
+    prefix_reference: http://www.w3.org/ns/adms#
+  ISSN:
+    prefix_prefix: ISSN
+    prefix_reference: http://identifiers.org/issn/
+  bibo:
+    prefix_prefix: bibo
+    prefix_reference: http://purl.org/ontology/bibo/
+  datalad:
+    prefix_prefix: datalad
+    prefix_reference: https://pid.datalad.org/datasets/
+  dash:
+    prefix_prefix: dash
+    prefix_reference: http://datashapes.org/dash#
+  dcterms:
+    prefix_prefix: dcterms
+    prefix_reference: http://purl.org/dc/terms/
+  dlcommonmx:
+    prefix_prefix: dlcommonmx
+    prefix_reference: https://concepts.datalad.org/s/common-mixin/unreleased/
+  dldi:
+    prefix_prefix: dldi
+    prefix_reference: https://pid.datalad.org/distributions/
+  dlcdi:
+    prefix_prefix: dlcdi
+    prefix_reference: https://concepts.datalad.org/ns/content-defined-identifiers/
+  dlfilesmx:
+    prefix_prefix: dlfilesmx
+    prefix_reference: https://concepts.datalad.org/s/files-mixin/unreleased/
+  dlflat:
+    prefix_prefix: dlflat
+    prefix_reference: https://concepts.datalad.org/s/flat/unreleased/
+  dlflatfiles:
+    prefix_prefix: dlflatfiles
+    prefix_reference: https://concepts.datalad.org/s/flat-files/unreleased/
+  dlflatprov:
+    prefix_prefix: dlflatprov
+    prefix_reference: https://concepts.datalad.org/s/flat-prov/unreleased/
+  dlflatpublications:
+    prefix_prefix: dlflatpublications
+    prefix_reference: https://concepts.datalad.org/s/flat-publications/unreleased/
+  dlflatres:
+    prefix_prefix: dlflatres
+    prefix_reference: https://concepts.datalad.org/s/flat-resources/unreleased/
+  dlflatsocial:
+    prefix_prefix: dlflatsocial
+    prefix_reference: https://concepts.datalad.org/s/flat-social/unreleased/
+  dlflatstudy:
+    prefix_prefix: dlflatstudy
+    prefix_reference: https://concepts.datalad.org/s/flat-study/unreleased/
+  dlidentifiers:
+    prefix_prefix: dlidentifiers
+    prefix_reference: https://concepts.datalad.org/s/identifiers/unreleased/
+  dlprovmx:
+    prefix_prefix: dlprovmx
+    prefix_reference: https://concepts.datalad.org/s/provenance-mixin/unreleased/
+  dlpublicationsmx:
+    prefix_prefix: dlpublicationsmx
+    prefix_reference: https://concepts.datalad.org/s/publications-mixin/unreleased/
+  dlquantmx:
+    prefix_prefix: dlquantmx
+    prefix_reference: https://concepts.datalad.org/s/quantities-mixin/unreleased/
+  dlrelationsmx:
+    prefix_prefix: dlrelationsmx
+    prefix_reference: https://concepts.datalad.org/s/relations-mixin/unreleased/
+  dlresmx:
+    prefix_prefix: dlresmx
+    prefix_reference: https://concepts.datalad.org/s/resources-mixin/unreleased/
+  dlschemas:
+    prefix_prefix: dlschemas
+    prefix_reference: https://concepts.datalad.org/s/
+  dlsocialmx:
+    prefix_prefix: dlsocialmx
+    prefix_reference: https://concepts.datalad.org/s/social-mixin/unreleased/
+  dlspatialmx:
+    prefix_prefix: dlspatialmx
+    prefix_reference: https://concepts.datalad.org/s/spatial-mixin/unreleased/
+  dlstudymx:
+    prefix_prefix: dlstudymx
+    prefix_reference: https://concepts.datalad.org/s/study-mixin/unreleased/
+  dltemporalmx:
+    prefix_prefix: dltemporalmx
+    prefix_reference: https://concepts.datalad.org/s/temporal-mixin/unreleased/
+  dlthings:
+    prefix_prefix: dlthings
+    prefix_reference: https://concepts.datalad.org/s/things/v1/
+  dltypes:
+    prefix_prefix: dltypes
+    prefix_reference: https://concepts.datalad.org/s/types/v1/
+  doi:
+    prefix_prefix: doi
+    prefix_reference: https://doi.org/
+  eunal:
+    prefix_prefix: eunal
+    prefix_reference: http://publications.europa.eu/resource/authority/
+  geodata:
+    prefix_prefix: geodata
+    prefix_reference: http://sws.geonames.org/
+  linkml:
+    prefix_prefix: linkml
+    prefix_reference: https://w3id.org/linkml/
+  nfo:
+    prefix_prefix: nfo
+    prefix_reference: http://www.semanticdesktop.org/ontologies/2007/03/22/nfo#
+  obo:
+    prefix_prefix: obo
+    prefix_reference: http://purl.obolibrary.org/obo/
+  orcid:
+    prefix_prefix: orcid
+    prefix_reference: https://orcid.org/
+  owl:
+    prefix_prefix: owl
+    prefix_reference: http://www.w3.org/2002/07/owl#
+  prov:
+    prefix_prefix: prov
+    prefix_reference: http://www.w3.org/ns/prov#
+  rdf:
+    prefix_prefix: rdf
+    prefix_reference: http://www.w3.org/1999/02/22-rdf-syntax-ns#
+  rdfs:
+    prefix_prefix: rdfs
+    prefix_reference: http://www.w3.org/2000/01/rdf-schema#
+  ror:
+    prefix_prefix: ror
+    prefix_reference: https://ror.org/
+  rrid:
+    prefix_prefix: rrid
+    prefix_reference: 'https://scicrunch.org/resolver/RRID:'
+  sh:
+    prefix_prefix: sh
+    prefix_reference: http://www.w3.org/ns/shacl#
+  sio:
+    prefix_prefix: sio
+    prefix_reference: http://semanticscience.org/resource/
+  skos:
+    prefix_prefix: skos
+    prefix_reference: http://www.w3.org/2004/02/skos/core#
+  spdx:
+    prefix_prefix: spdx
+    prefix_reference: http://spdx.org/rdf/terms#
+  vcard:
+    prefix_prefix: vcard
+    prefix_reference: http://www.w3.org/2006/vcard/ns#
+  w3ctr:
+    prefix_prefix: w3ctr
+    prefix_reference: https://www.w3.org/TR/
+  xsd:
+    prefix_prefix: xsd
+    prefix_reference: http://www.w3.org/2001/XMLSchema#
+  xyzra:
+    prefix_prefix: xyzra
+    prefix_reference: https://concepts.datalad.org/s/demo-research-assets/unreleased/
+  xyzrans:
+    prefix_prefix: xyzrans
+    prefix_reference: https://concepts.datalad.org/s/demo-research-assets/ns/
+  dcat:
+    prefix_prefix: dcat
+    prefix_reference: http://www.w3.org/ns/dcat#
+  foaf:
+    prefix_prefix: foaf
+    prefix_reference: http://xmlns.com/foaf/0.1/
+  pq:
+    prefix_prefix: pq
+    prefix_reference: http://www.wikidata.org/prop/qualifier/
+  schema:
+    prefix_prefix: schema
+    prefix_reference: http://schema.org/
+  ex:
+    prefix_prefix: ex
+    prefix_reference: http://example.org/
+  exthisns:
+    prefix_prefix: exthisns
+    prefix_reference: https://example.org/ns/
+  shex:
+    prefix_prefix: shex
+    prefix_reference: http://www.w3.org/ns/shex#
+emit_prefixes:
+- dlcommonmx
+- dlfilesmx
+- dlflat
+- dlflatfiles
+- dlflatres
+- dlflatprov
+- dlflatpublications
+- dlflatsocial
+- dlflatstudy
+- dlidentifiers
+- dlprovmx
+- dlpublicationsmx
+- dlquantmx
+- dlrelationsmx
+- dlresmx
+- dlspatialmx
+- dlsocialmx
+- dlstudymx
+- dltemporalmx
+- dlthings
+- dltypes
+- rdf
+- rdfs
+- skos
+- w3ctr
+- xsd
+- ISSN
+- bibo
+- datalad
+- dcterms
+- dldi
+- doi
+- geodata
+- obo
+- orcid
+- ror
+- rrid
+- xyzrans
+default_prefix: xyzra
+types:
+  flexdate:
+    name: flexdate
+    description: W3C variant/subset of IS08601 for specifying date(times). Supported
+      are - YYYY (eg 1997) - YYYY-MM (eg 1997-07) - YYYY-MM-DD (eg 1997-07-16)
+    from_schema: https://concepts.datalad.org/s/demo-research-assets
+    typeof: string
+    base: str
+    uri: xyzra:flexdate
+    pattern: ^([-+]\d+)|(\d{4})|(\d{4}-[01]\d)|(\d{4}-[01]\d-[0-3]\d)$
+  string:
+    name: string
+    description: A character string
+    notes:
+    - In RDF serializations, a slot with range of string is treated as a literal or
+      type xsd:string.   If you are authoring schemas in LinkML YAML, the type is
+      referenced with the lower case "string".
+    from_schema: https://w3id.org/linkml/types
+    exact_mappings:
+    - schema:Text
+    base: str
+    uri: xsd:string
+  integer:
+    name: integer
+    description: An integer
+    notes:
+    - If you are authoring schemas in LinkML YAML, the type is referenced with the
+      lower case "integer".
+    from_schema: https://w3id.org/linkml/types
+    exact_mappings:
+    - schema:Integer
+    base: int
+    uri: xsd:integer
+  boolean:
+    name: boolean
+    description: A binary (true or false) value
+    notes:
+    - If you are authoring schemas in LinkML YAML, the type is referenced with the
+      lower case "boolean".
+    from_schema: https://w3id.org/linkml/types
+    exact_mappings:
+    - schema:Boolean
+    base: Bool
+    uri: xsd:boolean
+    repr: bool
+  float:
+    name: float
+    description: A real number that conforms to the xsd:float specification
+    notes:
+    - If you are authoring schemas in LinkML YAML, the type is referenced with the
+      lower case "float".
+    from_schema: https://w3id.org/linkml/types
+    exact_mappings:
+    - schema:Float
+    base: float
+    uri: xsd:float
+  double:
+    name: double
+    description: A real number that conforms to the xsd:double specification
+    notes:
+    - If you are authoring schemas in LinkML YAML, the type is referenced with the
+      lower case "double".
+    from_schema: https://w3id.org/linkml/types
+    close_mappings:
+    - schema:Float
+    base: float
+    uri: xsd:double
+  decimal:
+    name: decimal
+    description: A real number with arbitrary precision that conforms to the xsd:decimal
+      specification
+    notes:
+    - If you are authoring schemas in LinkML YAML, the type is referenced with the
+      lower case "decimal".
+    from_schema: https://w3id.org/linkml/types
+    broad_mappings:
+    - schema:Number
+    base: Decimal
+    uri: xsd:decimal
+  time:
+    name: time
+    description: A time object represents a (local) time of day, independent of any
+      particular day
+    notes:
+    - URI is dateTime because OWL reasoners do not work with straight date or time
+    - If you are authoring schemas in LinkML YAML, the type is referenced with the
+      lower case "time".
+    from_schema: https://w3id.org/linkml/types
+    exact_mappings:
+    - schema:Time
+    base: XSDTime
+    uri: xsd:time
+    repr: str
+  date:
+    name: date
+    description: a date (year, month and day) in an idealized calendar
+    notes:
+    - URI is dateTime because OWL reasoners don't work with straight date or time
+    - If you are authoring schemas in LinkML YAML, the type is referenced with the
+      lower case "date".
+    from_schema: https://w3id.org/linkml/types
+    exact_mappings:
+    - schema:Date
+    base: XSDDate
+    uri: xsd:date
+    repr: str
+  datetime:
+    name: datetime
+    description: The combination of a date and time
+    notes:
+    - If you are authoring schemas in LinkML YAML, the type is referenced with the
+      lower case "datetime".
+    from_schema: https://w3id.org/linkml/types
+    exact_mappings:
+    - schema:DateTime
+    base: XSDDateTime
+    uri: xsd:dateTime
+    repr: str
+  date_or_datetime:
+    name: date_or_datetime
+    description: Either a date or a datetime
+    notes:
+    - If you are authoring schemas in LinkML YAML, the type is referenced with the
+      lower case "date_or_datetime".
+    from_schema: https://w3id.org/linkml/types
+    base: str
+    uri: linkml:DateOrDatetime
+    repr: str
+  uriorcurie:
+    name: uriorcurie
+    description: a URI or a CURIE
+    notes:
+    - If you are authoring schemas in LinkML YAML, the type is referenced with the
+      lower case "uriorcurie".
+    from_schema: https://w3id.org/linkml/types
+    base: URIorCURIE
+    uri: xsd:anyURI
+    repr: str
+  curie:
+    name: curie
+    conforms_to: https://www.w3.org/TR/curie/
+    description: a compact URI
+    notes:
+    - If you are authoring schemas in LinkML YAML, the type is referenced with the
+      lower case "curie".
+    comments:
+    - in RDF serializations this MUST be expanded to a URI
+    - in non-RDF serializations MAY be serialized as the compact representation
+    from_schema: https://w3id.org/linkml/types
+    base: Curie
+    uri: xsd:string
+    repr: str
+  uri:
+    name: uri
+    conforms_to: https://www.ietf.org/rfc/rfc3987.txt
+    description: a complete URI
+    notes:
+    - If you are authoring schemas in LinkML YAML, the type is referenced with the
+      lower case "uri".
+    comments:
+    - in RDF serializations a slot with range of uri is treated as a literal or type
+      xsd:anyURI unless it is an identifier or a reference to an identifier, in which
+      case it is translated directly to a node
+    from_schema: https://w3id.org/linkml/types
+    close_mappings:
+    - schema:URL
+    base: URI
+    uri: xsd:anyURI
+    repr: str
+  ncname:
+    name: ncname
+    description: Prefix part of CURIE
+    notes:
+    - If you are authoring schemas in LinkML YAML, the type is referenced with the
+      lower case "ncname".
+    from_schema: https://w3id.org/linkml/types
+    base: NCName
+    uri: xsd:string
+    repr: str
+  objectidentifier:
+    name: objectidentifier
+    description: A URI or CURIE that represents an object in the model.
+    notes:
+    - If you are authoring schemas in LinkML YAML, the type is referenced with the
+      lower case "objectidentifier".
+    comments:
+    - Used for inheritance and type checking
+    from_schema: https://w3id.org/linkml/types
+    base: ElementIdentifier
+    uri: shex:iri
+    repr: str
+  nodeidentifier:
+    name: nodeidentifier
+    description: A URI, CURIE or BNODE that represents a node in a model.
+    notes:
+    - If you are authoring schemas in LinkML YAML, the type is referenced with the
+      lower case "nodeidentifier".
+    from_schema: https://w3id.org/linkml/types
+    base: NodeIdentifier
+    uri: shex:nonLiteral
+    repr: str
+  jsonpointer:
+    name: jsonpointer
+    conforms_to: https://datatracker.ietf.org/doc/html/rfc6901
+    description: A string encoding a JSON Pointer. The value of the string MUST conform
+      to JSON Point syntax and SHOULD dereference to a valid object within the current
+      instance document when encoded in tree form.
+    notes:
+    - If you are authoring schemas in LinkML YAML, the type is referenced with the
+      lower case "jsonpointer".
+    from_schema: https://w3id.org/linkml/types
+    base: str
+    uri: xsd:string
+    repr: str
+  jsonpath:
+    name: jsonpath
+    conforms_to: https://www.ietf.org/archive/id/draft-goessner-dispatch-jsonpath-00.html
+    description: A string encoding a JSON Path. The value of the string MUST conform
+      to JSON Point syntax and SHOULD dereference to zero or more valid objects within
+      the current instance document when encoded in tree form.
+    notes:
+    - If you are authoring schemas in LinkML YAML, the type is referenced with the
+      lower case "jsonpath".
+    from_schema: https://w3id.org/linkml/types
+    base: str
+    uri: xsd:string
+    repr: str
+  sparqlpath:
+    name: sparqlpath
+    conforms_to: https://www.w3.org/TR/sparql11-query/#propertypaths
+    description: A string encoding a SPARQL Property Path. The value of the string
+      MUST conform to SPARQL syntax and SHOULD dereference to zero or more valid objects
+      within the current instance document when encoded as RDF.
+    notes:
+    - If you are authoring schemas in LinkML YAML, the type is referenced with the
+      lower case "sparqlpath".
+    from_schema: https://w3id.org/linkml/types
+    base: str
+    uri: xsd:string
+    repr: str
+  W3CISO8601:
+    name: W3CISO8601
+    description: W3C variant/subset of IS08601 for specifying date(times). Supported
+      are - YYYY (eg 1997) - YYYY-MM (eg 1997-07) - YYYY-MM-DD (eg 1997-07-16) - YYYY-MM-DDThh:mmTZD
+      (eg 1997-07-16T19:20+01:00) - YYYY-MM-DDThh:mm:ssTZD (eg 1997-07-16T19:20:30+01:00)
+      - YYYY-MM-DDThh:mm:ss.sTZD (eg 1997-07-16T19:20:30.45+01:00) where TZD is the
+      time zone designator (Z or +hh:mm or -hh:mm)
+    from_schema: https://concepts.datalad.org/s/temporal-mixin/unreleased
+    see_also:
+    - https://www.w3.org/TR/NOTE-datetime
+    typeof: string
+    base: str
+    uri: w3ctr:NOTE-datetime
+    pattern: ^([-+]\d+)|(\d{4})|(\d{4}-[01]\d)|(\d{4}-[01]\d-[0-3]\d)|(\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d:[0-5]\d\.\d+([+-][0-2]\d:[0-5]\d|Z))|(\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d:[0-5]\d([+-][0-2]\d:[0-5]\d|Z))|(\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d([+-][0-2]\d:[0-5]\d|Z))$
+  EmailAddress:
+    name: EmailAddress
+    description: RFC 5322 compliant email address
+    notes:
+    - The validation regex is taken from https://stackoverflow.com/a/201378
+    - The regex is single-quoted for YAML encoding, hence all inner "'" have been
+      doubled
+    from_schema: https://concepts.datalad.org/s/types/v1
+    typeof: string
+    base: str
+    uri: dltypes:EmailAddress
+    pattern: (?:[A-Za-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[A-Za-z0-9!#$%&'*+/=?^_`{|}~-]+)*|"(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21\x23-\x5b\x5d-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])*")@(?:(?:[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?\.)+[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?|\[(?:(?:(2(5[0-5]|[0-4][0-9])|1[0-9][0-9]|[1-9]?[0-9]))\.){3}(?:(2(5[0-5]|[0-4][0-9])|1[0-9][0-9]|[1-9]?[0-9])|[A-Za-z0-9-]*[A-Za-z0-9]:(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21-\x5a\x53-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])+)\])
+  HexBinary:
+    name: HexBinary
+    description: hex-encoded binary data.
+    from_schema: https://concepts.datalad.org/s/types/v1
+    typeof: string
+    base: str
+    uri: xsd:hexBinary
+    pattern: ^[a-fA-F0-9]+$
+  NodeUriOrCurie:
+    name: NodeUriOrCurie
+    description: A type referencing an graph node. This is like `uriorcurie`, but
+      in an RDF export leads to the desirable `rdf.type` declaration, rather then
+      an `rdf.literal` of the corresponding URI.
+    from_schema: https://concepts.datalad.org/s/types/v1
+    typeof: uriorcurie
+    base: str
+    uri: rdfs:Resource
+  NonNegativeInteger:
+    name: NonNegativeInteger
+    description: An integer
+    notes:
+    - Integer with minimum (inclusive) value of zero, i.e. the standard mathematical
+      concept of the non-negative integers.
+    from_schema: https://concepts.datalad.org/s/types/v1
+    broad_mappings:
+    - schema:Integer
+    typeof: integer
+    base: int
+    uri: xsd:nonNegativeInteger
+enums:
+  YesNoUnknownClassifcation:
+    name: YesNoUnknownClassifcation
+    description: Boolean classification with a third option indicating that the true
+      value is not known.
+    from_schema: https://concepts.datalad.org/s/demo-research-assets
+    permissible_values:
+      'yes':
+        text: 'yes'
+        description: Consent given
+      'no':
+        text: 'no'
+        description: No consent given
+      unknown:
+        text: unknown
+        description: The true value is not known (yet)
+slots:
+  orcid:
+    name: orcid
+    description: ORCID identifier of a person (see https://orcid.org).
+    title: ORCID
+    from_schema: https://concepts.datalad.org/s/demo-research-assets
+    range: string
+    pattern: ^\d{4}-\d{4}-\d{4}-\d{3}[0-9X]{1}$
+  display_label:
+    name: display_label
+    description: Label that can be shown when the metadata record is displayed as
+      an item.
+    title: Record display label
+    from_schema: https://concepts.datalad.org/s/flat
+    slot_uri: skos:prefLabel
+    range: string
+  display_note:
+    name: display_note
+    annotations:
+      dash:singleLine:
+        tag: dash:singleLine
+        value: false
+    description: Note that can be shown when the record is displayed as an item. This
+      is typically longer than a label.
+    title: Record display note
+    from_schema: https://concepts.datalad.org/s/flat
+    slot_uri: skos:note
+    range: string
+  editorial_note:
+    name: editorial_note
+    annotations:
+      dash:singleLine:
+        tag: dash:singleLine
+        value: false
+    description: A comment about a metadata record either providing additional information
+      for a record curation, or leaving a comment after curation occurred. This can
+      be used to include information that is deemed relevant, but could not be expressed
+      in the provided fields.
+    title: Editorial note
+    from_schema: https://concepts.datalad.org/s/flat
+    slot_uri: skos:editorialNote
+    range: string
+    multivalued: true
+  keywords:
+    name: keywords
+    description: One or more keywords or tags describing the subject.
+    from_schema: https://concepts.datalad.org/s/common-mixin/unreleased
+    exact_mappings:
+    - dcat:keyword
+    - schema:keywords
+    - obo:IAO_0000629
+    range: string
+    multivalued: true
+  name:
+    name: name
+    description: Name of the subject. A name is closely related to a `title`, but
+      often more compact and identifier-like, but without the implication of uniqueness
+      of an identifier. A name is often used by technical systems to display an item
+      in an organizational structure, such as a file in a directory hierarchy.
+    from_schema: https://concepts.datalad.org/s/common-mixin/unreleased
+    exact_mappings:
+    - rdfs:label
+    - schema:name
+    - foaf:name
+    close_mappings:
+    - dcterms:title
+    - obo:IAO_0000590
+    range: string
+  short_name:
+    name: short_name
+    description: A shortened name for the subject. For example, an acronym, initialism,
+      nickname, or other abbreviation of the `name`.
+    from_schema: https://concepts.datalad.org/s/common-mixin/unreleased
+    exact_mappings:
+    - pq:P1813
+    broad_mappings:
+    - obo:NCIT_C42610
+    is_a: name
+    range: string
+  title:
+    name: title
+    description: A summarily description of the subject. It is closely related to
+      a `name`, but often less compact and more descriptive. Typically used for documents.
+    from_schema: https://concepts.datalad.org/s/common-mixin/unreleased
+    exact_mappings:
+    - dcterms:title
+    related_mappings:
+    - schema:name
+    range: string
+  about:
+    name: about
+    description: A relation of an information artifact to the subject, such as a URL
+      identifying the topic of a document.
+    from_schema: https://concepts.datalad.org/s/relations-mixin/unreleased
+    exact_mappings:
+    - schema:about
+    - obo:IAO_0000136
+    range: Thing
+  conforms_to:
+    name: conforms_to
+    description: An established standard to which the subject conforms.
+    comments:
+    - This property SHOULD be used to indicate a model, schema, ontology, view or
+      profile that the subject conforms to.
+    from_schema: https://concepts.datalad.org/s/relations-mixin/unreleased
+    exact_mappings:
+    - dcterms:conformsTo
+    range: Thing
+  kind:
+    name: kind
+    description: The nature of the subject.
+    from_schema: https://concepts.datalad.org/s/relations-mixin/unreleased
+    exact_mappings:
+    - dcterms:type
+    range: Thing
+  part_of:
+    name: part_of
+    description: The entity that the subject is a part of. A core relation that holds
+      between a part and its whole.
+    from_schema: https://concepts.datalad.org/s/relations-mixin/unreleased
+    exact_mappings:
+    - obo:BFO_0000050
+    - dcterms:isPartOf
+    - schema:isPartOf
+    range: Thing
+  parts:
+    name: parts
+    description: A related resource that is included either physically or logically
+      in the described resource.
+    from_schema: https://concepts.datalad.org/s/relations-mixin/unreleased
+    exact_mappings:
+    - dcterms:hasPart
+    - schema:hasPart
+    range: Thing
+    multivalued: true
+  roles:
+    name: roles
+    description: Describes the function of an entity or agent (object) within the
+      scope of a relationship with the subject.
+    from_schema: https://concepts.datalad.org/s/relations-mixin/unreleased
+    exact_mappings:
+    - prov:hadRole
+    - dcat:had_role
+    range: Thing
+    multivalued: true
+  same_as:
+    name: same_as
+    description: Declares that the subject and an object are equal. Can be used to
+      indicate a URL of a reference Web page that unambiguously indicates the subject's
+      identity. For example, the URL of the subject's Wikipedia page, Wikidata entry,
+      or official website.
+    from_schema: https://concepts.datalad.org/s/relations-mixin/unreleased
+    exact_mappings:
+    - owl:sameAs
+    close_mappings:
+    - schema:sameAs
+    range: Thing
+  at_location:
+    name: at_location
+    description: Associate the subject with a location. This can be a geographic place,
+      or another uniquely identified object.
+    notes:
+    - For specifying a context-specific location see `locator`.
+    comments:
+    - Does not define a range, because the desired type is highly use case specific.
+    from_schema: https://concepts.datalad.org/s/spatial-mixin/unreleased
+    exact_mappings:
+    - prov:atLocation
+    - schema:location
+    range: Thing
+  locator:
+    name: locator
+    description: A descriptive identifier that locates a resource within a containing
+      resource. This can be a unique name, a numerical key, or another notation that
+      uniquely identifies the subject within the containing resource.
+    notes:
+    - For specifying a location via a globally unique identifier see `at_location`.
+    from_schema: https://concepts.datalad.org/s/spatial-mixin/unreleased
+    exact_mappings:
+    - bibo:locator
+    range: string
+  broad_mappings:
+    name: broad_mappings
+    description: A list of terms from different schemas or terminology systems that
+      have broader meaning.
+    title: Broad mappings
+    from_schema: https://concepts.datalad.org/s/things/v1
+    is_a: mappings
+    slot_uri: skos:broadMatch
+    range: uriorcurie
+    multivalued: true
+  close_mappings:
+    name: close_mappings
+    description: A list of terms from different schemas or terminology systems that
+      have close meaning.
+    title: Close mappings
+    from_schema: https://concepts.datalad.org/s/things/v1
+    is_a: mappings
+    slot_uri: skos:closeMatch
+    range: uriorcurie
+    multivalued: true
+  description:
+    name: description
+    annotations:
+      dash:singleLine:
+        tag: dash:singleLine
+        value: false
+    description: A free-text account of the subject.
+    title: Description
+    from_schema: https://concepts.datalad.org/s/things/v1
+    exact_mappings:
+    - dcterms:description
+    - rdfs:comment
+    broad_mappings:
+    - obo:IAO_0000300
+    slot_uri: dlthings:description
+    range: string
+  exact_mappings:
+    name: exact_mappings
+    description: A list of terms from different schemas or terminology systems that
+      have identical meaning.
+    title: Exact mappings
+    from_schema: https://concepts.datalad.org/s/things/v1
+    is_a: mappings
+    slot_uri: skos:exactMatch
+    range: uriorcurie
+    multivalued: true
+  attributes:
+    name: attributes
+    description: Declares a relation that associates a `Thing` (or another attribute)
+      with an attribute, where an attribute is an intrinsic characteristic, such as
+      a quality, capability, disposition, function, or is an externally derived attribute
+      determined from some descriptor (e.g. a quantity, position, label/identifier).
+      Technically, this declaration is done via an `AttributeSpecification` that combines
+      a `predicate` with a value declaration and the attribute-related slots of a
+      `Thing`. Importantly, such attributes are declared inline, because they do not
+      have a unique identifier. If an identifier is available, a `Thing` declaration
+      (see `relation`), and a qualification of that relationship via a `Statement`
+      (see `characterized_by`) should be preferred.
+    title: Attributes
+    from_schema: https://concepts.datalad.org/s/things/v1
+    exact_mappings:
+    - sio:SIO_000008
+    slot_uri: dlthings:attributes
+    range: AttributeSpecification
+    multivalued: true
+    inlined: true
+    inlined_as_list: true
+  pid:
+    name: pid
+    description: Persistent and globally unique identifier of a `Thing`.
+    title: Persistent identifier
+    from_schema: https://concepts.datalad.org/s/things/v1
+    exact_mappings:
+    - dcterms:identifier
+    - schema:identifier
+    - ADMS:identifier
+    slot_uri: dlthings:pid
+    identifier: true
+    range: uriorcurie
+  characterized_by:
+    name: characterized_by
+    description: Qualifies relationships between a subject `Thing` and an object `Thing`
+      with a `Statement` declaring a `predicate` on the nature of the relationship.
+    title: Is characterized by
+    from_schema: https://concepts.datalad.org/s/things/v1
+    exact_mappings:
+    - obo:RO_0000053
+    slot_uri: dlthings:characterized_by
+    range: Statement
+    multivalued: true
+    inlined: true
+    inlined_as_list: true
+  mappings:
+    name: mappings
+    description: A list of terms from different schemas or terminology systems that
+      have comparable meaning. These may include terms that are precisely equivalent,
+      broader or narrower in meaning, or otherwise semantically related but not equivalent
+      from a strict ontological perspective.
+    from_schema: https://concepts.datalad.org/s/things/v1
+    slot_uri: skos:mappingRelation
+    range: uriorcurie
+    multivalued: true
+  annotations:
+    name: annotations
+    description: A record of properties of the metadata record on a subject, a collection
+      of tag/text tuples with the semantics of OWL Annotation.
+    title: Annotations
+    from_schema: https://concepts.datalad.org/s/things/v1
+    exact_mappings:
+    - obo:NCIT_C44272
+    slot_uri: dlthings:annotations
+    range: Annotation
+    multivalued: true
+    inlined: true
+  annotation_tag:
+    name: annotation_tag
+    description: A tag identifying an annotation.
+    from_schema: https://concepts.datalad.org/s/things/v1
+    range: Thing
+  annotation_value:
+    name: annotation_value
+    description: The actual annotation.
+    from_schema: https://concepts.datalad.org/s/things/v1
+    range: string
+  narrow_mappings:
+    name: narrow_mappings
+    description: A list of terms from different schemas or terminology systems that
+      have narrower meaning.
+    title: Narrow mappings
+    from_schema: https://concepts.datalad.org/s/things/v1
+    is_a: mappings
+    slot_uri: skos:narrowMatch
+    range: uriorcurie
+    multivalued: true
+  object:
+    name: object
+    description: Reference to a `Thing` within a `Statement`.
+    notes:
+    - We do not declare a range here to be able to tighten the range in subclasses
+      of class that need a particular range. This appears to be working around a linkml
+      limitation.
+    from_schema: https://concepts.datalad.org/s/things/v1
+    exact_mappings:
+    - rdf:object
+    slot_uri: rdf:object
+    relational_role:
+      text: OBJECT
+      description: a slot with this role connects a relationship to its object/target
+        node
+      meaning: http://www.w3.org/1999/02/22-rdf-syntax-ns#object
+    multivalued: false
+    inlined: false
+  predicate:
+    name: predicate
+    description: Reference to a `Property` within a `Statement`.
+    from_schema: https://concepts.datalad.org/s/things/v1
+    exact_mappings:
+    - rdf:predicate
+    slot_uri: rdf:predicate
+    relational_role:
+      text: PREDICATE
+      description: a slot with this role connects a relationship to its predicate/property
+      meaning: http://www.w3.org/1999/02/22-rdf-syntax-ns#predicate
+    range: Property
+    multivalued: false
+    inlined: false
+  range:
+    name: range
+    description: Declares that the value of a `Thing` or `AttributeSpecification`
+      are instances of a particular class.
+    from_schema: https://concepts.datalad.org/s/things/v1
+    exact_mappings:
+    - rdfs:range
+    slot_uri: rdfs:range
+    range: uriorcurie
+  related_mappings:
+    name: related_mappings
+    description: A list of terms from different schemas or terminology systems that
+      have related meaning.
+    title: Related mappings
+    from_schema: https://concepts.datalad.org/s/things/v1
+    is_a: mappings
+    slot_uri: skos:relatedMatch
+    range: uriorcurie
+    multivalued: true
+  relations:
+    name: relations
+    description: Declares an unqualified relation of the subject `Thing` to another
+      `Thing`. This schema slot is used to define related things inline. If such a
+      definition is not needed. A qualified relationship can be declared directly
+      using the `characterized_by` slot.
+    title: Relations
+    from_schema: https://concepts.datalad.org/s/things/v1
+    exact_mappings:
+    - dcat:relation
+    - dcterms:relation
+    domain: Thing
+    slot_uri: dlthings:relation
+    symmetric: true
+    relational_role:
+      text: OBJECT
+      description: a slot with this role connects a relationship to its object/target
+        node
+      meaning: http://www.w3.org/1999/02/22-rdf-syntax-ns#object
+    range: Thing
+    multivalued: true
+    inlined: true
+    inlined_as_list: false
+  value:
+    name: value
+    description: Value of a thing.
+    from_schema: https://concepts.datalad.org/s/things/v1
+    exact_mappings:
+    - rdf:value
+    slot_uri: rdfs:value
+    relational_role:
+      text: OBJECT
+      description: a slot with this role connects a relationship to its object/target
+        node
+      meaning: http://www.w3.org/1999/02/22-rdf-syntax-ns#object
+    range: string
+  byte_size:
+    name: byte_size
+    description: The size of the subject in bytes.
+    from_schema: https://concepts.datalad.org/s/files-mixin/unreleased
+    exact_mappings:
+    - dcat:byteSize
+    range: NonNegativeInteger
+  distribution_of:
+    name: distribution_of
+    description: The resource that the subject is a distribution of.
+    from_schema: https://concepts.datalad.org/s/files-mixin/unreleased
+    broad_mappings:
+    - sio:SIO_000426
+    range: Thing
+  format:
+    name: format
+    description: The file format of a distribution.
+    notes:
+    - When type of the distribution is defined by IANA, `media_type` should be used.
+    from_schema: https://concepts.datalad.org/s/files-mixin/unreleased
+    exact_mappings:
+    - dcterms:format
+    range: Thing
+  media_type:
+    name: media_type
+    description: The media type of a distribution as defined by IANA
+    examples:
+    - value: text/csv
+    from_schema: https://concepts.datalad.org/s/files-mixin/unreleased
+    see_also:
+    - https://www.iana.org/assignments/media-types
+    exact_mappings:
+    - dcat:mediaType
+    range: string
+  checksums:
+    name: checksums
+    description: The checksum property provides a mechanism that can be used to verify
+      that the contents of a file or package have not changed.
+    from_schema: https://concepts.datalad.org/s/flat-files
+    exact_mappings:
+    - spdx:checksum
+    range: Checksum
+    multivalued: true
+    inlined: true
+    inlined_as_list: true
+  at_time:
+    name: at_time
+    description: Time at which an instanteneous event takes place or took place.
+    from_schema: https://concepts.datalad.org/s/temporal-mixin/unreleased
+    exact_mappings:
+    - prov:atTime
+    range: W3CISO8601
+  date_modified:
+    name: date_modified
+    description: Timepoint at which the subject was (last) changed, updated or modified.
+    notes:
+    - successful validation with `datetime` as a range and linkml-jsonschema-validate`
+      depends on a patched linkml, see https://github.com/linkml/linkml/issues/1806
+    - a related problem also exists for `linkml-validate`, we cannot have a more specific
+      range right now
+    from_schema: https://concepts.datalad.org/s/temporal-mixin/unreleased
+    exact_mappings:
+    - dcterms:modified
+    range: W3CISO8601
+  date_published:
+    name: date_published
+    description: Timepoint at which the subject was (last) published.
+    from_schema: https://concepts.datalad.org/s/temporal-mixin/unreleased
+    exact_mappings:
+    - schema:datePublished
+    - dcterms:issued
+    range: W3CISO8601
+  started_at:
+    name: started_at
+    description: Start is when an activity is deemed to have been started by some
+      trigger. The activity did not exist before its start. Any usage, generation,
+      or invalidation involving an activity follows the activity's start.
+    from_schema: https://concepts.datalad.org/s/temporal-mixin/unreleased
+    exact_mappings:
+    - prov:startedAtTime
+    range: W3CISO8601
+  ended_at:
+    name: ended_at
+    description: End is when an activity is deemed to have been ended by some trigger.
+      The activity no longer exists after its end. Any usage, generation, or invalidation
+      involving an activity precedes the activity's end.
+    from_schema: https://concepts.datalad.org/s/temporal-mixin/unreleased
+    exact_mappings:
+    - prov:endedAtTime
+    range: W3CISO8601
+  authors:
+    name: authors
+    description: People that contributed to a document in the author role.
+    from_schema: https://concepts.datalad.org/s/publications-mixin/unreleased
+    range: Thing
+    multivalued: true
+  doi:
+    name: doi
+    description: Associated Digital Object Identifier (DOI; ISO 26324; see https://doi.org).  The
+      value must be just the DOI without the URL project. So just `10.1038/s41597-022-01163-2`
+      and not `https://doi.org/10.1038/s41597-022-01163-2`.
+    title: DOI
+    from_schema: https://concepts.datalad.org/s/publications-mixin/unreleased
+    range: string
+  issn:
+    name: issn
+    description: Associated International Standard Serial Number (ISSN) identifier
+      (see https://www.issn.org).
+    title: ISSN
+    from_schema: https://concepts.datalad.org/s/publications-mixin/unreleased
+    range: string
+    pattern: ^\d{4}-\d{3}[0-9X]{1}$
+  published_at:
+    name: published_at
+    description: The venue a publication was made.
+    from_schema: https://concepts.datalad.org/s/publications-mixin/unreleased
+    range: Thing
+  howto_acknowledge:
+    name: howto_acknowledge
+    description: A description of how the subject should be acknowledged.
+    from_schema: https://concepts.datalad.org/s/resources-mixin/unreleased
+    range: string
+  funding:
+    name: funding
+    description: Source of funding for the subject, such as a specific grant.
+    from_schema: https://concepts.datalad.org/s/resources-mixin/unreleased
+    exact_mappings:
+    - schema:funding
+    range: Thing
+  sponsor:
+    name: sponsor
+    description: An agent that supports a thing through a pledge, promise, or financial
+      contribution.
+    from_schema: https://concepts.datalad.org/s/resources-mixin/unreleased
+    exact_mappings:
+    - schema:sponsor
+    close_mappings:
+    - obo:SLSO_0001139
+    range: Thing
+  family_name:
+    name: family_name
+    description: The (inherited) family name of the subject. In many Western languages
+      this is the "last name".
+    title: Family name
+    from_schema: https://concepts.datalad.org/s/social-mixin/unreleased
+    exact_mappings:
+    - foaf:familyName
+    - vcard:family-name
+    is_a: name
+    range: string
+  formatted_name:
+    name: formatted_name
+    description: A formatted text corresponding to the name of the subject.
+    from_schema: https://concepts.datalad.org/s/social-mixin/unreleased
+    exact_mappings:
+    - vcard:fn
+    is_a: name
+    range: string
+  honorific_name_prefix:
+    name: honorific_name_prefix
+    description: The honorific prefix(es) of the subject's name. For example, (academic/formal)
+      titles like "Mrs", or "Dr", "Dame".
+    title: Title or prefix
+    from_schema: https://concepts.datalad.org/s/social-mixin/unreleased
+    exact_mappings:
+    - vcard:honorific-suffix
+    is_a: name
+    range: string
+  honorific_name_suffix:
+    name: honorific_name_suffix
+    description: The honorific suffix(es) of the subject's name. For example, generation
+      labels ("III"), or indicators of an academic degree, a profession, or a position
+      ("MD", "BA").
+    title: Suffix
+    from_schema: https://concepts.datalad.org/s/social-mixin/unreleased
+    exact_mappings:
+    - vcard:honorific-suffix
+    is_a: name
+    range: string
+  given_name:
+    name: given_name
+    description: The given (non-inherited) name of the subject.
+    title: Given name
+    from_schema: https://concepts.datalad.org/s/social-mixin/unreleased
+    exact_mappings:
+    - foaf:familyName
+    - vcard:given-name
+    is_a: name
+    range: string
+  additional_names:
+    name: additional_names
+    description: Additional name(s) associated with the subject, such as one or more
+      middle names, or a nick name.
+    title: Additional names
+    from_schema: https://concepts.datalad.org/s/social-mixin/unreleased
+    exact_mappings:
+    - vcard:additional_name
+    is_a: name
+    range: string
+    multivalued: true
+  schema_type:
+    name: schema_type
+    description: State that the subject is an instance of a particular schema class.
+      Typically, no explicit value needs to be assigned to this slot, because it matches
+      the class type of a particular record. However, this slots can be used as a
+      type designator of a schema element for validation and schema structure handling
+      purposes. This is used to indicate specialized schema classes for properties
+      that accept a hierarchy of classes as their range.
+    from_schema: https://concepts.datalad.org/s/types/v1
+    exact_mappings:
+    - dcterms:type
+    slot_uri: rdf:type
+    designates_type: true
+    range: NodeUriOrCurie
+  creator:
+    name: creator
+    description: An agent responsible for making an entity.
+    notes:
+    - The `range` is only `uriorcurie` here (and not `Thing`), because we have an
+      `ifabsent` declaration for DOIs that only work with this type. And even for
+      that it needs a patch.
+    from_schema: https://concepts.datalad.org/s/identifiers/unreleased
+    exact_mappings:
+    - dcterms:creator
+    slot_uri: dlidentifiers:creator
+    range: uriorcurie
+  identifiers:
+    name: identifiers
+    description: An unambiguous reference to the subject within a given context.
+    from_schema: https://concepts.datalad.org/s/identifiers/unreleased
+    exact_mappings:
+    - dcterms:identifier
+    - schema:identifier
+    - ADMS:identifier
+    slot_uri: dlidentifiers:identifier
+    range: Identifier
+    multivalued: true
+    inlined: true
+    inlined_as_list: true
+  notation:
+    name: notation
+    description: String of characters such as "T58:5" or "30:4833" used to uniquely
+      identify a concept within the scope of a given concept scheme.
+    from_schema: https://concepts.datalad.org/s/identifiers/unreleased
+    exact_mappings:
+    - skos:notation
+    slot_uri: dlidentifiers:notation
+    range: string
+  schema_agency:
+    name: schema_agency
+    description: Name of the agency that issued an identifier.
+    from_schema: https://concepts.datalad.org/s/identifiers/unreleased
+    exact_mappings:
+    - ADMS:schemaAgency
+    slot_uri: dlidentifiers:schema_agency
+    range: string
+  dimensions:
+    name: dimensions
+    description: Associated outcome variables.
+    title: Outcomes variables
+    from_schema: https://concepts.datalad.org/s/study-mixin/unreleased
+    multivalued: true
+  factors:
+    name: factors
+    description: Factors that influence the subject matter.
+    title: Influencing factors
+    from_schema: https://concepts.datalad.org/s/study-mixin/unreleased
+    multivalued: true
+  instruments:
+    name: instruments
+    description: Instruments employed in a study activity. This could be physical
+      devices, but also software tools.
+    title: Used instruments
+    from_schema: https://concepts.datalad.org/s/study-mixin/unreleased
+    multivalued: true
+  study:
+    name: study
+    description: The study in which the subject took place or existed.
+    title: Study context
+    from_schema: https://concepts.datalad.org/s/study-mixin/unreleased
+  associated_with:
+    name: associated_with
+    description: An activity association is an assignment of responsibility to an
+      agent for an activity, indicating that the agent had a role in the activity.
+      It further allows for a plan to be specified, which is the plan intended by
+      the agent to achieve some goals in the context of this activity.
+    from_schema: https://concepts.datalad.org/s/prov-mixin/unreleased
+    exact_mappings:
+    - prov:wasAssociatedWith
+    range: Thing
+  derived_from:
+    name: derived_from
+    description: A entity from which the subject was created through some kind of
+      process. Derivation is a transformation of an entity into another, an update
+      of an entity resulting in a new one, or the construction of a new entity based
+      on a pre-existing entity.
+    title: Derived from
+    from_schema: https://concepts.datalad.org/s/prov-mixin/unreleased
+    exact_mappings:
+    - prov:wasDerivedFrom
+    range: Thing
+  generated_by:
+    name: generated_by
+    description: Identification of the process that led to the production of the subject
+      entity. Generation is the completion of production of a new entity by an activity.
+      This entity did not exist before generation and becomes available for usage
+      after this generation.
+    title: Generated by
+    from_schema: https://concepts.datalad.org/s/prov-mixin/unreleased
+    exact_mappings:
+    - prov:wasGeneratedBy
+    range: Thing
+  quantitative_unit:
+    name: quantitative_unit
+    description: Unit of the quantitative value associated with the subject.
+    title: Unit
+    from_schema: https://concepts.datalad.org/s/quantities-mixin/unreleased
+    range: Thing
+  quantitative_value:
+    name: quantitative_value
+    description: Quantitative value associated with the subject.
+    title: Value
+    from_schema: https://concepts.datalad.org/s/quantities-mixin/unreleased
+    range: float
+classes:
+  XYZAssessment:
+    name: XYZAssessment
+    description: The final result of a determination of the value of something. This
+      is a conceptual entity. A assessment outcome might be available in more than
+      one representation, with differing formats, and serializations.
+    title: Assessment
+    from_schema: https://concepts.datalad.org/s/demo-research-assets
+    is_a: Assessment
+  XYZDataset:
+    name: XYZDataset
+    description: A collection of data, published or curated by a single agent. This
+      is a conceptual entity. A single dataset might be available in more than one
+      representation, with differing schematic layouts, formats, and serializations.
+    title: Dataset
+    from_schema: https://concepts.datalad.org/s/demo-research-assets
+    is_a: Dataset
+  XYZDimension:
+    name: XYZDimension
+    description: A dependent or outcome variable.
+    title: Dimension
+    from_schema: https://concepts.datalad.org/s/demo-research-assets
+    is_a: Dimension
+  XYZDistribution:
+    name: XYZDistribution
+    description: A specific representation of a data item, which may come in the form
+      of an electronic file, or an archive or directory of many files.
+    title: Distribution
+    from_schema: https://concepts.datalad.org/s/demo-research-assets
+    is_a: Distribution
+    slot_usage:
+      kind:
+        name: kind
+        annotations:
+          sh:order:
+            tag: sh:order
+            value: 1.0
+        range: XYZDistributionType
+      distribution_of:
+        name: distribution_of
+        annotations:
+          sh:order:
+            tag: sh:order
+            value: 2.0
+        multivalued: true
+      byte_size:
+        name: byte_size
+        annotations:
+          sh:order:
+            tag: sh:order
+            value: 3.0
+      format:
+        name: format
+        annotations:
+          sh:order:
+            tag: sh:order
+            value: 4.0
+      media_type:
+        name: media_type
+        annotations:
+          sh:order:
+            tag: sh:order
+            value: 5.0
+      checksums:
+        name: checksums
+        annotations:
+          sh:order:
+            tag: sh:order
+            value: 6.0
+      parts:
+        name: parts
+        annotations:
+          sh:order:
+            tag: sh:order
+            value: 7.0
+        range: XYZNamedDistributionPart
+        inlined: true
+  XYZNamedDistributionPart:
+    name: XYZNamedDistributionPart
+    description: An association class for attaching a `locator` as additional information
+      to a `hasPart` relationship.
+    from_schema: https://concepts.datalad.org/s/demo-research-assets
+    is_a: NamedDistributionPart
+    slot_usage:
+      roles:
+        name: roles
+        range: XYZDistributionPartType
+  XYZDistributionType:
+    name: XYZDistributionType
+    description: Type of a distribution.
+    title: Distribution type
+    from_schema: https://concepts.datalad.org/s/demo-research-assets
+    is_a: FlatThing
+  XYZDistributionPartType:
+    name: XYZDistributionPartType
+    description: Type or role of a part of a distribution. For example, a part could
+      be an item in an archive, or a file that is an executable.
+    title: Distribution part type/role
+    from_schema: https://concepts.datalad.org/s/demo-research-assets
+    is_a: FlatThing
+  XYZDocument:
+    name: XYZDocument
+    description: A conceptual entity representing things which a, broadly conceived,
+      "documents. This includes non-textual things like images. A conceputal document
+      is to be distinguished from its physical, or electronic distributions.
+    title: Document
+    from_schema: https://concepts.datalad.org/s/demo-research-assets
+    is_a: Document
+    slot_usage:
+      title:
+        name: title
+        annotations:
+          sh:order:
+            tag: sh:order
+            value: 1.0
+      kind:
+        name: kind
+        annotations:
+          sh:order:
+            tag: sh:order
+            value: 2.0
+        description: The type of this document, e.g. journal article, book, webpage
+        title: Document type
+        range: XYZBibliographicType
+      description:
+        name: description
+        annotations:
+          sh:order:
+            tag: sh:order
+            value: 3.0
+  XYZFactor:
+    name: XYZFactor
+    description: A tag associated with a categorical, independent variable in a study
+      design. Factors can have an investigative role (e.g., treatments), or have an
+      organizational nature (e.g., site labels).
+    title: Factor
+    from_schema: https://concepts.datalad.org/s/demo-research-assets
+    is_a: Factor
+  XYZGrant:
+    name: XYZGrant
+    description: A grant, typically financial or otherwise quantifiable, resources.
+    title: Grant
+    from_schema: https://concepts.datalad.org/s/demo-research-assets
+    is_a: Grant
+    slot_usage:
+      title:
+        name: title
+        annotations:
+          sh:order:
+            tag: sh:order
+            value: 1.0
+      short_name:
+        name: short_name
+        annotations:
+          sh:order:
+            tag: sh:order
+            value: 2.0
+      sponsor:
+        name: sponsor
+        annotations:
+          sh:order:
+            tag: sh:order
+            value: 3.0
+        range: XYZOrganization
+      howto_acknowledge:
+        name: howto_acknowledge
+        annotations:
+          sh:order:
+            tag: sh:order
+            value: 4.0
+      description:
+        name: description
+        annotations:
+          sh:order:
+            tag: sh:order
+            value: 5.0
+  XYZInstrument:
+    name: XYZInstrument
+    description: A thing that enables an agent to perform an action. This is typically
+      a device (e.g., a machine to perform a particular type of measurement), but
+      it can also be a questionnaire that is used to perform a particular kind of
+      assessment. An instrument is typically not a "reagent".
+    title: Instrument
+    from_schema: https://concepts.datalad.org/s/demo-research-assets
+    is_a: Instrument
+    slot_usage:
+      name:
+        name: name
+        annotations:
+          sh:order:
+            tag: sh:order
+            value: 1.0
+      kind:
+        name: kind
+        annotations:
+          sh:order:
+            tag: sh:order
+            value: 2.0
+        description: The type of this instrument, e.g. microscope, software, chainsaw
+        title: Instrument type
+        range: XYZInstrumentType
+      description:
+        name: description
+        annotations:
+          sh:order:
+            tag: sh:order
+            value: 3.0
+  XYZOrganization:
+    name: XYZOrganization
+    description: A social or legal institution such as a company, a society, or a
+      university.
+    title: Organization
+    from_schema: https://concepts.datalad.org/s/demo-research-assets
+    is_a: Organization
+  XYZPerson:
+    name: XYZPerson
+    description: Person agents are people, alive, dead, or fictional.
+    title: Person
+    from_schema: https://concepts.datalad.org/s/demo-research-assets
+    is_a: Person
+    slot_usage:
+      family_name:
+        name: family_name
+        annotations:
+          sh:order:
+            tag: sh:order
+            value: 1.0
+      given_name:
+        name: given_name
+        annotations:
+          sh:order:
+            tag: sh:order
+            value: 2.0
+      additional_names:
+        name: additional_names
+        annotations:
+          sh:order:
+            tag: sh:order
+            value: 3.0
+      honorific_name_prefix:
+        name: honorific_name_prefix
+        annotations:
+          sh:order:
+            tag: sh:order
+            value: 4.0
+      honorific_name_suffix:
+        name: honorific_name_suffix
+        annotations:
+          sh:order:
+            tag: sh:order
+            value: 5.0
+  XYZProject:
+    name: XYZProject
+    description: A collective endeavour of some kind. Typically it is a planned process
+      that is undertaken or attempted to meet some requirement, or to achieve a particular
+      goal.
+    title: Project
+    from_schema: https://concepts.datalad.org/s/demo-research-assets
+    is_a: Project
+    slots:
+    - part_of
+    slot_usage:
+      title:
+        name: title
+        annotations:
+          sh:order:
+            tag: sh:order
+            value: 1.0
+      short_name:
+        name: short_name
+        annotations:
+          sh:order:
+            tag: sh:order
+            value: 2.0
+      description:
+        name: description
+        annotations:
+          sh:order:
+            tag: sh:order
+            value: 3.0
+      part_of:
+        name: part_of
+        annotations:
+          sh:order:
+            tag: sh:order
+            value: 4.0
+        range: XYZProject
+  XYZProtocol:
+    name: XYZProtocol
+    description: A plan specification which has sufficient level of detail and quantitative
+      information to communicate it between investigation agents, so that different
+      investigation agents will reliably be able to independently reproduce the process.
+    title: Protocol
+    from_schema: https://concepts.datalad.org/s/demo-research-assets
+    is_a: Protocol
+  XYZPublication:
+    name: XYZPublication
+    description: A resource that is the output of a publishing process.
+    title: Publication
+    from_schema: https://concepts.datalad.org/s/demo-research-assets
+    is_a: Publication
+    slots:
+    - derived_from
+    - doi
+    - generated_by
+    slot_usage:
+      doi:
+        name: doi
+        annotations:
+          sh:order:
+            tag: sh:order
+            value: 1.0
+        title: DOI
+        recommended: true
+      title:
+        name: title
+        annotations:
+          sh:order:
+            tag: sh:order
+            value: 2.0
+        description: The full title of the publication.
+        required: false
+      authors:
+        name: authors
+        annotations:
+          sh:order:
+            tag: sh:order
+            value: 3.0
+        description: Authors of the publication who are anyhow contributors to XYZ.
+        required: true
+      published_at:
+        name: published_at
+        annotations:
+          sh:order:
+            tag: sh:order
+            value: 4.0
+        range: XYZPublicationVenue
+      locator:
+        name: locator
+        annotations:
+          sh:order:
+            tag: sh:order
+            value: 5.0
+        description: A descriptive identifier that the publication within the venue
+          it was published at. For a journal article, this would be a volume and/or
+          page range. Format according to the conventions of the publication venue.
+        title: Location within publication venue
+      kind:
+        name: kind
+        annotations:
+          sh:order:
+            tag: sh:order
+            value: 6.0
+        description: The type of this publication, e.g. journal article, book, webpage
+        title: Publication type
+        range: XYZBibliographicType
+      about:
+        name: about
+        annotations:
+          sh:order:
+            tag: sh:order
+            value: 7.0
+        description: Topics covered by this publication.
+        title: Topic(s)
+        range: XYZTopic
+        recommended: true
+        multivalued: true
+      date_published:
+        name: date_published
+        annotations:
+          sh:order:
+            tag: sh:order
+            value: 8.0
+        description: The date when a publication became available at the publication
+          venue.
+        range: flexdate
+      generated_by:
+        name: generated_by
+        annotations:
+          sh:order:
+            tag: sh:order
+            value: 9.0
+        description: Any project that contributed to the outcomes described in the
+          publication.
+        title: Contributing project(s)
+        range: XYZProject
+        recommended: true
+        multivalued: true
+      derived_from:
+        name: derived_from
+        annotations:
+          sh:order:
+            tag: sh:order
+            value: 10.0
+        description: Any dataset that informed the outcomes described in the publication.
+        title: Associated dataset(s)
+        range: XYZDataset
+        recommended: true
+        multivalued: true
+  XYZBibliographicType:
+    name: XYZBibliographicType
+    description: Type of a publication or document, e.g., journal article, book, or
+      webpage.
+    title: Bibliographic type
+    from_schema: https://concepts.datalad.org/s/demo-research-assets
+    is_a: FlatThing
+  XYZInstrumentType:
+    name: XYZInstrumentType
+    description: Type of an instrument.
+    title: Instrument type
+    from_schema: https://concepts.datalad.org/s/demo-research-assets
+    is_a: FlatThing
+  XYZPublicationVenue:
+    name: XYZPublicationVenue
+    description: '"Place" of a publication, e.g., a journal, a website, an edited
+      collection.'
+    title: Publication venue
+    from_schema: https://concepts.datalad.org/s/demo-research-assets
+    is_a: FlatThing
+    slots:
+    - title
+    - kind
+    slot_usage:
+      title:
+        name: title
+        annotations:
+          sh:order:
+            tag: sh:order
+            value: 1.0
+        description: The full title of the publication.
+        required: false
+      kind:
+        name: kind
+        annotations:
+          sh:order:
+            tag: sh:order
+            value: 2.0
+        description: The type of this publication venue, e.g. journal article, book,
+          webpage
+        title: Publication venue type
+        range: XYZBibliographicType
+  XYZStudy:
+    name: XYZStudy
+    description: 'A planned process that consists of parts: planning, study design
+      execution, documentation and which produce conclusion(s).'
+    title: Study
+    from_schema: https://concepts.datalad.org/s/demo-research-assets
+    is_a: Study
+  XYZSubject:
+    name: XYZSubject
+    description: A subject is an entity being investigated in a study. This is a contextual
+      entity. One and the same entity can be different subjects in two different studies.
+    title: Subject
+    from_schema: https://concepts.datalad.org/s/demo-research-assets
+    is_a: Subject
+  XYZTopic:
+    name: XYZTopic
+    description: Topic a subject is about, e.g., a particular research question or
+      domain
+    title: Topic
+    from_schema: https://concepts.datalad.org/s/demo-research-assets
+    is_a: FlatThing
+  FlatThing:
+    name: FlatThing
+    description: '`Thing` variant that provides a basis for the annotation and curation
+      of more specialized concepts.
+
+      It equips `Thing` with additional slots to annotate labels and notes that aid
+      information entry and curation in workflows and user interfaces. Moreover, the
+      `identifiers` slot enables the specification is any number of identifiers (issued
+      or computed) associated with a `Thing`.'
+    from_schema: https://concepts.datalad.org/s/flat
+    is_a: Thing
+    slots:
+    - display_label
+    - display_note
+    - editorial_note
+    - identifiers
+  ThingMixin:
+    name: ThingMixin
+    description: Mix-in with the common interface of `Thing` and `AttributeSpecification`.
+      This interface enables type specifications (`rdf:type`) for things and attributes
+      via a `type` designator slot to indicate specialized schema classes for validation
+      where a slot's `range` is too generic. A thing or attribute can be further describe
+      with statements on qualified relations to other things (`characterized_by`),
+      or inline attributes (`attributes`). A set of `mappings` slots enables the alignment
+      for arbitrary external schemas and terminologies.
+    from_schema: https://concepts.datalad.org/s/things/v1
+    mixin: true
+    slots:
+    - annotations
+    - broad_mappings
+    - close_mappings
+    - description
+    - exact_mappings
+    - attributes
+    - characterized_by
+    - narrow_mappings
+    - related_mappings
+    - schema_type
+  ValueSpecificationMixin:
+    name: ValueSpecificationMixin
+    description: Mix-in for a (structured) value specification. Two slots are provided
+      to define a (literal) value (`value`) and its type (`range`).
+    from_schema: https://concepts.datalad.org/s/things/v1
+    mixin: true
+    slots:
+    - range
+    - value
+  AttributeSpecification:
+    name: AttributeSpecification
+    description: An attribute is conceptually a thing, but it requires no dedicated
+      identifier (`pid`). Instead, it is linked to a `Thing` via its `attributes`
+      slot and declares a `predicate` on the nature of the relationship.
+    from_schema: https://concepts.datalad.org/s/things/v1
+    exact_mappings:
+    - sio:SIO_000614
+    close_mappings:
+    - dlthings:Thing
+    mixins:
+    - ThingMixin
+    - ValueSpecificationMixin
+    slots:
+    - predicate
+    slot_usage:
+      predicate:
+        name: predicate
+        required: true
+  Property:
+    name: Property
+    description: An RDF property, a `Thing` used to define a `predicate`, for example
+      in a `Statement`.
+    from_schema: https://concepts.datalad.org/s/things/v1
+    exact_mappings:
+    - rdf:Property
+    is_a: Thing
+    class_uri: dlthings:Property
+  Statement:
+    name: Statement
+    description: An RDF statement that links a `predicate` (a `Property`) with an
+      `object` (a `Thing`) to the subject to form a triple. A `Statement` is used
+      to qualify a relation to a `Thing` referenced by its identifier. For specifying
+      a qualified relation to an attribute that has no dedicated identifier, use an
+      `AttributeSpecification`.
+    from_schema: https://concepts.datalad.org/s/things/v1
+    exact_mappings:
+    - rdf:Statement
+    slots:
+    - object
+    - predicate
+    slot_usage:
+      object:
+        name: object
+        range: Thing
+        required: true
+      predicate:
+        name: predicate
+        required: true
+    class_uri: dlthings:Statement
+  Thing:
+    name: Thing
+    description: The most basic, identifiable item. In addition to the slots that
+      are common between a `Thing` and an `AttributeSpecification` (see `ThingMixin`),
+      two additional slots are provided. The `pid` slot takes the required identifier
+      for a `Thing`. The `relation` slot allows for the inline specification of other
+      `Thing` instances. Such a relation is unqualified (and symmetric), and should
+      be further characterized via a `Statement` (see `characterized_by`). From a
+      schema perspective, the `relation` slots allows for building self-contained,
+      structured documents (e.g., a JSON object) with arbitrarily complex information
+      on a `Thing`.
+    from_schema: https://concepts.datalad.org/s/things/v1
+    exact_mappings:
+    - schema:Thing
+    mixins:
+    - ThingMixin
+    slots:
+    - pid
+    - relations
+    slot_usage:
+      pid:
+        name: pid
+        annotations:
+          sh:order:
+            tag: sh:order
+            value: 1
+      characterized_by:
+        name: characterized_by
+        annotations:
+          sh:order:
+            tag: sh:order
+            value: 2
+      attributes:
+        name: attributes
+        annotations:
+          sh:order:
+            tag: sh:order
+            value: 3
+      description:
+        name: description
+        annotations:
+          sh:order:
+            tag: sh:order
+            value: 4
+          dash:singleLine:
+            tag: dash:singleLine
+            value: false
+      annotations:
+        name: annotations
+        annotations:
+          sh:order:
+            tag: sh:order
+            value: 5
+      relations:
+        name: relations
+        annotations:
+          sh:order:
+            tag: sh:order
+            value: 6
+      exact_mappings:
+        name: exact_mappings
+        annotations:
+          sh:order:
+            tag: sh:order
+            value: 7
+      close_mappings:
+        name: close_mappings
+        annotations:
+          sh:order:
+            tag: sh:order
+            value: 8
+      broad_mappings:
+        name: broad_mappings
+        annotations:
+          sh:order:
+            tag: sh:order
+            value: 9
+      narrow_mappings:
+        name: narrow_mappings
+        annotations:
+          sh:order:
+            tag: sh:order
+            value: 10
+      related_mappings:
+        name: related_mappings
+        annotations:
+          sh:order:
+            tag: sh:order
+            value: 11
+    class_uri: dlthings:Thing
+  ValueSpecification:
+    name: ValueSpecification
+    description: A `Thing` that is a value of some kind. This class can be used to
+      describe an outcome of a measurement, a factual value or constant, or other
+      qualitative or quantitative information with an associated identifier. If no
+      identifier is available, an `AttributeSpecification` can be used within the
+      context of an associated `Thing` (`attributes`).
+    from_schema: https://concepts.datalad.org/s/things/v1
+    exact_mappings:
+    - obo:OBI_0001933
+    is_a: Thing
+    mixins:
+    - ValueSpecificationMixin
+    slot_usage:
+      value:
+        name: value
+        notes:
+        - It is required, because when it is not needed, `Thing` should be used as
+          a type. Its absence is therefore likely a sign of an error.
+        required: true
+  Annotation:
+    name: Annotation
+    description: A tag/value pair with the semantics of OWL Annotation.
+    from_schema: https://concepts.datalad.org/s/things/v1
+    slots:
+    - annotation_tag
+    - annotation_value
+    slot_usage:
+      annotation_tag:
+        name: annotation_tag
+        key: true
+  Distribution:
+    name: Distribution
+    description: A specific representation of a data item, which may come in the form
+      of an electronic file, or an archive or directory of many files, may be standalone
+      or part of a larger collection.
+    comments:
+    - There is no `name` property or similar, because the focus is on the identity
+      of the distribution content, not how it might be named in a particular context.
+      For example, an image in JPEG format might be names "20250825_102385.jpg" on
+      a camera and "me_at_the_party.jpg" elsewhere, but it would be the exact same
+      image. Expressing naming in some context should be done within the scope of
+      the containing entity (see `named_parts`).
+    from_schema: https://concepts.datalad.org/s/flat-files
+    is_a: FlatThing
+    slots:
+    - byte_size
+    - checksums
+    - distribution_of
+    - format
+    - kind
+    - media_type
+    - parts
+    slot_usage:
+      kind:
+        name: kind
+        annotations:
+          sh:order:
+            tag: sh:order
+            value: 1
+      distribution_of:
+        name: distribution_of
+        annotations:
+          sh:order:
+            tag: sh:order
+            value: 2
+        multivalued: true
+      byte_size:
+        name: byte_size
+        annotations:
+          sh:order:
+            tag: sh:order
+            value: 3
+      format:
+        name: format
+        annotations:
+          sh:order:
+            tag: sh:order
+            value: 4
+      media_type:
+        name: media_type
+        annotations:
+          sh:order:
+            tag: sh:order
+            value: 5
+      checksums:
+        name: checksums
+        annotations:
+          sh:order:
+            tag: sh:order
+            value: 6
+      parts:
+        name: parts
+        annotations:
+          sh:order:
+            tag: sh:order
+            value: 7
+        range: NamedDistributionPart
+        inlined: true
+  NamedDistributionPart:
+    name: NamedDistributionPart
+    description: An association class for attaching a `locator` as additional information
+      to a `hasPart` relationship.
+    from_schema: https://concepts.datalad.org/s/flat-files
+    slots:
+    - locator
+    - roles
+    - object
+    slot_usage:
+      locator:
+        name: locator
+        description: A relative path in POSIX notation.
+        key: true
+        pattern: ^[^/]+.*$
+      object:
+        name: object
+        range: Distribution
+        required: true
+  Protocol:
+    name: Protocol
+    description: A plan specification which has sufficient level of detail and quantitative
+      information to communicate it between investigation agents, so that different
+      investigation agents will reliably be able to independently reproduce the process.
+    from_schema: https://concepts.datalad.org/s/flat-prov
+    exact_mappings:
+    - obo:OBI_0000272
+    is_a: FlatThing
+    slots:
+    - name
+    - short_name
+    slot_usage:
+      name:
+        name: name
+        annotations:
+          sh:order:
+            tag: sh:order
+            value: 1
+      short_name:
+        name: short_name
+        annotations:
+          sh:order:
+            tag: sh:order
+            value: 2
+      description:
+        name: description
+        annotations:
+          sh:order:
+            tag: sh:order
+            value: 3
+          dash:singleLine:
+            tag: dash:singleLine
+            value: false
+  Publication:
+    name: Publication
+    description: A resource that is the output of a publishing process.
+    from_schema: https://concepts.datalad.org/s/flat-publications
+    exact_mappings:
+    - obo:IAO_0000311
+    is_a: FlatThing
+    slots:
+    - about
+    - authors
+    - date_published
+    - kind
+    - locator
+    - title
+    - published_at
+    slot_usage:
+      title:
+        name: title
+        annotations:
+          sh:order:
+            tag: sh:order
+            value: 1
+        required: true
+      authors:
+        name: authors
+        annotations:
+          sh:order:
+            tag: sh:order
+            value: 2
+      published_at:
+        name: published_at
+        annotations:
+          sh:order:
+            tag: sh:order
+            value: 3
+      locator:
+        name: locator
+        annotations:
+          sh:order:
+            tag: sh:order
+            value: 4
+        description: A descriptive identifier that locates the publication within
+          the publication venue. This can be a unique name, a numerical key, or another
+          notation that uniquely identifies the subject within that context.
+      kind:
+        name: kind
+        annotations:
+          sh:order:
+            tag: sh:order
+            value: 5
+      about:
+        name: about
+        annotations:
+          sh:order:
+            tag: sh:order
+            value: 6
+        multivalued: true
+      date_published:
+        name: date_published
+        annotations:
+          sh:order:
+            tag: sh:order
+            value: 7
+  Dataset:
+    name: Dataset
+    description: A collection of data, published or curated by a single agent. This
+      is a conceptual entity. A single dataset might be available in more than one
+      representation, with differing schematic layouts, formats, and serializations.
+    from_schema: https://concepts.datalad.org/s/flat-resources
+    exact_mappings:
+    - dcat:Dataset
+    is_a: FlatThing
+    slots:
+    - title
+    - short_name
+    slot_usage:
+      title:
+        name: title
+        annotations:
+          sh:order:
+            tag: sh:order
+            value: 1
+      short_name:
+        name: short_name
+        annotations:
+          sh:order:
+            tag: sh:order
+            value: 2
+      description:
+        name: description
+        annotations:
+          sh:order:
+            tag: sh:order
+            value: 3
+  Document:
+    name: Document
+    description: A conceptual entity representing things which a, broadly conceived,
+      "documents. This includes non-textual things like images. A conceputal document
+      is to be distinguished from its physical, or electronic distributions.
+    notes:
+    - The key difference between a dataset and a document is the collection-nature
+      of the dataset (multiple items of a kind in a collection), whereas a document
+      is "one of its kind". A dataset could comprise multiple documents.
+    - A document typically has at least one author. However, there are also generated
+      documents (e.g., a birth certificate) for which this is irrelevant. And there
+      are more roles that could be relevant for a document's provenance. Rather than
+      adding them all, none is provided.
+    from_schema: https://concepts.datalad.org/s/flat-resources
+    exact_mappings:
+    - foaf:Document
+    is_a: FlatThing
+    slots:
+    - kind
+    - title
+    slot_usage:
+      title:
+        name: title
+        annotations:
+          sh:order:
+            tag: sh:order
+            value: 1
+      kind:
+        name: kind
+        annotations:
+          sh:order:
+            tag: sh:order
+            value: 2
+      description:
+        name: description
+        annotations:
+          sh:order:
+            tag: sh:order
+            value: 3
+  Grant:
+    name: Grant
+    description: A grant, typically financial or otherwise quantifiable, resources.
+    notes:
+    - A grant is not a document. The associated document would be the grant agreement.
+    - Not all grants have titles, hence there is no such slot defined here.
+    from_schema: https://concepts.datalad.org/s/flat-resources
+    exact_mappings:
+    - obo:NCIT_C16644
+    - schema:Grant
+    is_a: FlatThing
+    slots:
+    - howto_acknowledge
+    - sponsor
+    - title
+    - short_name
+    slot_usage:
+      title:
+        name: title
+        annotations:
+          sh:order:
+            tag: sh:order
+            value: 1
+      short_name:
+        name: short_name
+        annotations:
+          sh:order:
+            tag: sh:order
+            value: 2
+      sponsor:
+        name: sponsor
+        annotations:
+          sh:order:
+            tag: sh:order
+            value: 3
+        comments:
+        - In a particular context, a sponsor might always be an organization, but
+          in others it could be one or more individuals. Leaving it open here.
+        range: Thing
+      howto_acknowledge:
+        name: howto_acknowledge
+        annotations:
+          sh:order:
+            tag: sh:order
+            value: 4
+          dash:singleLine:
+            tag: dash:singleLine
+            value: false
+      description:
+        name: description
+        annotations:
+          sh:order:
+            tag: sh:order
+            value: 5
+  Instrument:
+    name: Instrument
+    description: A thing that enables an agent to perform an action. This is typically
+      a device (e.g., a machine to perform a particular type of measurement), but
+      it can also be a questionnaire that is used to perform a particular kind of
+      assessment. An instrument is typically not a "reagent".
+    notes:
+    - It is unclear whether an instrument `name` would provide meaningful and precise
+      information (vs a description or an identifier). There is `display_label`, if
+      the need for a name is just for display purposes (e.g., to say something generic
+      like 'thermometer').
+    - Slot `name` is added to avoid `display_label` having to carry unique information.
+    from_schema: https://concepts.datalad.org/s/flat-resources
+    related_mappings:
+    - schema:instrument
+    narrow_mappings:
+    - obo:NCIT_C62103
+    is_a: FlatThing
+    slots:
+    - name
+    - kind
+    slot_usage:
+      name:
+        name: name
+        annotations:
+          sh:order:
+            tag: sh:order
+            value: 1
+      kind:
+        name: kind
+        annotations:
+          sh:order:
+            tag: sh:order
+            value: 2
+      description:
+        name: description
+        annotations:
+          sh:order:
+            tag: sh:order
+            value: 3
+  Organization:
+    name: Organization
+    description: A social or legal institution such as a company, a society, or a
+      university.
+    from_schema: https://concepts.datalad.org/s/flat-social
+    exact_mappings:
+    - prov:Organization
+    is_a: FlatThing
+    slots:
+    - name
+    - short_name
+    - at_location
+    - part_of
+    slot_usage:
+      name:
+        name: name
+        annotations:
+          sh:order:
+            tag: sh:order
+            value: 1
+      short_name:
+        name: short_name
+        annotations:
+          sh:order:
+            tag: sh:order
+            value: 2
+      at_location:
+        name: at_location
+        annotations:
+          sh:order:
+            tag: sh:order
+            value: 3
+      part_of:
+        name: part_of
+        annotations:
+          sh:order:
+            tag: sh:order
+            value: 4
+        description: An organization that the subject is part of.
+        range: Organization
+  Person:
+    name: Person
+    description: Person agents are people, alive, dead, or fictional.
+    from_schema: https://concepts.datalad.org/s/flat-social
+    exact_mappings:
+    - foaf:Person
+    - prov:Person
+    is_a: FlatThing
+    slots:
+    - additional_names
+    - family_name
+    - given_name
+    - honorific_name_prefix
+    - honorific_name_suffix
+    - formatted_name
+    slot_usage:
+      family_name:
+        name: family_name
+        annotations:
+          sh:order:
+            tag: sh:order
+            value: 1
+      given_name:
+        name: given_name
+        annotations:
+          sh:order:
+            tag: sh:order
+            value: 2
+      additional_names:
+        name: additional_names
+        annotations:
+          sh:order:
+            tag: sh:order
+            value: 3
+      honorific_name_prefix:
+        name: honorific_name_prefix
+        annotations:
+          sh:order:
+            tag: sh:order
+            value: 4
+      honorific_name_suffix:
+        name: honorific_name_suffix
+        annotations:
+          sh:order:
+            tag: sh:order
+            value: 5
+  Project:
+    name: Project
+    description: A collective endeavour of some kind. Typically it is a planned process
+      that is undertaken or attempted to meet some requirement, or to achieve a particular
+      goal.
+    from_schema: https://concepts.datalad.org/s/flat-social
+    exact_mappings:
+    - foaf:Project
+    close_mappings:
+    - obo:NCIT_C47885
+    broad_mappings:
+    - obo:BFO_0000015
+    is_a: FlatThing
+    slots:
+    - short_name
+    - title
+    - part_of
+    slot_usage:
+      title:
+        name: title
+        annotations:
+          sh:order:
+            tag: sh:order
+            value: 1
+      short_name:
+        name: short_name
+        annotations:
+          sh:order:
+            tag: sh:order
+            value: 2
+  Identifier:
+    name: Identifier
+    description: An identifier is a label that uniquely identifies an item in a particular
+      context. Some identifiers are globally unique. All identifiers are unique within
+      their individual scope.
+    from_schema: https://concepts.datalad.org/s/identifiers/unreleased
+    close_mappings:
+    - ADMS:Identifier
+    slots:
+    - creator
+    - notation
+    - schema_type
+    slot_usage:
+      notation:
+        name: notation
+        required: true
+    class_uri: dlidentifiers:Identifier
+  IssuedIdentifier:
+    name: IssuedIdentifier
+    description: An identifier that was issued by a particular agent with a notation
+      that has no (or an undefined) relation to the nature of the identified entity.
+    from_schema: https://concepts.datalad.org/s/identifiers/unreleased
+    see_also:
+    - https://semiceu.github.io/ADMS/releases/2.00/#Identifier
+    exact_mappings:
+    - ADMS:Identifier
+    is_a: Identifier
+    slots:
+    - schema_agency
+    class_uri: dlidentifiers:IssuedIdentifier
+  ComputedIdentifier:
+    name: ComputedIdentifier
+    description: An identifier that has been derived from information on the identified
+      entity.
+    from_schema: https://concepts.datalad.org/s/identifiers/unreleased
+    narrow_mappings:
+    - spdx:Checksum
+    is_a: Identifier
+    class_uri: dlidentifiers:ComputedIdentifier
+  Checksum:
+    name: Checksum
+    description: A Checksum is a value that allows to check the integrity of the contents
+      of a file. Even small changes to the content of the file will change its checksum.
+      This class allows the results of a variety of checksum and cryptographic message
+      digest algorithms to be represented.
+    from_schema: https://concepts.datalad.org/s/identifiers/unreleased
+    exact_mappings:
+    - spdx:Checksum
+    is_a: ComputedIdentifier
+    slot_usage:
+      creator:
+        name: creator
+        description: Identifies the software agent (algorithm) used to produce the
+          subject `Checksum`.
+        exact_mappings:
+        - spdx:algorithm
+        required: true
+      notation:
+        name: notation
+        description: Lower case hexadecimal encoded checksum digest value.
+        exact_mappings:
+        - spdx:checksumValue
+        range: HexBinary
+        required: true
+    class_uri: dlidentifiers:Checksum
+  DOI:
+    name: DOI
+    description: Digital Object Identifier (DOI; ISO 26324), an identifier system
+      governed by the DOI Foundation, where individual identifiers are issued by one
+      of several registration agencies.
+    from_schema: https://concepts.datalad.org/s/identifiers/unreleased
+    is_a: IssuedIdentifier
+    slot_usage:
+      creator:
+        name: creator
+        description: By default, the creator is identified as "https://doi.org".
+        ifabsent: string(https://doi.org)
+      notation:
+        name: notation
+        description: The identifier notation is specified without a URL-prefix, or
+          a `doi:` prefix.
+      schema_agency:
+        name: schema_agency
+        description: By default, the schema agency is identified as `DOI Foundation`.
+        ifabsent: string(DOI Foundation)
+    class_uri: dlidentifiers:DOI
+    unique_keys:
+      value:
+        unique_key_name: value
+        unique_key_slots:
+        - notation
+        description: The DOI notation is globally unique within the scope of DOIs
+  Assessment:
+    name: Assessment
+    description: The final result of a determination of the value of something. This
+      is a conceptual entity. A assessment outcome might be available in more than
+      one representation, with differing formats, and serializations.
+    comments:
+    - The class enables the expressing quantitative and qualitative assessments. For
+      a quantitative value, the numerical value, and a possible unit is given. For
+      a qualitative value, `same_as` is used to identify the quality of the assessment
+      from a controlled vocabulary or standard term. Both approaches can be combined,
+      for example when classifying numerical values into qualitative/ordinal categories.
+    from_schema: https://concepts.datalad.org/s/flat-study
+    exact_mappings:
+    - obo:NCIT_C25217
+    is_a: FlatThing
+    slots:
+    - derived_from
+    - generated_by
+    - kind
+    - part_of
+    - quantitative_unit
+    - quantitative_value
+    - same_as
+    slot_usage:
+      part_of:
+        name: part_of
+        annotations:
+          sh:order:
+            tag: sh:order
+            value: 1
+        range: Thing
+      generated_by:
+        name: generated_by
+        annotations:
+          sh:order:
+            tag: sh:order
+            value: 2
+      derived_from:
+        name: derived_from
+        annotations:
+          sh:order:
+            tag: sh:order
+            value: 3
+        range: Subject
+      same_as:
+        name: same_as
+        annotations:
+          sh:order:
+            tag: sh:order
+            value: 4
+        description: The value of a qualitative assessment.
+        title: Qualitative value
+      quantitative_value:
+        name: quantitative_value
+        annotations:
+          sh:order:
+            tag: sh:order
+            value: 5
+        description: The value of a quantitative assessment.
+        title: Quantitative value
+      quantitative_unit:
+        name: quantitative_unit
+        annotations:
+          sh:order:
+            tag: sh:order
+            value: 6
+      kind:
+        name: kind
+        annotations:
+          sh:order:
+            tag: sh:order
+            value: 7
+  Dimension:
+    name: Dimension
+    description: A dependent or outcome variable.
+    from_schema: https://concepts.datalad.org/s/flat-study
+    is_a: FlatThing
+    slots:
+    - name
+    - part_of
+    slot_usage:
+      name:
+        name: name
+        annotations:
+          sh:order:
+            tag: sh:order
+            value: 1
+      part_of:
+        name: part_of
+        annotations:
+          sh:order:
+            tag: sh:order
+            value: 2
+        range: Dimension
+      description:
+        name: description
+        annotations:
+          sh:order:
+            tag: sh:order
+            value: 3
+          dash:singleLine:
+            tag: dash:singleLine
+            value: false
+  Factor:
+    name: Factor
+    description: A tag associated with a categorical, independent variable in a study
+      design. Factors can have an investigative role (e.g., treatments), or have an
+      organizational nature (e.g., site labels).
+    comments:
+    - The relationship of a factor "level" with the broader factor can be described
+      via `broader_mappings`.
+    from_schema: https://concepts.datalad.org/s/flat-study
+    is_a: FlatThing
+    slots:
+    - name
+    - part_of
+    slot_usage:
+      name:
+        name: name
+        annotations:
+          sh:order:
+            tag: sh:order
+            value: 1
+      part_of:
+        name: part_of
+        annotations:
+          sh:order:
+            tag: sh:order
+            value: 2
+        range: Factor
+      description:
+        name: description
+        annotations:
+          sh:order:
+            tag: sh:order
+            value: 3
+          dash:singleLine:
+            tag: dash:singleLine
+            value: false
+  Study:
+    name: Study
+    description: 'A planned process that consists of parts: planning, study design
+      execution, documentation and which produce conclusion(s).'
+    from_schema: https://concepts.datalad.org/s/flat-study
+    exact_mappings:
+    - obo:OBI_0000066
+    - sio:SIO_001066
+    narrow_mappings:
+    - sio:SIO_000994
+    - obo:NCIT_C15206
+    broad_mappings:
+    - prov:Activity
+    - obo:BFO_0000015
+    is_a: FlatThing
+    slots:
+    - associated_with
+    - dimensions
+    - factors
+    - instruments
+    - name
+    - part_of
+    slot_usage:
+      name:
+        name: name
+        annotations:
+          sh:order:
+            tag: sh:order
+            value: 1
+      factors:
+        name: factors
+        annotations:
+          sh:order:
+            tag: sh:order
+            value: 2
+        range: Factor
+      instruments:
+        name: instruments
+        annotations:
+          sh:order:
+            tag: sh:order
+            value: 3
+        range: Thing
+      dimensions:
+        name: dimensions
+        annotations:
+          sh:order:
+            tag: sh:order
+            value: 4
+        range: Dimension
+      part_of:
+        name: part_of
+        annotations:
+          sh:order:
+            tag: sh:order
+            value: 5
+        range: Study
+      associated_with:
+        name: associated_with
+        annotations:
+          sh:order:
+            tag: sh:order
+            value: 6
+        multivalued: true
+      description:
+        name: description
+        annotations:
+          sh:order:
+            tag: sh:order
+            value: 7
+          dash:singleLine:
+            tag: dash:singleLine
+            value: false
+  Subject:
+    name: Subject
+    description: A subject is an entity being investigated in a study. This is a contextual
+      entity. One and the same entity can be different subjects in two different studies.
+    from_schema: https://concepts.datalad.org/s/flat-study
+    is_a: FlatThing
+    slots:
+    - derived_from
+    - kind
+    - name
+    - study
+    slot_usage:
+      study:
+        name: study
+        annotations:
+          sh:order:
+            tag: sh:order
+            value: 1
+        range: Study
+      name:
+        name: name
+        annotations:
+          sh:order:
+            tag: sh:order
+            value: 2
+      kind:
+        name: kind
+        annotations:
+          sh:order:
+            tag: sh:order
+            value: 3
+        description: A classifier that identifies the nature/type of a subject. For
+          specimen (a subject derived/taken from another subject), this classifier
+          should be more precise than the classifier of the source subject.
+        title: Type
+      description:
+        name: description
+        annotations:
+          sh:order:
+            tag: sh:order
+            value: 4
+          dash:singleLine:
+            tag: dash:singleLine
+            value: false
+      derived_from:
+        name: derived_from
+        annotations:
+          sh:order:
+            tag: sh:order
+            value: 5
+        range: Subject
+source_file: https://concepts.datalad.org/s/demo-research-assets/unreleased.yaml
