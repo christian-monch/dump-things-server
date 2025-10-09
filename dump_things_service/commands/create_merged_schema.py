@@ -1,6 +1,9 @@
 import sys
 from argparse import ArgumentParser
 
+# Patch linkml
+from dump_things_service.patches import enabled
+
 from linkml_runtime.utils.schemaview import SchemaView
 from linkml_runtime.utils.yamlutils import as_yaml
 
@@ -23,10 +26,13 @@ def update_uris_for_elements(
         if uri is None:
             source = info.from_schema + '/'
             # Work around a bug in the schema id of the schema `
-            # `https://concepts.datalad.org/s/flat-social/unreleased`
+            # `https://concepts.datalad.org/s/flat-social/unreleased.yaml`
+            # `https://concepts.datalad.org/s/flat-study/unreleased.yaml`
             if source == 'https://concepts.datalad.org/s/flat-social/':
                 source = 'https://concepts.datalad.org/s/flat-social/unreleased/'
-            # End of work around
+            if source == 'https://concepts.datalad.org/s/flat-study/':
+                source = 'https://concepts.datalad.org/s/flat-study/unreleased/'
+            # End of workaround
 
             if source in prefix_index:
                 source = prefix_index[source] + ':'
