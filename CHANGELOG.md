@@ -1,3 +1,10 @@
+# 4.5.1 (2025-10-10)
+
+## Bugfixes
+
+- Add workaround for faulty schema definitions to schema merging tool.
+
+
 # 4.5.0 (2025-10-08)
 
 ## New features
