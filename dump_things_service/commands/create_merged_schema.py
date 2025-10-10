@@ -16,6 +16,33 @@ parser.add_argument(
 )
 
 
+def fix_schema_id_bugs(source: str) -> str:
+    """ Work around bugs in the schema id of a number of schema
+
+    While the schemas are located at `<http...x/unreleased.yaml>`, their
+    ids are `<http...x>`. This includes (at least) the schemas:
+    - `https://concepts.datalad.org/s/flat-social/unreleased.yaml`
+    - `https://concepts.datalad.org/s/flat-study/unreleased.yaml`
+    - `https://concepts.datalad.org/s/demo-research-assets/unreleased.yaml`
+    - `https://concepts.datalad.org/s/flat-resources/unreleased.yaml`
+    - `https://concepts.datalad.org/s/flat-files/unreleased.yaml`
+    - `https://concepts.datalad.org/s/flat-prov/unreleased.yaml`
+    - `https://concepts.datalad.org/s/flat-publications/unreleased.yaml`
+    """
+    for faulty_schema_source in (
+            'https://concepts.datalad.org/s/flat-social/',
+            'https://concepts.datalad.org/s/flat-study/',
+            'https://concepts.datalad.org/s/demo-research-assets/',
+            'https://concepts.datalad.org/s/flat-resources/',
+            'https://concepts.datalad.org/s/flat-files/',
+            'https://concepts.datalad.org/s/flat-prov/',
+            'https://concepts.datalad.org/s/flat-publications/',
+    ):
+        if source == faulty_schema_source:
+            return source + 'unreleased/'
+    return source
+
+
 def update_uris_for_elements(
         all_elements: dict,
         attribute_name: str,
@@ -25,14 +52,8 @@ def update_uris_for_elements(
         uri = getattr(info, attribute_name)
         if uri is None:
             source = info.from_schema + '/'
-            # Work around a bug in the schema id of the schema `
-            # `https://concepts.datalad.org/s/flat-social/unreleased.yaml`
-            # `https://concepts.datalad.org/s/flat-study/unreleased.yaml`
-            if source == 'https://concepts.datalad.org/s/flat-social/':
-                source = 'https://concepts.datalad.org/s/flat-social/unreleased/'
-            if source == 'https://concepts.datalad.org/s/flat-study/':
-                source = 'https://concepts.datalad.org/s/flat-study/unreleased/'
-            # End of workaround
+
+            source = fix_schema_id_bugs(source)
 
             if source in prefix_index:
                 source = prefix_index[source] + ':'
