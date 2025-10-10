@@ -795,6 +795,8 @@ If any backend is a `record_dir+stl` backend, a schema has to be supplied via th
 - `dump-things-pid-check`: this command checks the pids in all collections of a store to verify that they can be resolved (if they are in CURIE form).
   This is useful to validate the proper definition of prefixes after schema-changes.
 
+- `dump-things-create-merged-schema`: this command creates a new schema that statically contains all schemas that the original schema imported.
+  The new schema is fully self contained and does not reference any other schemas anymore.
 
 ### If things go wrong
 

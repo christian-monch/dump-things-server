@@ -1,31 +1,26 @@
 from __future__ import annotations
 
 import dataclasses  # noqa F401 -- used by generated code
-import importlib
 import logging
-import random
-import string
-import subprocess
-import tempfile
 from itertools import count
-from pathlib import Path
 from typing import (
     TYPE_CHECKING,
     Any,
 )
 from urllib.parse import urlparse
 
+# Ensure linkml is patched
+import dump_things_service.patches.enabled  # noqa F401 -- apply patches
+
 import annotated_types  # noqa F401 -- used by generated code
 import pydantic  # noqa F401 -- used by generated code
 import pydantic_core  # noqa F401 -- used by generated code
-from linkml.generators import PythonGenerator
+from linkml.generators import (
+    PydanticGenerator,
+    PythonGenerator,
+)
 from linkml_runtime import SchemaView
 from pydantic._internal._model_construction import ModelMetaclass
-
-from dump_things_service.utils import (
-    read_url,
-    sys_path,
-)
 
 if TYPE_CHECKING:
     from types import ModuleType
@@ -39,30 +34,6 @@ _model_counter = count()
 _model_cache = {}
 _schema_model_cache = {}
 _schema_view_cache = {}
-
-
-def build_model(
-    source_url: str,
-) -> Any:
-
-    parse_result = urlparse(source_url)
-    schema_name = Path(parse_result.path).stem
-
-    with tempfile.TemporaryDirectory() as temp_dir:
-        random_suffix = ''.join(
-            random.choices(string.ascii_letters + string.digits, k=10)
-        )
-        module_name = f'model_{next(serial_number)}_{schema_name}_{random_suffix}'
-        definition_file = Path(temp_dir) / 'definition.yaml'
-        definition_file.write_text(read_url(source_url))
-        subprocess.run(
-            args=['gen-pydantic', str(definition_file)],
-            stdout=(Path(temp_dir) / (module_name + '.py')).open('w'),
-            check=True,
-        )
-        with sys_path([temp_dir]):
-            model = importlib.import_module(module_name)
-    return model
 
 
 def get_classes(
@@ -90,7 +61,7 @@ def get_model_for_schema(
 ) -> tuple[ModuleType, list[str], str]:
     if schema_location not in _model_cache:
         lgr.info(f'Building model for schema {schema_location}.')
-        model = build_model(schema_location)
+        model = PydanticGenerator(schema_location).compile_module()
         classes = get_classes(model)
         model_var_name = f'model_{next(_model_counter)}'
         _model_cache[schema_location] = model, classes, model_var_name
