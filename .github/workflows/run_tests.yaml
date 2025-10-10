@@ -10,7 +10,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.11'
+          python-version: '3.12'
 
       - name: Install hatch
         run: |
@@ -22,4 +22,8 @@ jobs:
 
       - name: run tests
         run: |
-          hatch run tests:run
+          hatch run tests:run --ignore=dump_things_service/tests/test_generators.py
+
+      - name: run generator tests
+        run: |
+          hatch run tests:run dump_things_service/tests/test_generators.py
