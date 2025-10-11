@@ -1,3 +1,11 @@
+# 4.5.2 (2025-10-11)
+
+## Bugfixes
+
+- Remove workaround for faulty schema definitions because the schema definitions
+  were fixed in PR https://github.com/psychoinformatics-de/datalad-concepts/pull/393
+
+
 # 4.5.1 (2025-10-10)
 
 ## Bugfixes
