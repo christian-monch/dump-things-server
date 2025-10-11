@@ -16,33 +16,6 @@ parser.add_argument(
 )
 
 
-def fix_schema_id_bugs(source: str) -> str:
-    """ Work around bugs in the schema id of a number of schema
-
-    While the schemas are located at `<http...x/unreleased.yaml>`, their
-    ids are `<http...x>`. This includes (at least) the schemas:
-    - `https://concepts.datalad.org/s/flat-social/unreleased.yaml`
-    - `https://concepts.datalad.org/s/flat-study/unreleased.yaml`
-    - `https://concepts.datalad.org/s/demo-research-assets/unreleased.yaml`
-    - `https://concepts.datalad.org/s/flat-resources/unreleased.yaml`
-    - `https://concepts.datalad.org/s/flat-files/unreleased.yaml`
-    - `https://concepts.datalad.org/s/flat-prov/unreleased.yaml`
-    - `https://concepts.datalad.org/s/flat-publications/unreleased.yaml`
-    """
-    for faulty_schema_source in (
-            'https://concepts.datalad.org/s/flat-social/',
-            'https://concepts.datalad.org/s/flat-study/',
-            'https://concepts.datalad.org/s/demo-research-assets/',
-            'https://concepts.datalad.org/s/flat-resources/',
-            'https://concepts.datalad.org/s/flat-files/',
-            'https://concepts.datalad.org/s/flat-prov/',
-            'https://concepts.datalad.org/s/flat-publications/',
-    ):
-        if source == faulty_schema_source:
-            return source + 'unreleased/'
-    return source
-
-
 def update_uris_for_elements(
         all_elements: dict,
         attribute_name: str,
@@ -52,9 +25,6 @@ def update_uris_for_elements(
         uri = getattr(info, attribute_name)
         if uri is None:
             source = info.from_schema + '/'
-
-            source = fix_schema_id_bugs(source)
-
             if source in prefix_index:
                 source = prefix_index[source] + ':'
             uri = source + name
@@ -64,8 +34,8 @@ def update_uris_for_elements(
 def update_uris(schema_view: SchemaView):
     """ Update element-defining URIs to the original element source
 
-    Element-defining URIs (e.g. slot_uri, class_uri) are by default set to
-    the schema in which the element is defined. In this case that would be the
+    Element-defining URIs (e.g., slot_uri, class_uri) are by default set to
+    the schema in which the element is defined. In this case, that would be the
     root-schema of the merged schema. The merged schema would then contain different
     element-defining URIs than the individual schemas that were merged. That
     means that records that are based on the individual schemas would not be
