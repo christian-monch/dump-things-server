@@ -13,14 +13,18 @@ logger = logging.getLogger('dump_things_service')
 
 
 def EnumDefinitionMeta__getitem__(cls, item):
+    # PATCH >>>>>
     if isinstance(item, JsonObj):
         return cls.__dict__[item.text]
+    # PATCH <<<<<
     return cls.__dict__[item]
 
 
 def EnumDefinitionMeta__contains__(cls, item) -> bool:
+    # PATCH >>>>>
     if isinstance(item, JsonObj):
         return item.text in cls.__dict__
+    # PATCH <<<<<
     return item in cls.__dict__
 
 

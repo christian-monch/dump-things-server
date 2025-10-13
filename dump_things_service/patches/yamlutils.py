@@ -104,7 +104,9 @@ def _normalize_inlined(self, slot_name: str, slot_type: type, key_name: str, key
                     for lek, lev in items(list_entry):
                         if lek == key_name and not isinstance(lev, (list, dict, JsonObj)):
                             # key_name:value
+                            # PATCH >>>>>
                             order_up(list_entry[lek], slot_type(**list_entry))
+                            # PATCH <<<<<
                             break   # Not strictly necessary, but
                         elif not isinstance(lev, (list, dict, JsonObj)):
                             # key: value --> slot_type(key, value)
