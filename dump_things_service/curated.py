@@ -21,6 +21,7 @@ from dump_things_service import (
     HTTP_401_UNAUTHORIZED,
     HTTP_413_REQUEST_ENTITY_TOO_LARGE,
 )
+from dump_things_service.auth import AuthenticationError
 from dump_things_service.api_key import api_key_header_scheme
 from dump_things_service.backends import StorageBackend
 from dump_things_service.backends.schema_type_layer import _SchemaTypeLayer
@@ -29,6 +30,7 @@ from dump_things_service.exceptions import CurieResolutionError
 from dump_things_service.lazy_list import ModifierList
 from dump_things_service.store.model_store import ModelStore
 from dump_things_service.utils import (
+    authenticate_token,
     check_collection,
     cleaned_json,
     resolve_hashed_token,
@@ -230,11 +232,11 @@ async def _delete_curated_record(
 
 async def _get_store_and_backend(
     collection: str,
-    api_key: str | None,
+    plain_token: str | None,
 ) -> tuple[ModelStore, StorageBackend]:
 
     # A token is required
-    if api_key is None:
+    if plain_token is None:
         raise HTTPException(
             status_code=HTTP_401_UNAUTHORIZED,
             detail='token required',
@@ -246,23 +248,8 @@ async def _get_store_and_backend(
     check_collection(instance_config, collection)
 
     # Get token permissions
-    # If the token is hashed, get the hashed value. This is required because
-    # we associate token info with the hashed version of the token.
-    hashed_token = resolve_hashed_token(
-        instance_config,
-        collection,
-        api_key,
-    )
-
-    # A curator token can only come from the configuration
-    if hashed_token not in instance_config.tokens[collection]:
-        raise HTTPException(
-            status_code=HTTP_401_UNAUTHORIZED,
-            detail='ConfigAuthenticationSource: token not valid for collection '
-                   f'`{collection}`',
-        )
-
-    permissions = instance_config.tokens[collection][hashed_token]['permissions']
+    auth_info = authenticate_token(instance_config, collection, plain_token)
+    permissions = auth_info.token_permission
     if permissions.curated_write is False:
         raise HTTPException(
             status_code=HTTP_401_UNAUTHORIZED,

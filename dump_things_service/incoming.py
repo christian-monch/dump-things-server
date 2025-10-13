@@ -29,6 +29,7 @@ from dump_things_service.exceptions import CurieResolutionError
 from dump_things_service.lazy_list import ModifierList
 from dump_things_service.store.model_store import ModelStore
 from dump_things_service.utils import (
+    authenticate_token,
     check_collection,
     check_label,
     cleaned_json,
@@ -319,10 +320,10 @@ async def _get_store_and_backend(
 
 async def authorize_zones(
     collection: str,
-    api_key: str | None,
+    plain_token: str | None,
 ):
     # A token is required
-    if api_key is None:
+    if plain_token is None:
         raise HTTPException(
             status_code=HTTP_401_UNAUTHORIZED,
             detail='token required',
@@ -333,24 +334,8 @@ async def authorize_zones(
     # Check that the collection exists
     check_collection(instance_config, collection)
 
-    # Get token permissions
-    # If the token is hashed, get the hashed value. This is required because
-    # we associate token info with the hashed version of the token.
-    hashed_token = resolve_hashed_token(
-        instance_config,
-        collection,
-        api_key,
-    )
-
-    # A token with zone access can only come from the configuration
-    if hashed_token not in instance_config.tokens[collection]:
-        raise HTTPException(
-            status_code=HTTP_401_UNAUTHORIZED,
-            detail='ConfigAuthenticationSource: token not valid for collection '
-                   f'`{collection}`',
-        )
-
-    permissions = instance_config.tokens[collection][hashed_token]['permissions']
+    auth_info = authenticate_token(instance_config, collection, plain_token)
+    permissions = auth_info.token_permission
     if permissions.zones_access is False:
         raise HTTPException(
             status_code=HTTP_401_UNAUTHORIZED,
