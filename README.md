@@ -422,21 +422,27 @@ The user ID is the email of the user.
 If `label_type` is set to `team`, the incoming label is `forgejo-team-<organization-name>-<team-name>`.
 If `label_type` is set to `user`, the incoming label is `forgejo-user-<user-login>`
 
-The permissions will be fetched from the unit `repo.code` of the team definition.
-The following mapping is used
+The permissions will be fetched from the units `repo.code` and `repo.actions` of the team definition.
+The following mapping is used:
 
-| `repo.code` | curated_read | incoming_read | incoming_write |
-| ------------- | ------------- | ------------- | ------------- |
-| `none` | `False` | `False` | `False` |
-| `read` | `True` | `True` | `False` |
-| `write` | `True` | `True` | `True` |
+| `repo.code` | curated_read | incoming_read | incoming_write | curated_right | zones_access |
+|-------------|--------------|---------------|----------------|---------------|--------------|
+| `none`      | `False`      | `False`       | `False`        | `False`       | `False`      |
+| `read`      | `True`       | `True`        | `False`        | `False`       | `False`      |
+| `write`     | `True`       | `True`        | `True`         | `False`       | `False`      |
 
+
+| `repo.actions` | curated_read | incoming_read | incoming_write | curated_right | zones_access |
+|----------------|--------------|---------------|----------------|---------------|--------------|
+| `none`         | `False`      | `False`       | `False`        | `False`       | `False`      |
+| `read`         | `False`      | `False`       | `False`        | `False`       | `False`      |
+| `write`        | `True`       | `True`        | `True`         | `True`        | `True`       |
 
 A Forgejo authentication source can authenticate Forgejo-tokens that have at least the following `Read`-permissions:
 
 - User: this is required to determine user-related information, i.e. user-email and user login name.
 - Organization: this is required to determine the membership of a user to a team in an organization.
-- Repository (only if `repository` is set in the configuration): required to determine a team's access to the repository.
+- (Only if `repository` is set in the configuration) Repository : required to determine a team's access to the repository.
 
 
 #### Submission annotation tag

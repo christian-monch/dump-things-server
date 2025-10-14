@@ -20,7 +20,10 @@ from dump_things_service import (
     HTTP_403_FORBIDDEN,
     HTTP_404_NOT_FOUND,
 )
-from dump_things_service.auth import AuthenticationError
+from dump_things_service.auth import (
+    AuthenticationError,
+    AuthenticationInfo,
+)
 from dump_things_service.token import (
     TokenPermission,
     get_token_parts,
@@ -230,26 +233,11 @@ def resolve_hashed_token(
     return token
 
 
-def get_token_store(
+def authenticate_token(
         instance_config: InstanceConfig,
         collection_name: str,
-        plain_token: str
-) -> tuple[ModelStore, str, TokenPermission, str] | tuple[None, None, None, None]:
-    check_collection(instance_config, collection_name)
-
-    # If the token is hashed, get the hashed value. This is required because
-    # we associate token info with the hashed version of the token.
-    hashed_token = resolve_hashed_token(
-        instance_config,
-        collection_name,
-        plain_token,
-    )
-
-    # Check whether a store for this collection and token does already exist.
-    # If the token is a hashed token, we have to
-    store_info = instance_config.token_stores[collection_name].get(plain_token)
-    if store_info:
-        return store_info
+        plain_token: str,
+) -> AuthenticationInfo:
 
     # Try to authenticate the token with the authentication providers that
     # are associated with the collection.
@@ -279,8 +267,34 @@ def get_token_store(
             status_code=HTTP_401_UNAUTHORIZED,
             detail=detail,
         )
+    return auth_info
 
+
+def get_token_store(
+        instance_config: InstanceConfig,
+        collection_name: str,
+        plain_token: str
+) -> tuple[ModelStore, str, TokenPermission, str] | tuple[None, None, None, None]:
+    check_collection(instance_config, collection_name)
+
+    # Check whether a store for this collection and token does already exist.
+    # If the token is a hashed token, we have to
+    store_info = instance_config.token_stores[collection_name].get(plain_token)
+    if store_info:
+        return store_info
+
+    # Try to authenticate the token with the authentication providers that
+    # are associated with the collection.
+    auth_info = authenticate_token(instance_config, collection_name, plain_token)
     permissions = auth_info.token_permission
+
+    # If the token is hashed, get the hashed value. This is required because
+    # we associate token info with the hashed version of the token.
+    hashed_token = resolve_hashed_token(
+        instance_config,
+        collection_name,
+        plain_token,
+    )
 
     # If the token has no incoming-read or incoming-write permissions, we do not
     # need to create a store.

@@ -81,8 +81,9 @@ class ForgejoAuthenticationSource(AuthenticationSource, MethodCache):
 
         A token will be authorized if the associated user exists, is part of
         team `team`, and if the repository is accessible by the team `team`.
-        The token permissions are taken from the unit mapping `repo.code` in the
-        team definition.
+
+        The token permissions are taken from the unit `repo.code` and the unit
+        `repo.actions` in the team definition.
 
         :param api_url: Forgejo API URL
         :param organization: The name of the organization that defines the team
@@ -174,14 +175,38 @@ class ForgejoAuthenticationSource(AuthenticationSource, MethodCache):
         return {team['name']: team for team in r}
 
     @staticmethod
-    def _get_permissions(code_permission: str) -> TokenPermission:
-        read = code_permission in ('read', 'write')
-        write = code_permission == 'write'
+    def _get_permissions(
+            code_permission: str,
+            action_permission: str,
+    ) -> TokenPermission:
+        is_curator = action_permission == 'write'
+        read = code_permission in ('read', 'write') or is_curator
+        write = code_permission == 'write' or is_curator
         return TokenPermission(
             curated_read=read,
             incoming_read=read,
             incoming_write=write,
+            curated_write=is_curator,
+            zones_access=is_curator,
         )
+
+    def _get_unit_content(
+        self,
+        team: dict,
+        unit_name: str
+    ) -> str:
+        permissions = team['units_map'].get(unit_name)
+        if not permissions:
+            logger.debug(f'no unit `repo.actions` in team {self.team}')
+            msg = (
+                f'no `repo.{unit_name}`-unit defined for team `{self.team}` in '
+                f'organization {self.organization}'
+            )
+            raise RemoteAuthenticationError(
+                status=HTTP_401_UNAUTHORIZED,
+                message=msg,
+            )
+        return permissions
 
     def authenticate(
         self,
@@ -231,18 +256,17 @@ class ForgejoAuthenticationSource(AuthenticationSource, MethodCache):
             )
 
         # Get the repo.code permissions from the team definition
-        code_permissions = team['units_map'].get('repo.code')
-        if not code_permissions:
-            logger.debug(f'no unit `repo.code` in team {self.team}')
-            msg = f'no `repo.code`-unit defined for team `{self.team}` in organization {self.organization}'
-            raise RemoteAuthenticationError(
-                status=HTTP_401_UNAUTHORIZED,
-                message=msg,
-            )
-
-        logger.debug(f'authentication success, team permissions: {code_permissions}')
+        code_permissions = self._get_unit_content(team, 'repo.code')
+        action_permissions = self._get_unit_content(team, 'repo.actions')
+        logger.debug(
+            f'authentication success, team permissions: {code_permissions}, '
+            f'{action_permissions}'
+        )
         return AuthenticationInfo(
-            token_permission=self._get_permissions(code_permissions),
+            token_permission=self._get_permissions(
+                code_permissions,
+                action_permissions,
+            ),
             user_id=user_info['email'],
             incoming_label=
                 f'forgejo-team-{organization["name"]}-{team["name"]}'
