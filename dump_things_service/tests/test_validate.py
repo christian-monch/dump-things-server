@@ -1,9 +1,9 @@
 
-from dump_things_service import HTTP_422_UNPROCESSABLE_ENTITY
+from dump_things_service import HTTP_422_UNPROCESSABLE_CONTENT
 
 json_records = [
-    ({'name': 'Henry', 'pid': 'unknown_prefix:henry'}, HTTP_422_UNPROCESSABLE_ENTITY),
-    ({'given_name': 'Henry', 'pid': 'unknown_prefix:henry'}, HTTP_422_UNPROCESSABLE_ENTITY),
+    ({'name': 'Henry', 'pid': 'unknown_prefix:henry'}, HTTP_422_UNPROCESSABLE_CONTENT),
+    ({'given_name': 'Henry', 'pid': 'unknown_prefix:henry'}, HTTP_422_UNPROCESSABLE_CONTENT),
     ({'given_name': 'Henry', 'pid': 'xyz:henry'}, 200),
 ]
 

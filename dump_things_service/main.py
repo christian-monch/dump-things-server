@@ -42,8 +42,8 @@ from dump_things_service import (
     HTTP_400_BAD_REQUEST,
     HTTP_403_FORBIDDEN,
     HTTP_404_NOT_FOUND,
-    HTTP_413_REQUEST_ENTITY_TOO_LARGE,
-    HTTP_422_UNPROCESSABLE_ENTITY,
+    HTTP_413_CONTENT_TOO_LARGE,
+    HTTP_422_UNPROCESSABLE_CONTENT,
     Format,
     config_file_name,
 )
@@ -298,18 +298,18 @@ def validate_record(
         )
 
     if input_format == Format.ttl:
-        with wrap_http_exception(ValueError, status_code=HTTP_422_UNPROCESSABLE_ENTITY, header='Conversion error'):
+        with wrap_http_exception(ValueError, status_code=HTTP_422_UNPROCESSABLE_CONTENT, header='Conversion error'):
             json_object = FormatConverter(
                 g_instance_config.schemas[collection],
                 input_format=Format.ttl,
                 output_format=Format.json,
             ).convert(data, class_name)
-        with wrap_http_exception(ValidationError, status_code=HTTP_422_UNPROCESSABLE_ENTITY, header='Validation error'):
+        with wrap_http_exception(ValidationError, status_code=HTTP_422_UNPROCESSABLE_CONTENT, header='Validation error'):
             TypeAdapter(getattr(model, class_name)).validate_python(json_object)
     else:
         # Try to convert it into TTL to detect potential errors before storing
         # the record
-        with wrap_http_exception(ValueError, status_code=HTTP_422_UNPROCESSABLE_ENTITY, header='Validation error'):
+        with wrap_http_exception(ValueError, status_code=HTTP_422_UNPROCESSABLE_CONTENT, header='Validation error'):
             FormatConverter(
                 g_instance_config.schemas[collection],
                 input_format=Format.json,
@@ -451,7 +451,7 @@ async def _read_all_records(
     def check_bounds(length: int, max_length: int):
         if length > max_length:
             raise HTTPException(
-                status_code=HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+                status_code=HTTP_413_CONTENT_TOO_LARGE,
                 detail=f'Too many records found in collection "{collection}". '
                        f'Please use pagination (/{collection}/records/p/).',
             )
@@ -514,7 +514,7 @@ async def _read_records_of_type(
     def check_bounds(length: int, max_length: int):
         if length > max_length:
             raise HTTPException(
-                status_code=HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+                status_code=HTTP_413_CONTENT_TOO_LARGE,
                 detail=f'Too many records found for class "{class_name}" in '
                 f'collection "{collection}". Please use pagination '
                 f'(/{collection}/records/p/{class_name}).',
