@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import dataclasses  # noqa F401 -- used by generated code
 import logging
+import sys
 from itertools import count
 from typing import (
     TYPE_CHECKING,
@@ -25,6 +26,8 @@ from pydantic._internal._model_construction import ModelMetaclass
 if TYPE_CHECKING:
     from types import ModuleType
 
+if (sys.version_info.major, sys.version_info.minor) == (3, 11):
+    sys.setrecursionlimit(2000)
 
 lgr = logging.getLogger('dump_things_service')
 
