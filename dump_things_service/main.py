@@ -2,15 +2,13 @@ from __future__ import annotations  # noqa: I001 -- the patches have to be impor
 
 import argparse
 import logging
+import sys
 from pathlib import Path
 from typing import (
     Annotated,  # noqa F401 -- used by generated code
     Any,
     TYPE_CHECKING,
 )
-
-from starlette.status import HTTP_413_REQUEST_ENTITY_TOO_LARGE, \
-    HTTP_422_UNPROCESSABLE_ENTITY
 
 # Perform the patching before importing any third-party libraries
 from dump_things_service.patches import enabled  # noqa: F401
@@ -44,6 +42,8 @@ from dump_things_service import (
     HTTP_400_BAD_REQUEST,
     HTTP_403_FORBIDDEN,
     HTTP_404_NOT_FOUND,
+    HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+    HTTP_422_UNPROCESSABLE_ENTITY,
     Format,
     config_file_name,
 )
@@ -92,6 +92,12 @@ from dump_things_service.utils import (
 
 if TYPE_CHECKING:
     from dump_things_service.lazy_list import LazyList
+
+
+# Pydantic module generation requires a higher recursion limit
+# on Python 3.11.
+if (sys.version_info.major, sys.version_info.minor) == (3, 11):
+    sys.setrecursionlimit(2000)
 
 
 class TokenCapabilityRequest(BaseModel):

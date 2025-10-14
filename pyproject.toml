@@ -99,6 +99,9 @@ description = "fastapi dev environment"
 [tool.hatch.envs.fastapi.scripts]
 run = "python -m dump_things_service.main {args}"
 
+[[tool.hatch.envs.tests.matrix]]
+python = ["3.11", "3.12"]
+
 [tool.hatch.envs.tests]
 default-args = ["dump_things_service"]
 extra-dependencies = [

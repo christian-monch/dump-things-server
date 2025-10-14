@@ -1,3 +1,11 @@
+# 4.5.3 (2025-10-14)
+
+## Bugfixes
+
+- Increase recursion limit on python version 3.11. This prevents a
+  RecursionLimit-error when pydantic modules are generated.
+
+
 # 4.5.2 (2025-10-11)
 
 ## Bugfixes
