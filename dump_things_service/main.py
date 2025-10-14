@@ -10,9 +10,6 @@ from typing import (
     TYPE_CHECKING,
 )
 
-from starlette.status import HTTP_413_REQUEST_ENTITY_TOO_LARGE, \
-    HTTP_422_UNPROCESSABLE_ENTITY
-
 # Perform the patching before importing any third-party libraries
 from dump_things_service.patches import enabled  # noqa: F401
 
@@ -45,6 +42,8 @@ from dump_things_service import (
     HTTP_400_BAD_REQUEST,
     HTTP_403_FORBIDDEN,
     HTTP_404_NOT_FOUND,
+    HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+    HTTP_422_UNPROCESSABLE_ENTITY,
     Format,
     config_file_name,
 )
