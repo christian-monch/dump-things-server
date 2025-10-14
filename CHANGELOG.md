@@ -1,3 +1,14 @@
+# 4.6.0 (2025-10-14)
+
+## New features
+
+- support authentication of curators via Forgejo authentication sources.
+  If the unit `repo.actions` of the respective team is set to `write`, the
+  token will authorize curator access to the collection, that means read and
+  write access to all incoming areas and to curated records (see the "curator"
+  and "incoming" endpoints in the API documentation).
+
+
 # 4.5.3 (2025-10-14)
 
 ## Bugfixes
