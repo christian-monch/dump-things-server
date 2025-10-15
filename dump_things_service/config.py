@@ -503,6 +503,21 @@ def process_config_object(
             msg = f'Unknown default token: `{collection_info.default_token}`'
             raise ConfigError(msg)
 
+    # Check that config authentication source is present if tokens are defined
+    # in the config file
+    for collection_name, collection_info in config_object.collections.items():
+        config_tokens = instance_config.tokens.get(collection_name, {})
+        if config_tokens:
+            if not any(
+                isinstance(auth_source, ConfigAuthenticationSource)
+                for auth_source in instance_config.auth_providers[collection_name]
+            ):
+                msg = (
+                    f'Collection `{collection_name}` has tokens defined in '
+                    'configuration file, but no `config` authentication source'
+                )
+                raise ConfigError(msg)
+
     # Check that hashed plain tokens do not clash with hashed tokens:
     hashed_plain_tokens = set(
         hash_token(token)

@@ -1,3 +1,11 @@
+# 4.6.1 (2025-10-15)
+
+## Enhancements
+
+- ensure that a `config` authentication source is defined for collections that
+  use tokens that are defined in the configuration file.
+
+
 # 4.6.0 (2025-10-14)
 
 ## New features
