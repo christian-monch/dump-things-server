@@ -19,7 +19,7 @@ from pydantic import BaseModel
 
 from dump_things_service import (
     HTTP_401_UNAUTHORIZED,
-    HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+    HTTP_413_CONTENT_TOO_LARGE,
 )
 from dump_things_service.api_key import api_key_header_scheme
 from dump_things_service.backends import StorageBackend
@@ -77,7 +77,7 @@ def check_bounds(
 ):
     if length > max_length:
         raise HTTPException(
-            status_code=HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+            status_code=HTTP_413_CONTENT_TOO_LARGE,
             detail=f'Too many records found in collection "{collection}". '
                    f'Please use pagination (/{collection}{alternative_url}).',
         )

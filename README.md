@@ -325,7 +325,9 @@ Authentication sources are tried in order until a token is successfully authenti
 If no authentication source authenticates the token, the token will be rejected.
 
 If no authentication source is defined, the configuration file will be used to authenticate tokens.
-If an authentication source is defined multiple times, the first instance will be queried, all other instances will be ignored.
+If an identical authentication source is defined multiple times, the first instance will be queried, all other instances will be ignored.
+Authentication sources are identical if the content of their keys match.
+If an identical authentication source is listed multiple time in the configuration, the service will issue a warning about `Ignoring duplicate authentication provider...`.
 
 These authentication sources are available:
 
