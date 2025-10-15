@@ -36,7 +36,7 @@ from dump_things_service.utils import (
     create_token_store,
     get_config_labels,
     get_on_disk_labels,
-    resolve_hashed_token, wrap_http_exception,
+    wrap_http_exception,
 )
 
 if TYPE_CHECKING:
