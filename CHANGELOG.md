@@ -1,3 +1,11 @@
+# 4.6.2 (2025-10-15)
+
+## Bugfixes
+
+- fix a bug that prevented the service from detecting externally authorized
+  incoming zones on disk.
+
+
 # 4.6.1 (2025-10-15)
 
 ## Enhancements
