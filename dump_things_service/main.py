@@ -221,16 +221,19 @@ def store_record(
         )
 
     if input_format == Format.ttl:
-        with wrap_http_exception(ValueError, header='Conversion error'):
+        with wrap_http_exception(ValueError, status_code=HTTP_422_UNPROCESSABLE_CONTENT, header='Conversion error'):
             json_object = FormatConverter(
                 g_instance_config.schemas[collection],
                 input_format=Format.ttl,
                 output_format=Format.json,
             ).convert(data, class_name)
-        with wrap_http_exception(ValidationError, header='Validation error'):
+        with wrap_http_exception(ValidationError, status_code=HTTP_422_UNPROCESSABLE_CONTENT, header='Validation error'):
             record = TypeAdapter(getattr(model, class_name)).validate_python(json_object)
     else:
         record = data
+
+    with wrap_http_exception(ValueError, status_code=HTTP_422_UNPROCESSABLE_CONTENT, header='Validation error'):
+        g_instance_config.validators[collection].validate(record)
 
     with wrap_http_exception(CurieResolutionError):
         stored_records = store.store_object(obj=record, submitter=user_id)
@@ -310,11 +313,7 @@ def validate_record(
         # Try to convert it into TTL to detect potential errors before storing
         # the record
         with wrap_http_exception(ValueError, status_code=HTTP_422_UNPROCESSABLE_CONTENT, header='Validation error'):
-            FormatConverter(
-                g_instance_config.schemas[collection],
-                input_format=Format.json,
-                output_format=Format.ttl,
-            ).convert(data.model_dump(mode='json', exclude_none=True), class_name)
+            g_instance_config.validators[collection].validate(data)
 
     return JSONResponse(True)
 

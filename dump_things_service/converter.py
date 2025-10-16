@@ -74,7 +74,6 @@ def add_type_validator(
 
 def get_conversion_objects(schema: str):
     if schema not in _cached_conversion_objects:
-        model = get_model_for_schema(schema)[0]
         schema_view = SchemaView(schema)
         _cached_conversion_objects[schema] = {
             'schema_module': get_schema_model_for_schema(schema),
@@ -112,20 +111,37 @@ class FormatConverter:
             return self._convert_ttl_to_json
         return self._convert_json_to_ttl
 
-    def convert(self, data: str | dict, target_class: str) -> str | dict:
-        return self.converter(data, target_class)
+    def convert(
+        self,
+        data: str | dict,
+        target_class: str,
+    ) -> str | dict:
+        return self.converter(data, target_class, load_only=False)
+
+    def validate(
+        self,
+        pydantic_object: BaseModel,
+    ) -> str | dict:
+        return self._convert_pydantic_to_ttl(pydantic_object, load_only=True)
 
     def _convert_json_to_ttl(
         self,
         data: dict,
         target_class: str,
+        *,
+        load_only: bool = False,
     ) -> str:
         pydantic_object = getattr(self.model, target_class)(**data)
-        return self._convert_pydantic_to_ttl(pydantic_object=pydantic_object)
+        return self._convert_pydantic_to_ttl(
+            pydantic_object=pydantic_object,
+            load_only=load_only,
+        )
 
     def _convert_pydantic_to_ttl(
         self,
         pydantic_object: BaseModel,
+        *,
+        load_only: bool = False,
     ):
         return _convert_format(
             target_class=pydantic_object.__class__.__name__,
@@ -133,12 +149,15 @@ class FormatConverter:
             input_format=Format.json,
             output_format=Format.ttl,
             **self.conversion_objects,
+            load_only=load_only,
         )
 
     def _convert_ttl_to_json(
         self,
         data: str,
         target_class: str,
+        *,
+        load_only: bool = False,
     ) -> dict:
         json_string = _convert_format(
             target_class=target_class,
@@ -146,6 +165,7 @@ class FormatConverter:
             input_format=Format.ttl,
             output_format=Format.json,
             **self.conversion_objects,
+            load_only=load_only,
         )
         return cleaned_json(json_loads(json_string))
 
@@ -193,6 +213,8 @@ def _convert_format(
     output_format: Format,
     schema_module: ModuleType,
     schema_view: SchemaView,
+    *,
+    load_only: bool = False,
 ) -> str:
     """Convert between different representations of schema:target_class instances
 
@@ -209,10 +231,16 @@ def _convert_format(
             schema_view=schema_view,
         )
     except Exception as e:  # BLE001
-        msg = (
-            f'Conversion {input_format} -> {output_format}. Error: {e}, '
-            f'target class {target_class}, data:\n{data}'
-        )
+        if load_only:
+            msg = (
+                f'Validation error for instance of {target_class}: {e}, '
+                f'data:\n{data}'
+            )
+        else:
+            msg = (
+                f'Conversion {input_format} -> {output_format}. Error: {e}, '
+                f'target class {target_class}, data:\n{data}'
+            )
         raise ValueError(msg) from e
 
 
@@ -235,6 +263,7 @@ def _do_convert_format(
 
     py_target_class = schema_module.__dict__[target_class]
     loader = get_loader(input_format.value)
+
     if input_format.value in ('ttl',):
         input_args = {'schemaview': schema_view, 'fmt': input_format.value}
     else:
