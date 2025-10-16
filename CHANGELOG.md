@@ -1,3 +1,11 @@
+# 4.7.0 (2025-10-15)
+
+## New features
+
+- all records that are submitted are validated against the schema before
+  storing them.
+
+
 # 4.6.2 (2025-10-15)
 
 ## Bugfixes
