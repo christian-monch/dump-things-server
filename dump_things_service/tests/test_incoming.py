@@ -1,11 +1,13 @@
 from __future__ import annotations
 
 import pytest
+import random
 
 from dump_things_service import (
     HTTP_200_OK,
     HTTP_404_NOT_FOUND,
 )
+from dump_things_service.tests.test_auth import repo_1
 
 delete_record = {
     'schema_type': 'abc:Person',
@@ -177,3 +179,19 @@ def test_incoming_delete(fastapi_client_simple):
     )
     assert response.status_code == HTTP_200_OK
     assert response.json() is None
+
+
+def test_incoming_on_disk_only(fastapi_client_simple):
+    test_client, data_root = fastapi_client_simple
+
+    # add a random directory to the incoming area of collection_1
+    random_part = ''.join(random.choices('abcdefghijklmnopqrstuvwxyz', k=6))
+    dir_name = f'random_{random_part}'
+    (data_root / 'incoming' / dir_name).mkdir()
+
+    response = test_client.get(
+        '/collection_1/incoming/',
+        headers={'x-dumpthings-token': 'token_admin'},
+    )
+    assert response.status_code == HTTP_200_OK
+    assert dir_name in response.json()
