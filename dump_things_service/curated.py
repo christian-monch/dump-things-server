@@ -20,8 +20,8 @@ from pydantic import BaseModel
 from dump_things_service import (
     HTTP_401_UNAUTHORIZED,
     HTTP_413_CONTENT_TOO_LARGE,
+    HTTP_422_UNPROCESSABLE_CONTENT,
 )
-from dump_things_service.auth import AuthenticationError
 from dump_things_service.api_key import api_key_header_scheme
 from dump_things_service.backends import StorageBackend
 from dump_things_service.backends.schema_type_layer import _SchemaTypeLayer
@@ -33,7 +33,6 @@ from dump_things_service.utils import (
     authenticate_token,
     check_collection,
     cleaned_json,
-    resolve_hashed_token,
     wrap_http_exception,
 )
 
@@ -319,6 +318,10 @@ async def store_curated_record(
     class_name: str,
     api_key: str | None = Depends(api_key_header_scheme),
 ):
+
+    instance_config = get_config()
+    with wrap_http_exception(ValueError, status_code=HTTP_422_UNPROCESSABLE_CONTENT, header='Validation error'):
+        instance_config.validators[collection].validate(data)
 
     pid = data.pid
     model_store, backend = await _get_store_and_backend(collection, api_key)

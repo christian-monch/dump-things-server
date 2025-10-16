@@ -171,7 +171,10 @@ def get_on_disk_labels(
 ) -> set[str]:
     check_collection(instance_config, collection)
 
-    incoming_path = instance_config.collections[collection].incoming
+    incoming_path = (
+        instance_config.store_path
+        / instance_config.collections[collection].incoming
+    )
     if not incoming_path or not incoming_path.exists():
         return set()
 

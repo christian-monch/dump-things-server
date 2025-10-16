@@ -16,6 +16,11 @@ default_range: string
 default_prefix: abc
 
 slots:
+  pid:
+    identifier: true
+    range: uriorcurie
+    required: true
+
   relations:
     range: Thing
     multivalued: true
@@ -45,12 +50,10 @@ classes:
 
   Thing:
     slots:
+      - pid
       - relations
       - annotations
     attributes:
-      pid:
-        identifier: true
-        required: true
       schema_type:
         range: string
 

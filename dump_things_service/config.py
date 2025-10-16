@@ -23,14 +23,18 @@ from pydantic import (
 )
 from yaml.scanner import ScannerError
 
-from dump_things_service import HTTP_404_NOT_FOUND
+from dump_things_service import (
+    HTTP_404_NOT_FOUND,
+    Format,
+)
 from dump_things_service.backends.record_dir import RecordDirStore
 from dump_things_service.backends.schema_type_layer import SchemaTypeLayer
 from dump_things_service.backends.sqlite import SQLiteBackend
 from dump_things_service.backends.sqlite import (
     record_file_name as sqlite_record_file_name,
 )
-from dump_things_service.converter import get_conversion_objects
+from dump_things_service.converter import get_conversion_objects, \
+    FormatConverter
 from dump_things_service.exceptions import (
     ConfigError,
     CurieResolutionError,
@@ -165,6 +169,7 @@ class InstanceConfig:
     auth_providers: dict = dataclasses.field(default_factory=dict)
     tokens: dict = dataclasses.field(default_factory=dict)
     hashed_tokens: dict = dataclasses.field(default_factory=dict)
+    validators: dict = dataclasses.field(default_factory=dict)
 
 
 mode_mapping = {
@@ -436,6 +441,14 @@ def process_config_object(
         # We do not create stores for tokens here, but leave it to the token
         # authentication routine.
         instance_config.token_stores[collection_name] = dict()
+
+    # Create validator for each collection
+    for collection_name, collection_info in config_object.collections.items():
+        instance_config.validators[collection_name] = FormatConverter(
+            schema=instance_config.schemas[collection_name],
+            input_format=Format.json,
+            output_format=Format.ttl,
+        )
 
     # Read info for tokens from the configuration
     for token_name, token_info in config_object.tokens.items():
