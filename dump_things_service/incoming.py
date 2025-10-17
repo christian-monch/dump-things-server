@@ -19,6 +19,7 @@ from pydantic import BaseModel
 
 from dump_things_service import (
     HTTP_401_UNAUTHORIZED,
+    HTTP_404_NOT_FOUND,
     HTTP_413_CONTENT_TOO_LARGE,
     HTTP_422_UNPROCESSABLE_CONTENT,
 )
@@ -31,6 +32,7 @@ from dump_things_service.lazy_list import ModifierList
 from dump_things_service.store.model_store import ModelStore
 from dump_things_service.utils import (
     authenticate_token,
+    check_bounds,
     check_collection,
     check_label,
     cleaned_json,
@@ -68,20 +70,6 @@ async def {name}(
 logger = logging.getLogger('dump_things_service')
 router = APIRouter()
 add_pagination(router)
-
-
-def check_bounds(
-        length: int | None,
-        max_length: int,
-        collection: str,
-        alternative_url: str
-):
-    if length > max_length:
-        raise HTTPException(
-            status_code=HTTP_413_CONTENT_TOO_LARGE,
-            detail=f'Too many records found in collection "{collection}". '
-                   f'Please use pagination (/{collection}{alternative_url}).',
-        )
 
 
 @router.get(
@@ -246,7 +234,9 @@ async def _incoming_read_records(
             len(result_list),
             upper_bound,
             collection,
-            f'/incoming/records/p/{class_name}',
+            f'/incoming/{label}/records/p/{class_name}'
+            if class_name
+            else f'/incoming/{label}/records/p/'
         )
 
     return ModifierList(
@@ -262,8 +252,13 @@ async def _incoming_delete_record(
     api_key: str | None = None,
 ) -> bool:
     model_store, backend = await _get_store_and_backend(collection, label, api_key)
-    return backend.remove_record(model_store.pid_to_iri(pid))
-
+    if not backend.remove_record(model_store.pid_to_iri(pid)):
+        raise HTTPException(
+            status_code=HTTP_404_NOT_FOUND,
+            detail=f"Could not remove record with PID '{pid}' from incoming "
+                   f"area '{label}' of collection '{collection}'.",
+        )
+    return True
 
 async def _get_store_and_backend(
     collection: str,

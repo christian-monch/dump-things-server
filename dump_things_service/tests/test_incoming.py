@@ -180,6 +180,12 @@ def test_incoming_delete(fastapi_client_simple):
     assert response.status_code == HTTP_200_OK
     assert response.json() is None
 
+    response = test_client.delete(
+        '/collection_7/incoming/admin_common/record?pid=abc:delete-me',
+        headers={'x-dumpthings-token': 'token_admin'},
+    )
+    assert response.status_code == HTTP_404_NOT_FOUND
+
 
 def test_incoming_on_disk_only(fastapi_client_simple):
     test_client, data_root = fastapi_client_simple

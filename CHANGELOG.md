@@ -1,4 +1,17 @@
-# 4.7.0 (2025-10-15)
+# 5.0.0 (2025-10-17)
+
+## Breaking changes
+
+- Report an HTTP 404 error if the client tries to delete a record that does not
+  exist. This changes the behavior of the following endpoints if the record
+  identified by the provided PID is not found:
+
+  - `DELETE /<collection>/record`
+  - `DELETE /<collection>/curated/record`
+  - `DELETE /{collection}/incoming/{label}/record`
+
+
+# 4.7.0 (2025-10-16)
 
 ## New features
 

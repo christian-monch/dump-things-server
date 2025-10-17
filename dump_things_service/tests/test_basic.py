@@ -4,6 +4,7 @@ from .. import (
     HTTP_200_OK,
     HTTP_401_UNAUTHORIZED,
     HTTP_403_FORBIDDEN,
+    HTTP_404_NOT_FOUND,
 )
 from ..__about__ import __version__
 from ..utils import cleaned_json
@@ -96,6 +97,12 @@ def test_delete(fastapi_client_simple):
     )
     assert response.status_code == HTTP_200_OK
     assert response.json() is None
+
+    response = test_client.delete(
+        '/collection_1/record?pid=abc:delete-me',
+        headers={'x-dumpthings-token': 'token-1'},
+    )
+    assert response.status_code == HTTP_404_NOT_FOUND
 
 
 def test_hashed_token(fastapi_client_simple):

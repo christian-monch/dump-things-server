@@ -445,3 +445,17 @@ def create_sqlite_token_store(
         db_path=store_dir / sqlite_record_file_name,
         order_by=order_by,
     )
+
+
+def check_bounds(
+        length: int | None,
+        max_length: int,
+        collection: str,
+        alternative_url: str
+):
+    if length > max_length:
+        raise HTTPException(
+            status_code=HTTP_413_CONTENT_TOO_LARGE,
+            detail=f"Too many records found in collection '{collection}'. "
+                   f'Please use pagination (/{collection}{alternative_url}).',
+        )
