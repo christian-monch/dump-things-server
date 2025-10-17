@@ -42,7 +42,6 @@ from dump_things_service import (
     HTTP_400_BAD_REQUEST,
     HTTP_403_FORBIDDEN,
     HTTP_404_NOT_FOUND,
-    HTTP_413_CONTENT_TOO_LARGE,
     HTTP_422_UNPROCESSABLE_CONTENT,
     Format,
     config_file_name,
@@ -81,6 +80,7 @@ from dump_things_service.model import (
     get_subclasses,
 )
 from dump_things_service.utils import (
+    check_bounds,
     check_collection,
     combine_ttl,
     get_default_token_name,
@@ -384,7 +384,7 @@ async def read_all_records(
 
 
 @app.get('/{collection}/records/p/', tags=['Read records'])
-async def read_all_records(
+async def read_all_records_paginated(
         collection: str,
         matching: str | None = None,
         format: Format = Format.json,  # noqa A002
@@ -447,13 +447,6 @@ async def _read_all_records(
         api_key: str = Depends(api_key_header_scheme),
         bound: int | None = None,
 ) -> LazyList:
-    def check_bounds(length: int, max_length: int):
-        if length > max_length:
-            raise HTTPException(
-                status_code=HTTP_413_CONTENT_TOO_LARGE,
-                detail=f'Too many records found in collection "{collection}". '
-                       f'Please use pagination (/{collection}/records/p/).',
-            )
 
     def convert_to_http_exception(e: BaseException):
         raise HTTPException(
@@ -470,7 +463,7 @@ async def _read_all_records(
     if final_permissions.incoming_read:
         token_store_list = token_store.get_all_objects(matching=matching)
         if bound:
-            check_bounds(len(token_store_list), bound)
+            check_bounds(len(token_store_list), bound, collection, 'records/p/')
         result_list.add_list(token_store_list)
 
     if final_permissions.curated_read:
@@ -480,7 +473,7 @@ async def _read_all_records(
             matching=matching,
         )
         if bound:
-            check_bounds(len(curated_store_list), bound)
+            check_bounds(len(curated_store_list), bound, collection, 'records/p/')
         result_list.add_list(curated_store_list)
 
     # Sort the result list.
@@ -510,15 +503,6 @@ async def _read_records_of_type(
     api_key: str = Depends(api_key_header_scheme),
     bound: int | None = None,
 ) -> LazyList:
-    def check_bounds(length: int, max_length: int):
-        if length > max_length:
-            raise HTTPException(
-                status_code=HTTP_413_CONTENT_TOO_LARGE,
-                detail=f'Too many records found for class "{class_name}" in '
-                f'collection "{collection}". Please use pagination '
-                f'(/{collection}/records/p/{class_name}).',
-            )
-
     def convert_to_http_exception(e: BaseException):
         raise HTTPException(
             status_code=HTTP_400_BAD_REQUEST,
@@ -545,7 +529,7 @@ async def _read_records_of_type(
                 matching=matching,
             )
             if bound:
-                check_bounds(len(token_store_list), bound)
+                check_bounds(len(token_store_list), bound, collection, f'/records/p/{class_name}')
             result_list.add_list(token_store_list)
 
     if final_permissions.curated_read:
@@ -557,7 +541,7 @@ async def _read_records_of_type(
                 matching=matching,
             )
             if bound:
-                check_bounds(len(curated_store_list), bound)
+                check_bounds(len(curated_store_list), bound, collection, f'/records/p/{class_name}')
             result_list.add_list(curated_store_list)
 
     # Sort the result list.

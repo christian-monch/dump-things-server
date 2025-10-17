@@ -32,6 +32,7 @@ from dump_things_service.lazy_list import ModifierList
 from dump_things_service.store.model_store import ModelStore
 from dump_things_service.utils import (
     authenticate_token,
+    check_bounds,
     check_collection,
     cleaned_json,
     wrap_http_exception,
@@ -62,20 +63,6 @@ async def {name}(
 logger = logging.getLogger('dump_things_service')
 router = APIRouter()
 add_pagination(router)
-
-
-def check_bounds(
-    length: int | None,
-    max_length: int,
-    collection: str,
-    alternative_url: str
-):
-    if length > max_length:
-        raise HTTPException(
-            status_code=HTTP_413_CONTENT_TOO_LARGE,
-            detail=f'Too many records found in collection "{collection}". '
-                   f'Please use pagination (/{collection}{alternative_url}).',
-        )
 
 
 @router.get(
@@ -212,7 +199,9 @@ async def _read_curated_records(
             len(result_list),
             upper_bound,
             collection,
-            f'/curated/records/p/{class_name}',
+            f'/curated/records/p/{class_name}'
+            if class_name
+            else f'/curated/records/p/',
         )
 
     return ModifierList(
