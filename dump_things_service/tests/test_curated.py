@@ -103,3 +103,9 @@ def test_curated_delete(fastapi_client_simple):
     )
     assert response.status_code == HTTP_200_OK
     assert response.json() is None
+
+    response = test_client.delete(
+        '/collection_8/curated/record?pid=abc:delete-me',
+        headers={'x-dumpthings-token': 'token_1_xxxxx'},
+    )
+    assert response.status_code == HTTP_404_NOT_FOUND

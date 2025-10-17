@@ -593,10 +593,16 @@ async def delete_record(
     if not final_permissions.incoming_write:
         raise HTTPException(
             status_code=HTTP_403_FORBIDDEN,
-            detail=f'No write access to incoming data in collection "{collection}".',
+            detail=f"No write access to incoming data in collection '{collection}'.",
         )
 
-    return token_store.delete_object(pid)
+    if not token_store.delete_object(pid):
+        raise HTTPException(
+            status_code=HTTP_404_NOT_FOUND,
+            detail=f"Could not remove record with PID '{pid}' from collection '{collection}'.",
+        )
+    return True
+
 
 
 # If we have a valid configuration, create dynamic endpoints and rebuild the

@@ -213,7 +213,8 @@ class _RecordDirStore(StorageBackend):
             return False
 
         if self.index.remove_iri_info(iri) is False:
-            return False
+            msg = f'failed to remove IRI {iri} from index'
+            raise RuntimeError(msg)
 
         _, path, _ = index_entry
         Path(path).unlink()

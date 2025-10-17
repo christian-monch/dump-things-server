@@ -19,6 +19,7 @@ from pydantic import BaseModel
 
 from dump_things_service import (
     HTTP_401_UNAUTHORIZED,
+    HTTP_404_NOT_FOUND,
     HTTP_413_CONTENT_TOO_LARGE,
     HTTP_422_UNPROCESSABLE_CONTENT,
 )
@@ -262,8 +263,13 @@ async def _incoming_delete_record(
     api_key: str | None = None,
 ) -> bool:
     model_store, backend = await _get_store_and_backend(collection, label, api_key)
-    return backend.remove_record(model_store.pid_to_iri(pid))
-
+    if not backend.remove_record(model_store.pid_to_iri(pid)):
+        raise HTTPException(
+            status_code=HTTP_404_NOT_FOUND,
+            detail=f"Could not remove record with PID '{pid}' from incoming "
+                   f"area '{label}' of collection '{collection}'.",
+        )
+    return True
 
 async def _get_store_and_backend(
     collection: str,
