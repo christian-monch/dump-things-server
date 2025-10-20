@@ -4,8 +4,8 @@ from argparse import ArgumentParser
 # Patch linkml
 from dump_things_service.patches import enabled
 
+import yaml
 from linkml_runtime.utils.schemaview import SchemaView
-from linkml_runtime.utils.yamlutils import as_yaml
 
 parser = ArgumentParser(
     prog='Create a static schema with all imported schemas integrated',
@@ -63,7 +63,13 @@ def main():
     )
 
     update_uris(schema_view)
-    print(as_yaml(schema_view.schema))
+    text = yaml.dump(
+        schema_view.schema,
+        Dumper=yaml.SafeDumper,
+        allow_unicode=True,
+        sort_keys=False,
+        )
+    print(text)
     return 0
 
 
