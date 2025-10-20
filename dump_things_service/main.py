@@ -2,7 +2,6 @@ from __future__ import annotations  # noqa: I001 -- the patches have to be impor
 
 import argparse
 import logging
-import sys
 from pathlib import Path
 from typing import (
     Annotated,  # noqa F401 -- used by generated code
@@ -92,12 +91,6 @@ from dump_things_service.utils import (
 
 if TYPE_CHECKING:
     from dump_things_service.lazy_list import LazyList
-
-
-# Pydantic module generation requires a higher recursion limit
-# on Python 3.11.
-if (sys.version_info.major, sys.version_info.minor) == (3, 11):
-    sys.setrecursionlimit(2000)
 
 
 class TokenCapabilityRequest(BaseModel):

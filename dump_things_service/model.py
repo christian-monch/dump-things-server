@@ -4,6 +4,7 @@ import dataclasses  # noqa F401 -- used by generated code
 import logging
 import sys
 from itertools import count
+from types import ModuleType
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -39,6 +40,12 @@ _schema_model_cache = {}
 _schema_view_cache = {}
 
 
+# Pydantic module generation might require a highe recursion limit than the
+# default. Add a mechanism to increase it as needed, up to a maximum.
+max_recursion_limit = 10000
+current_recursion_limit = sys.getrecursionlimit()
+
+
 def get_classes(
     model: Any,
 ) -> list[str]:
@@ -59,12 +66,43 @@ def get_subclasses(
     ]
 
 
+def compile_module_with_increasing_recursion_limit(
+    pydantic_generator: PydanticGenerator,
+    schema_location: str,
+) -> ModuleType:
+    global current_recursion_limit
+
+    module = None
+    while module is None:
+        try:
+            module = pydantic_generator.compile_module()
+        except RecursionError as e:
+            if current_recursion_limit >= max_recursion_limit:
+                lgr.error(
+                    f'Maximum recursion limit ({max_recursion_limit}) reached when '
+                    'building Pydantic model, cannot increase further.'
+                )
+                raise
+            current_recursion_limit += 1000
+            sys.setrecursionlimit(current_recursion_limit)
+            lgr.warning(
+                'RecursionError when building Pydantic model for schema '
+                f'{schema_location}, increasing recursion limit to: '
+                f'{current_recursion_limit}.'
+            )
+    return module
+
+
 def get_model_for_schema(
     schema_location: str,
 ) -> tuple[ModuleType, list[str], str]:
     if schema_location not in _model_cache:
         lgr.info(f'Building model for schema {schema_location}.')
-        model = PydanticGenerator(schema_location).compile_module()
+        pydantic_generator = PydanticGenerator(schema_location)
+        model = compile_module_with_increasing_recursion_limit(
+            pydantic_generator,
+            schema_location,
+        )
         classes = get_classes(model)
         model_var_name = f'model_{next(_model_counter)}'
         _model_cache[schema_location] = model, classes, model_var_name
