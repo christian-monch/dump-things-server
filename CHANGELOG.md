@@ -1,3 +1,10 @@
+# 5.0.2 (2025-10-27)
+
+## Bugfixes
+
+-  Patch LinkML to use meaningful module names for compiled Pydantic code.
+
+
 # 5.0.1 (2025-10-20)
 
 ## Bugfixes

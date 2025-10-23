@@ -40,7 +40,7 @@ _schema_model_cache = {}
 _schema_view_cache = {}
 
 
-# Pydantic module generation might require a highe recursion limit than the
+# Pydantic module generation might require a higher recursion limit than the
 # default. Add a mechanism to increase it as needed, up to a maximum.
 max_recursion_limit = 10000
 current_recursion_limit = sys.getrecursionlimit()
