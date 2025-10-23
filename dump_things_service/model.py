@@ -73,9 +73,10 @@ def compile_module_with_increasing_recursion_limit(
     global current_recursion_limit
 
     module = None
+    module_name = urlparse(schema_location).path.replace('/', '_').replace('.', '_')
     while module is None:
         try:
-            module = pydantic_generator.compile_module()
+            module = pydantic_generator.compile_module(module_name=module_name)
         except RecursionError as e:
             if current_recursion_limit >= max_recursion_limit:
                 lgr.error(
