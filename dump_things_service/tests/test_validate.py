@@ -48,7 +48,7 @@ def test_validate_record(fastapi_client_simple):
 
     for record, expected_status in json_records:
         response = test_client.post(
-            f'/collection_1/validate/record/Person',
+            '/collection_1/validate/record/Person',
             headers={'x-dumpthings-token': 'token-1'},
             json=record,
         )
@@ -56,7 +56,7 @@ def test_validate_record(fastapi_client_simple):
 
     for record, expected_status in ttl_records:
         response = test_client.post(
-            f'/collection_1/validate/record/Person?format=ttl',
+            '/collection_1/validate/record/Person?format=ttl',
             headers={'x-dumpthings-token': 'token-1'},
             json=record,
         )

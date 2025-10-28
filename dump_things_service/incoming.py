@@ -15,7 +15,6 @@ from fastapi_pagination import (
     add_pagination,
     paginate,
 )
-from pydantic import BaseModel
 
 from dump_things_service import (
     HTTP_401_UNAUTHORIZED,
@@ -23,12 +22,10 @@ from dump_things_service import (
     HTTP_422_UNPROCESSABLE_CONTENT,
 )
 from dump_things_service.api_key import api_key_header_scheme
-from dump_things_service.backends import StorageBackend
 from dump_things_service.backends.schema_type_layer import _SchemaTypeLayer
 from dump_things_service.config import get_config
 from dump_things_service.exceptions import CurieResolutionError
 from dump_things_service.lazy_list import ModifierList
-from dump_things_service.store.model_store import ModelStore
 from dump_things_service.utils import (
     authenticate_token,
     check_bounds,
@@ -42,7 +39,11 @@ from dump_things_service.utils import (
 )
 
 if TYPE_CHECKING:
+    from pydantic import BaseModel
+
+    from dump_things_service.backends import StorageBackend
     from dump_things_service.lazy_list import LazyList
+    from dump_things_service.store.model_store import ModelStore
 
 _endpoint_incoming_template = """
 async def {name}(
@@ -223,7 +224,7 @@ async def _incoming_read_records(
 
     if pid:
         return backend.get_record_by_iri(model_store.pid_to_iri(pid))
-    elif class_name:
+    if class_name:
         result_list = backend.get_records_of_classes([class_name], matching)
     else:
         result_list = backend.get_all_records(matching)

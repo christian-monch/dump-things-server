@@ -2,7 +2,7 @@ import sys
 from argparse import ArgumentParser
 
 # Patch linkml
-from dump_things_service.patches import enabled
+from dump_things_service.patches import enabled  # noqa F401 -- patches LinkML
 
 import yaml
 from linkml_runtime.utils.schemaview import SchemaView

@@ -19,6 +19,7 @@ from dump_things_service import (
     HTTP_401_UNAUTHORIZED,
     HTTP_403_FORBIDDEN,
     HTTP_404_NOT_FOUND,
+    HTTP_413_CONTENT_TOO_LARGE,
 )
 from dump_things_service.auth import (
     AuthenticationError,
@@ -103,7 +104,7 @@ def wrap_http_exception(
         raise HTTPException(
             status_code=status_code,
             detail=f'{header}: {e}' if header else str(e),
-        )
+        ) from e
 
 
 def join_default_token_permissions(
