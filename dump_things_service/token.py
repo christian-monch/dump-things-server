@@ -14,7 +14,7 @@ class TokenPermission(BaseModel):
 def get_token_parts(token: str) -> list[str]:
     parts = token.split('-', 1)
     if len(parts) != 2:
-        msg = f'Invalid token format'
+        msg = 'Invalid token format'
         raise ValueError(msg)
     return parts
 

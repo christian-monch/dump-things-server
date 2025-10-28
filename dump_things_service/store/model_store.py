@@ -8,7 +8,7 @@ from dump_things_service.model import (
     get_model_for_schema,
     get_subclasses,
 )
-from dump_things_service.resolve_curie import resolve_curie, is_curie
+from dump_things_service.resolve_curie import is_curie, resolve_curie
 from dump_things_service.utils import cleaned_json
 
 if TYPE_CHECKING:

@@ -1,11 +1,11 @@
 import sys
 from argparse import ArgumentParser
 
-# Patch linkml
-from dump_things_service.patches import enabled  # noqa F401 -- patches LinkML
-
 import yaml
 from linkml_runtime.utils.schemaview import SchemaView
+
+# Patch linkml
+from dump_things_service.patches import enabled  # noqa F401 -- patches LinkML
 
 parser = ArgumentParser(
     prog='Create a static schema with all imported schemas integrated',

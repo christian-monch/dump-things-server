@@ -75,6 +75,7 @@ add_pagination(router)
 @router.get(
     '/{collection}/incoming/',
     tags=['Incoming area: read labels'],
+    name='Get all incoming labels for the given collection'
 )
 async def incoming_read_labels(
     collection: str,
@@ -90,6 +91,7 @@ async def incoming_read_labels(
 @router.get(
     '/{collection}/incoming/{label}/records/{class_name}',
     tags=['Incoming area: read records'],
+    name='Read all records of the given class from the given incoming area'
 )
 async def incoming_read_records_of_type(
     collection: str,
@@ -112,6 +114,7 @@ async def incoming_read_records_of_type(
 @router.get(
     '/{collection}/incoming/{label}/records/p/{class_name}',
     tags=['Incoming area: read records'],
+    name='Read all records of the given class from the given incoming area with pagination'
 )
 async def incoming_read_records_of_type_paginated(
     collection: str,
@@ -134,6 +137,7 @@ async def incoming_read_records_of_type_paginated(
 @router.get(
     '/{collection}/incoming/{label}/records/',
     tags=['Incoming area: read records'],
+    name='Read all records from the given incoming area'
 )
 async def incoming_read_all_records(
     collection: str,
@@ -155,6 +159,7 @@ async def incoming_read_all_records(
 @router.get(
     '/{collection}/incoming/{label}/records/p/',
     tags=['Incoming area: read records'],
+    name='Read all records from the given incoming area with pagination'
 )
 async def incoming_read_all_records_paginated(
         collection: str,
@@ -176,6 +181,7 @@ async def incoming_read_all_records_paginated(
 @router.get(
     '/{collection}/incoming/{label}/record',
     tags=['Incoming area: read records'],
+    name='Read the record with the given PID from the given incoming area'
 )
 async def incoming_read_record_with_pid(
         collection: str,
@@ -195,6 +201,7 @@ async def incoming_read_record_with_pid(
 @router.delete(
     '/{collection}/incoming/{label}/record',
     tags=['Incoming area: delete records'],
+    name='Delete the record with the given PID from the given incoming area'
 )
 async def incoming_delete_record_with_pid(
     collection: str,
@@ -358,7 +365,7 @@ def create_incoming_endpoints(
             model_var_name,
     ) in instance_config.model_info.items():
 
-        tag_name = f'Incoming area: write records to collection "{collection}"'
+        tag_name = f'Incoming area: write records to the given incoming area of collection "{collection}"'
 
         if model_var_name not in global_dict:
             global_dict[model_var_name] = model
@@ -389,7 +396,7 @@ def create_incoming_endpoints(
 
         generated_tags.append({
             'name': tag_name,
-            'description': f'Incoming area: write records to collection "{collection}" (requires **curator token**)',
+            'description': f'(requires **curator token**)',
         })
 
     index = tag_info.index({'name': placeholder, 'description': ''})

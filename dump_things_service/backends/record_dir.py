@@ -94,7 +94,7 @@ class _RecordDirStore(StorageBackend):
     def get_uri(
         self
     ) -> str:
-        return f'file://{str(self.root)}'
+        return f'file://{self.root!s}'
 
     def build_index(
         self,

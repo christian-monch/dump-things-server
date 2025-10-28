@@ -2,13 +2,13 @@ from __future__ import annotations
 
 import sys
 from argparse import ArgumentParser
+from collections.abc import Iterable
 from pathlib import Path
-from typing import Iterable
 
 from dump_things_service import config_file_name
 from dump_things_service.backends.schema_type_layer import _SchemaTypeLayer
 from dump_things_service.backends.sqlite import _SQLiteBackend
-from dump_things_service.config import process_config, get_config
+from dump_things_service.config import get_config, process_config
 from dump_things_service.exceptions import CurieResolutionError
 from dump_things_service.store.model_store import _ModelStore
 from dump_things_service.utils import (

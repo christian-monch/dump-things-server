@@ -61,14 +61,14 @@ def create_store_endpoints(
                 path=f'/{collection}/record/{class_name}',
                 endpoint=global_dict[endpoint_name],
                 methods=['POST'],
-                name=f'store instances of class "{class_name}" of schema "{model.linkml_meta["id"]}"',
+                name=f'store "{class_name}" object (schema: {model.linkml_meta["id"]})',
                 response_model=None,
                 tags=[tag_name]
             )
 
         generated_tags.append({
             'name': tag_name,
-            'description': f'Write records to collection "{collection}"',
+            'description': '',
         })
 
     index = tag_info.index({'name': placeholder, 'description': ''})
@@ -119,14 +119,14 @@ def create_validate_endpoints(
                 path=f'/{collection}/validate/record/{class_name}',
                 endpoint=global_dict[endpoint_name],
                 methods=['POST'],
-                name=f'Validate instance of class "{class_name}" of schema "{model.linkml_meta["id"]}"',
+                name=f'Validate "{class_name}" object (schema: {model.linkml_meta["id"]})',
                 response_model=None,
                 tags=[tag_name]
             )
 
         generated_tags.append({
             'name': tag_name,
-            'description': f'Validate records for collection "{collection}"',
+            'description': '',
         })
 
     index = tag_info.index({'name': placeholder, 'description': ''})

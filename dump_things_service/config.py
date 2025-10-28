@@ -33,8 +33,7 @@ from dump_things_service.backends.sqlite import SQLiteBackend
 from dump_things_service.backends.sqlite import (
     record_file_name as sqlite_record_file_name,
 )
-from dump_things_service.converter import get_conversion_objects, \
-    FormatConverter
+from dump_things_service.converter import FormatConverter, get_conversion_objects
 from dump_things_service.exceptions import (
     ConfigError,
     CurieResolutionError,
@@ -357,7 +356,7 @@ def process_config_object(
                 msg = f'Unknown authentication provider type: {auth_provider.type}'
                 raise ConfigError(msg)
             if key in auth_provider_list:
-                logger.warning(f'Ignoring duplicated authentication provider: %s', key)
+                logger.warning('Ignoring duplicated authentication provider: %s', key)
                 continue
             auth_provider_list.append(key)
 

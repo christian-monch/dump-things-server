@@ -168,7 +168,7 @@ async def read_curated_record_with_pid(
 @router.delete(
     '/{collection}/curated/record',
     tags=['Curated area: delete records'],
-    name='Delete the record with the given pid from the curated area'
+    name='Delete the record with the given pid from the curated area of the given collection'
 )
 async def delete_curated_record_with_pid(
     collection: str,
@@ -284,7 +284,7 @@ def create_curated_endpoints(
             model_var_name,
     ) in instance_config.model_info.items():
 
-        tag_name = f'Curated area: write records to collection "{collection}"'
+        tag_name = f'Curated area: write records to curated area of collection "{collection}"'
 
         if model_var_name not in global_dict:
             global_dict[model_var_name] = model
@@ -308,14 +308,14 @@ def create_curated_endpoints(
                 path=f'/{collection}/curated/record/{class_name}',
                 endpoint=global_dict[endpoint_name],
                 methods=['POST'],
-                name=f'curated store of "{class_name}" object (schema: {model.linkml_meta["id"]})',
+                name=f'curated area: store "{class_name}" object (schema: {model.linkml_meta["id"]})',
                 response_model=None,
                 tags=[tag_name]
             )
 
         generated_tags.append({
             'name': tag_name,
-            'description': f'Curated area: write records to collection "{collection}" (requires **curator token**)',
+            'description': f'(requires **curator token**)',
         })
 
     index = tag_info.index({'name': placeholder, 'description': ''})

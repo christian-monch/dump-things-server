@@ -155,11 +155,11 @@ of the project.
 tag_info = [
     {
         'name': 'Server info',
-        'description': 'General information about the server',
+        'description': 'Get general information about the server',
     },
     {
         'name': 'Read records',
-        'description': 'Read records',
+        'description': 'Read records from the given collection',
     },
     {
         'name': 'placeholder_write',
@@ -175,7 +175,7 @@ tag_info = [
     },
     {
         'name': 'Curated area: read records',
-        'description': 'Read records from the curated area only (requires **curator token**)',
+        'description': 'Read records only from the curated area of the given collection (requires **curator token**)',
     },
     {
         'name': 'placeholder_curated_write',
@@ -183,7 +183,7 @@ tag_info = [
     },
     {
         'name': 'Curated area: delete records',
-        'description': 'Delete records from the curated area (requires **curator token**)',
+        'description': 'Delete records from the curated area of the given collection (requires **curator token**)',
     },
     {
         'name': 'Incoming area: read labels',
@@ -191,7 +191,7 @@ tag_info = [
     },
     {
         'name': 'Incoming area: read records',
-        'description': 'Read records from an incoming area of the given collection (requires **curator token**)',
+        'description': 'Read records from the given incoming area of the given collection (requires **curator token**)',
     },
     {
         'name': 'placeholder_incoming_write',
@@ -199,7 +199,7 @@ tag_info = [
     },
     {
         'name': 'Incoming area: delete records',
-        'description': 'Delete records from an incoming area of the given collection (requires **curator token**)',
+        'description': 'Delete records from the given incoming area of the given collection (requires **curator token**)',
     },
 ]
 
@@ -388,14 +388,22 @@ def validate_record(
     return JSONResponse(True)
 
 
-@app.get('/server', tags=['Server info'])
+@app.get(
+    '/server',
+    tags=['Server info'],
+    name='get server information'
+)
 async def get_server() -> ServerResponse:
     return ServerResponse(
         version = __version__,
     )
 
 
-@app.get('/{collection}/record', tags=['Read records'])
+@app.get(
+    '/{collection}/record',
+    tags=['Read records'],
+    name='Read the record with the given PID from the given collection',
+)
 async def read_record_with_pid(
     collection: str,
     pid: str,
@@ -434,7 +442,11 @@ async def read_record_with_pid(
     return json_object
 
 
-@app.get('/{collection}/records/', tags=['Read records'])
+@app.get(
+    '/{collection}/records/',
+    tags=['Read records'],
+    name='Read all records from the given collection',
+)
 async def read_all_records(
         collection: str,
         matching: str | None = None,
@@ -453,7 +465,11 @@ async def read_all_records(
     )
 
 
-@app.get('/{collection}/records/p/', tags=['Read records'])
+@app.get(
+    '/{collection}/records/p/',
+    tags=['Read records'],
+    name='Read all records from the given collection with pagination',
+)
 async def read_all_records_paginated(
         collection: str,
         matching: str | None = None,
@@ -470,7 +486,11 @@ async def read_all_records_paginated(
     return paginate(result_list)
 
 
-@app.get('/{collection}/records/{class_name}', tags=['Read records'])
+@app.get(
+    '/{collection}/records/{class_name}',
+    tags=['Read records'],
+    name='Read records of the given class (or subclass) from the given collection',
+)
 async def read_records_of_type(
     collection: str,
     class_name: str,
@@ -491,7 +511,11 @@ async def read_records_of_type(
     )
 
 
-@app.get('/{collection}/records/p/{class_name}', tags=['Read records'])
+@app.get(
+    '/{collection}/records/p/{class_name}',
+    tags=['Read records'],
+    name='Read records of the given class (or subclass) from the given collection with pagination',
+)
 async def read_records_of_type_paginated(
     collection: str,
     class_name: str,

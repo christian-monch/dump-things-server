@@ -11,9 +11,6 @@ from typing import (
 )
 from urllib.parse import urlparse
 
-# Ensure linkml is patched
-import dump_things_service.patches.enabled  # noqa F401 -- apply patches
-
 import annotated_types  # noqa F401 -- used by generated code
 import pydantic  # noqa F401 -- used by generated code
 import pydantic_core  # noqa F401 -- used by generated code
@@ -23,6 +20,9 @@ from linkml.generators import (
 )
 from linkml_runtime import SchemaView
 from pydantic._internal._model_construction import ModelMetaclass
+
+# Ensure linkml is patched
+import dump_things_service.patches.enabled  # noqa F401 -- apply patches
 
 if TYPE_CHECKING:
     from types import ModuleType
@@ -82,7 +82,7 @@ def compile_module_with_increasing_recursion_limit(
     while module is None:
         try:
             module = pydantic_generator.compile_module(module_name=module_name)
-        except RecursionError as e:
+        except RecursionError:
             if current_recursion_limit >= max_recursion_limit:
                 lgr.error(
                     f'Maximum recursion limit ({max_recursion_limit}) reached when '

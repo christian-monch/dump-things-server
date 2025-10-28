@@ -8,7 +8,7 @@ from dump_things_service.config import (
     ConfigError,
     GlobalConfig,
     process_config,
-    process_config_object, get_config,
+    process_config_object,
 )
 
 

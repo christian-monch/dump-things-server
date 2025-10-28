@@ -1,5 +1,4 @@
 # The tests below require patches
-import dump_things_service.patches.enabled
 
 from pathlib import Path
 
