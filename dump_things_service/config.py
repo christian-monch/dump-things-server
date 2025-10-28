@@ -33,8 +33,7 @@ from dump_things_service.backends.sqlite import SQLiteBackend
 from dump_things_service.backends.sqlite import (
     record_file_name as sqlite_record_file_name,
 )
-from dump_things_service.converter import get_conversion_objects, \
-    FormatConverter
+from dump_things_service.converter import FormatConverter, get_conversion_objects
 from dump_things_service.exceptions import (
     ConfigError,
     CurieResolutionError,
@@ -316,6 +315,7 @@ def process_config(
         order_by=order_by,
         globals_dict=globals_dict,
     )
+    return global_config_instance
 
 
 def get_config():
@@ -356,7 +356,7 @@ def process_config_object(
                 msg = f'Unknown authentication provider type: {auth_provider.type}'
                 raise ConfigError(msg)
             if key in auth_provider_list:
-                logger.warning(f'Ignoring duplicate authentication provider: {key}')
+                logger.warning('Ignoring duplicated authentication provider: %s', key)
                 continue
             auth_provider_list.append(key)
 
@@ -440,10 +440,10 @@ def process_config_object(
 
         # We do not create stores for tokens here, but leave it to the token
         # authentication routine.
-        instance_config.token_stores[collection_name] = dict()
+        instance_config.token_stores[collection_name] = {}
 
     # Create validator for each collection
-    for collection_name, collection_info in config_object.collections.items():
+    for collection_name, _ in config_object.collections.items():
         instance_config.validators[collection_name] = FormatConverter(
             schema=instance_config.schemas[collection_name],
             input_format=Format.json,
@@ -455,19 +455,20 @@ def process_config_object(
         for collection_name, token_collection_info in token_info.collections.items():
 
             if collection_name not in instance_config.hashed_tokens:
-                instance_config.hashed_tokens[collection_name] = dict()
+                instance_config.hashed_tokens[collection_name] = {}
 
             if token_info.hashed:
                 token_id, _ = get_token_parts(token_name)
                 if token_id == '':
-                    raise ConfigError('empty ID in hashed token')
+                    msg = 'empty ID in hashed token'
+                    raise ConfigError(msg)
                 if token_id in instance_config.hashed_tokens[collection_name]:
                     msg = f'duplicated ID in hashed token: {token_id}'
                     raise ConfigError(msg)
                 instance_config.hashed_tokens[collection_name][token_id] = token_name
 
             if collection_name not in instance_config.tokens:
-                instance_config.tokens[collection_name] = dict()
+                instance_config.tokens[collection_name] = {}
 
             permissions = get_permissions(token_collection_info.mode)
             instance_config.tokens[collection_name][token_name] = {
@@ -518,7 +519,7 @@ def process_config_object(
 
     # Check that config authentication source is present if tokens are defined
     # in the config file
-    for collection_name, collection_info in config_object.collections.items():
+    for collection_name, _ in config_object.collections.items():
         config_tokens = instance_config.tokens.get(collection_name, {})
         if config_tokens:
             if not any(
@@ -532,17 +533,17 @@ def process_config_object(
                 raise ConfigError(msg)
 
     # Check that hashed plain tokens do not clash with hashed tokens:
-    hashed_plain_tokens = set(
+    hashed_plain_tokens = {
         hash_token(token)
         for collection in instance_config.collections
         for token in instance_config.tokens[collection]
         if '-' in token
-    )
-    hashed_tokens = set(
+    }
+    hashed_tokens = {
         value
         for token_dict in instance_config.hashed_tokens.values()
         for value in token_dict.values()
-    )
+    }
     if hashed_plain_tokens.intersection(hashed_tokens):
         msg = 'plain tokens clash with hashed tokens'
         raise ConfigError(msg)

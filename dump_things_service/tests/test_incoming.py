@@ -1,13 +1,13 @@
 from __future__ import annotations
 
-import pytest
 import random
+
+import pytest
 
 from dump_things_service import (
     HTTP_200_OK,
     HTTP_404_NOT_FOUND,
 )
-from dump_things_service.tests.test_auth import repo_1
 
 delete_record = {
     'schema_type': 'abc:Person',

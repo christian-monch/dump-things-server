@@ -1,6 +1,3 @@
-import datetime
-from datetime import datetime as datetime_object
-
 import pytest  # noqa F401
 
 import freezegun

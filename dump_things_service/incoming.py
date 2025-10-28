@@ -15,21 +15,17 @@ from fastapi_pagination import (
     add_pagination,
     paginate,
 )
-from pydantic import BaseModel
 
 from dump_things_service import (
     HTTP_401_UNAUTHORIZED,
     HTTP_404_NOT_FOUND,
-    HTTP_413_CONTENT_TOO_LARGE,
     HTTP_422_UNPROCESSABLE_CONTENT,
 )
 from dump_things_service.api_key import api_key_header_scheme
-from dump_things_service.backends import StorageBackend
 from dump_things_service.backends.schema_type_layer import _SchemaTypeLayer
 from dump_things_service.config import get_config
 from dump_things_service.exceptions import CurieResolutionError
 from dump_things_service.lazy_list import ModifierList
-from dump_things_service.store.model_store import ModelStore
 from dump_things_service.utils import (
     authenticate_token,
     check_bounds,
@@ -43,7 +39,11 @@ from dump_things_service.utils import (
 )
 
 if TYPE_CHECKING:
+    from pydantic import BaseModel
+
+    from dump_things_service.backends import StorageBackend
     from dump_things_service.lazy_list import LazyList
+    from dump_things_service.store.model_store import ModelStore
 
 _endpoint_incoming_template = """
 async def {name}(
@@ -74,7 +74,8 @@ add_pagination(router)
 
 @router.get(
     '/{collection}/incoming/',
-    tags=['Incoming read labels'],
+    tags=['Incoming area: read labels'],
+    name='Get all incoming labels for the given collection'
 )
 async def incoming_read_labels(
     collection: str,
@@ -89,7 +90,8 @@ async def incoming_read_labels(
 
 @router.get(
     '/{collection}/incoming/{label}/records/{class_name}',
-    tags=['Incoming read records'],
+    tags=['Incoming area: read records'],
+    name='Read all records of the given class from the given incoming area'
 )
 async def incoming_read_records_of_type(
     collection: str,
@@ -111,7 +113,8 @@ async def incoming_read_records_of_type(
 
 @router.get(
     '/{collection}/incoming/{label}/records/p/{class_name}',
-    tags=['Incoming read records'],
+    tags=['Incoming area: read records'],
+    name='Read all records of the given class from the given incoming area with pagination'
 )
 async def incoming_read_records_of_type_paginated(
     collection: str,
@@ -133,7 +136,8 @@ async def incoming_read_records_of_type_paginated(
 
 @router.get(
     '/{collection}/incoming/{label}/records/',
-    tags=['Incoming read records'],
+    tags=['Incoming area: read records'],
+    name='Read all records from the given incoming area'
 )
 async def incoming_read_all_records(
     collection: str,
@@ -154,7 +158,8 @@ async def incoming_read_all_records(
 
 @router.get(
     '/{collection}/incoming/{label}/records/p/',
-    tags=['Incoming read records'],
+    tags=['Incoming area: read records'],
+    name='Read all records from the given incoming area with pagination'
 )
 async def incoming_read_all_records_paginated(
         collection: str,
@@ -175,7 +180,8 @@ async def incoming_read_all_records_paginated(
 
 @router.get(
     '/{collection}/incoming/{label}/record',
-    tags=['Incoming read records'],
+    tags=['Incoming area: read records'],
+    name='Read the record with the given PID from the given incoming area'
 )
 async def incoming_read_record_with_pid(
         collection: str,
@@ -194,7 +200,8 @@ async def incoming_read_record_with_pid(
 
 @router.delete(
     '/{collection}/incoming/{label}/record',
-    tags=['Incoming delete records'],
+    tags=['Incoming area: delete records'],
+    name='Delete the record with the given PID from the given incoming area'
 )
 async def incoming_delete_record_with_pid(
     collection: str,
@@ -224,7 +231,7 @@ async def _incoming_read_records(
 
     if pid:
         return backend.get_record_by_iri(model_store.pid_to_iri(pid))
-    elif class_name:
+    if class_name:
         result_list = backend.get_records_of_classes([class_name], matching)
     else:
         result_list = backend.get_all_records(matching)
@@ -340,20 +347,25 @@ async def authorize_zones(
 
 
 def create_incoming_endpoints(
-    app: FastAPI,
-    global_dict: dict,
+        app: FastAPI,
+        tag_info: list[dict[str, str]],
+        placeholder: str,
+        global_dict: dict,
 ):
     # Create endpoints for all classes in all collections
     logger.info('Creating dynamic incoming endpoints...')
     serial_number = count()
 
     instance_config = get_config()
+    generated_tags = []
 
     for collection, (
             model,
             classes,
             model_var_name,
     ) in instance_config.model_info.items():
+
+        tag_name = f'Incoming area: write records to the given incoming area of collection "{collection}"'
 
         if model_var_name not in global_dict:
             global_dict[model_var_name] = model
@@ -377,10 +389,18 @@ def create_incoming_endpoints(
                 path=f'/{collection}/incoming/{{label}}/record/{class_name}',
                 endpoint=global_dict[endpoint_name],
                 methods=['POST'],
-                name=f'incoming store for "{class_name}" object (schema: {model.linkml_meta["id"]})',
+                name=f'incoming area: store "{class_name}" object (schema: {model.linkml_meta["id"]})',
                 response_model=None,
-                tags=[f'Incoming write records to "{collection}"']
+                tags=[tag_name]
             )
+
+        generated_tags.append({
+            'name': tag_name,
+            'description': f'(requires **curator token**)',
+        })
+
+    index = tag_info.index({'name': placeholder, 'description': ''})
+    tag_info[index:index + 1] = generated_tags
 
     logger.info(
         'Creation of %d incoming endpoints completed.',
