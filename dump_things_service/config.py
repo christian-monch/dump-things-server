@@ -140,6 +140,7 @@ class CollectionConfig(StrictModel):
     backend: BackendConfigRecordDir | BackendConfigSQLite | None = None
     auth_sources: list[ForgejoAuthConfig | ConfigAuthConfig] = [ConfigAuthConfig()]
     submission_tags: TagConfig = TagConfig()
+    ignored_classes: list[str] = dataclasses.field(default_factory=list)
 
 
 class GlobalConfig(StrictModel):
@@ -169,6 +170,7 @@ class InstanceConfig:
     tokens: dict = dataclasses.field(default_factory=dict)
     hashed_tokens: dict = dataclasses.field(default_factory=dict)
     validators: dict = dataclasses.field(default_factory=dict)
+    ignored_classes: dict = dataclasses.field(default_factory=dict)
 
 
 mode_mapping = {
@@ -449,6 +451,10 @@ def process_config_object(
             input_format=Format.json,
             output_format=Format.ttl,
         )
+
+    # Store the ignored class blacklist for each collection
+    for collection_name, collection_info in config_object.collections.items():
+        instance_config.ignored_classes[collection_name] = collection_info.ignored_classes[:]
 
     # Read info for tokens from the configuration
     for token_name, token_info in config_object.tokens.items():
