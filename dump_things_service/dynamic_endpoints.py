@@ -20,19 +20,26 @@ async def {name}(
 
 
 def create_store_endpoints(
-    app: FastAPI,
-    instance_config: InstanceConfig,
-    global_dict: dict,
+        app: FastAPI,
+        instance_config: InstanceConfig,
+        tag_info: list[dict[str, str]],
+        placeholder: str,
+        global_dict: dict,
 ):
     # Create endpoints for all classes in all collections
     logger.info('Creating dynamic store_record endpoints...')
     serial_number = count()
+
+    generated_tags = []
 
     for collection, (
         model,
         classes,
         model_var_name,
     ) in instance_config.model_info.items():
+
+        tag_name = f'Write records to collection "{collection}"'
+
         global_dict[model_var_name] = model
         for class_name in classes:
             # Create an endpoint to dump data of type `class_name` in version
@@ -54,10 +61,18 @@ def create_store_endpoints(
                 path=f'/{collection}/record/{class_name}',
                 endpoint=global_dict[endpoint_name],
                 methods=['POST'],
-                name=f'handle "{class_name}" of schema "{model.linkml_meta["id"]}" objects',
+                name=f'store instances of class "{class_name}" of schema "{model.linkml_meta["id"]}"',
                 response_model=None,
-                tags=[f'Write records to "{collection}"']
+                tags=[tag_name]
             )
+
+        generated_tags.append({
+            'name': tag_name,
+            'description': f'Write records to collection "{collection}"',
+        })
+
+    index = tag_info.index({'name': placeholder, 'description': ''})
+    tag_info[index:index + 1] = generated_tags
 
     logger.info('Creation of %d endpoints completed.', next(serial_number))
 
@@ -65,17 +80,24 @@ def create_store_endpoints(
 def create_validate_endpoints(
         app: FastAPI,
         instance_config: InstanceConfig,
+        tag_info: list[dict[str, str]],
+        placeholder: str,
         global_dict: dict,
 ):
     # Create endpoints for all classes in all collections
     logger.info('Creating dynamic validate_record endpoints...')
     serial_number = count()
 
+    generated_tags = []
+
     for collection, (
             model,
             classes,
             model_var_name,
     ) in instance_config.model_info.items():
+
+        tag_name = f'Validate records for collection "{collection}"'
+
         global_dict[model_var_name] = model
         for class_name in classes:
             # Create an endpoint to dump data of type `class_name` in version
@@ -97,9 +119,17 @@ def create_validate_endpoints(
                 path=f'/{collection}/validate/record/{class_name}',
                 endpoint=global_dict[endpoint_name],
                 methods=['POST'],
-                name=f'validate "{class_name}" of schema "{model.linkml_meta["id"]}" objects',
+                name=f'Validate instance of class "{class_name}" of schema "{model.linkml_meta["id"]}"',
                 response_model=None,
-                tags=[f'Validate records for "{collection}"']
+                tags=[tag_name]
             )
+
+        generated_tags.append({
+            'name': tag_name,
+            'description': f'Validate records for collection "{collection}"',
+        })
+
+    index = tag_info.index({'name': placeholder, 'description': ''})
+    tag_info[index:index + 1] = generated_tags
 
     logger.info('Creation of %d endpoints completed.', next(serial_number))

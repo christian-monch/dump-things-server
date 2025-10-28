@@ -20,7 +20,6 @@ from pydantic import BaseModel
 from dump_things_service import (
     HTTP_401_UNAUTHORIZED,
     HTTP_404_NOT_FOUND,
-    HTTP_413_CONTENT_TOO_LARGE,
     HTTP_422_UNPROCESSABLE_CONTENT,
 )
 from dump_things_service.api_key import api_key_header_scheme
@@ -67,7 +66,8 @@ add_pagination(router)
 
 @router.get(
     '/{collection}/curated/records/{class_name}',
-    tags=['Curator read records'],
+    tags=['Curated area: read records'],
+    name='Read all records of the given class from the curated area'
 )
 async def read_curated_records_of_type(
     collection: str,
@@ -87,7 +87,8 @@ async def read_curated_records_of_type(
 
 @router.get(
     '/{collection}/curated/records/p/{class_name}',
-    tags=['Curator read records'],
+    tags=['Curated area: read records'],
+    name='Read all records of the given class from the curated area with pagination'
 )
 async def read_curated_records_of_type_paginated(
     collection: str,
@@ -107,7 +108,8 @@ async def read_curated_records_of_type_paginated(
 
 @router.get(
     '/{collection}/curated/records/',
-    tags=['Curator read records'],
+    tags=['Curated area: read records'],
+    name='Read all records from the curated area'
 )
 async def read_curated_all_records(
     collection: str,
@@ -126,7 +128,8 @@ async def read_curated_all_records(
 
 @router.get(
     '/{collection}/curated/records/p/',
-    tags=['Curator read records'],
+    tags=['Curated area: read records'],
+    name='Read all records from the curated area with pagination'
 )
 async def read_curated_all_records_paginated(
     collection: str,
@@ -145,7 +148,8 @@ async def read_curated_all_records_paginated(
 
 @router.get(
     '/{collection}/curated/record',
-    tags=['Curator read records'],
+    tags=['Curated area: read records'],
+    name='Read the record with the given pid from the curated area'
 )
 async def read_curated_record_with_pid(
     collection: str,
@@ -162,7 +166,8 @@ async def read_curated_record_with_pid(
 
 @router.delete(
     '/{collection}/curated/record',
-    tags=['Curator delete records'],
+    tags=['Curated area: delete records'],
+    name='Delete the record with the given pid from the curated area'
 )
 async def delete_curated_record_with_pid(
     collection: str,
@@ -260,20 +265,25 @@ async def _get_store_and_backend(
 
 
 def create_curated_endpoints(
-    app: FastAPI,
-    global_dict: dict,
+        app: FastAPI,
+        tag_info: list[dict[str, str]],
+        placeholder: str,
+        global_dict: dict,
 ):
     # Create endpoints for all classes in all collections
     logger.info('Creating dynamic curated endpoints...')
     serial_number = count()
 
     instance_config = get_config()
+    generated_tags = []
 
     for collection, (
             model,
             classes,
             model_var_name,
     ) in instance_config.model_info.items():
+
+        tag_name = f'Curated area: write records to collection "{collection}"'
 
         if model_var_name not in global_dict:
             global_dict[model_var_name] = model
@@ -299,8 +309,16 @@ def create_curated_endpoints(
                 methods=['POST'],
                 name=f'curated store of "{class_name}" object (schema: {model.linkml_meta["id"]})',
                 response_model=None,
-                tags=[f'Curator write records to "{collection}"']
+                tags=[tag_name]
             )
+
+        generated_tags.append({
+            'name': tag_name,
+            'description': f'Curated area: write records to collection "{collection}" (requires **curator token**)',
+        })
+
+    index = tag_info.index({'name': placeholder, 'description': ''})
+    tag_info[index:index + 1] = generated_tags
 
     logger.info(
         'Creation of %d curated endpoints completed.',

@@ -132,6 +132,78 @@ parser.add_argument(
 )
 
 
+description = """
+
+A service to store and retrieve data that is structured according to given
+schemata.
+
+Data is stored in **collections**.
+Each collection has a name and an associated schema.
+All data records in the collection have to adhere to the given schema.
+
+Users store data in an incoming area and read data from a curated area and their
+incoming area. There can be many incoming areas, but only one curated area.
+
+Curators store data in an incoming area or in the curated area and read data
+from any incoming area or the curated area.
+
+
+For more information refer to the [README-file](https://github.com/christian-monch/dump-things-server?tab=readme-ov-file#dump-things-service)
+of the project.
+"""
+
+tag_info = [
+    {
+        'name': 'Server info',
+        'description': 'General information about the server',
+    },
+    {
+        'name': 'Read records',
+        'description': 'Read records',
+    },
+    {
+        'name': 'placeholder_write',
+        'description': '',
+    },
+    {
+        'name': 'placeholder_validate',
+        'description': '',
+    },
+    {
+        'name': 'Delete records',
+        'description': 'Delete records from the incoming area associated with the authorization token',
+    },
+    {
+        'name': 'Curated area: read records',
+        'description': 'Read records from the curated area only (requires **curator token**)',
+    },
+    {
+        'name': 'placeholder_curated_write',
+        'description': '',
+    },
+    {
+        'name': 'Curated area: delete records',
+        'description': 'Delete records from the curated area (requires **curator token**)',
+    },
+    {
+        'name': 'Incoming area: read labels',
+        'description': 'Read labels of all incoming areas for the given collection (requires **curator token**)',
+    },
+    {
+        'name': 'Incoming area: read records',
+        'description': 'Read records from an incoming area of the given collection (requires **curator token**)',
+    },
+    {
+        'name': 'placeholder_incoming_write',
+        'description': '',
+    },
+    {
+        'name': 'Incoming area: delete records',
+        'description': 'Delete records from an incoming area of the given collection (requires **curator token**)',
+    },
+]
+
+
 arguments = parser.parse_args()
 
 # Set the log level
@@ -163,7 +235,12 @@ g_instance_config = get_config()
 
 disable_installed_extensions_check()
 
-app = FastAPI()
+app = FastAPI(
+    title='Dump Things Service',
+    description=description,
+    version=__version__,
+    openapi_tags=tag_info
+)
 app.include_router(curated_router)
 app.include_router(incoming_router)
 
@@ -311,7 +388,7 @@ def validate_record(
     return JSONResponse(True)
 
 
-@app.get('/server', tags=['Server'])
+@app.get('/server', tags=['Server info'])
 async def get_server() -> ServerResponse:
     return ServerResponse(
         version = __version__,
@@ -556,7 +633,11 @@ async def _read_records_of_type(
     return result_list
 
 
-@app.delete('/{collection}/record', tags=['Delete records'])
+@app.delete(
+    '/{collection}/record',
+    tags=['Delete records'],
+    name='Delete record with the given pid from the given collection',
+)
 async def delete_record(
     collection: str,
     pid: str,
@@ -581,16 +662,15 @@ async def delete_record(
     return True
 
 
+# Create dynamic endpoints and rebuild the app to include all dynamically
+# created endpoints.
+create_store_endpoints(app, g_instance_config, tag_info, 'placeholder_write', globals())
+create_validate_endpoints(app, g_instance_config, tag_info, 'placeholder_validate', globals())
+create_curated_endpoints(app, tag_info, 'placeholder_curated_write', globals())
+create_incoming_endpoints(app, tag_info, 'placeholder_incoming_write', globals())
+app.openapi_schema = None
+app.setup()
 
-# If we have a valid configuration, create dynamic endpoints and rebuild the
-# app to include all dynamically created endpoints.
-if g_instance_config:
-    create_store_endpoints(app, g_instance_config, globals())
-    create_validate_endpoints(app, g_instance_config, globals())
-    create_curated_endpoints(app, globals())
-    create_incoming_endpoints(app, globals())
-    app.openapi_schema = None
-    app.setup()
 
 # Add CORS origins
 app.add_middleware(

@@ -20,7 +20,6 @@ from pydantic import BaseModel
 from dump_things_service import (
     HTTP_401_UNAUTHORIZED,
     HTTP_404_NOT_FOUND,
-    HTTP_413_CONTENT_TOO_LARGE,
     HTTP_422_UNPROCESSABLE_CONTENT,
 )
 from dump_things_service.api_key import api_key_header_scheme
@@ -74,7 +73,7 @@ add_pagination(router)
 
 @router.get(
     '/{collection}/incoming/',
-    tags=['Incoming read labels'],
+    tags=['Incoming area: read labels'],
 )
 async def incoming_read_labels(
     collection: str,
@@ -89,7 +88,7 @@ async def incoming_read_labels(
 
 @router.get(
     '/{collection}/incoming/{label}/records/{class_name}',
-    tags=['Incoming read records'],
+    tags=['Incoming area: read records'],
 )
 async def incoming_read_records_of_type(
     collection: str,
@@ -111,7 +110,7 @@ async def incoming_read_records_of_type(
 
 @router.get(
     '/{collection}/incoming/{label}/records/p/{class_name}',
-    tags=['Incoming read records'],
+    tags=['Incoming area: read records'],
 )
 async def incoming_read_records_of_type_paginated(
     collection: str,
@@ -133,7 +132,7 @@ async def incoming_read_records_of_type_paginated(
 
 @router.get(
     '/{collection}/incoming/{label}/records/',
-    tags=['Incoming read records'],
+    tags=['Incoming area: read records'],
 )
 async def incoming_read_all_records(
     collection: str,
@@ -154,7 +153,7 @@ async def incoming_read_all_records(
 
 @router.get(
     '/{collection}/incoming/{label}/records/p/',
-    tags=['Incoming read records'],
+    tags=['Incoming area: read records'],
 )
 async def incoming_read_all_records_paginated(
         collection: str,
@@ -175,7 +174,7 @@ async def incoming_read_all_records_paginated(
 
 @router.get(
     '/{collection}/incoming/{label}/record',
-    tags=['Incoming read records'],
+    tags=['Incoming area: read records'],
 )
 async def incoming_read_record_with_pid(
         collection: str,
@@ -194,7 +193,7 @@ async def incoming_read_record_with_pid(
 
 @router.delete(
     '/{collection}/incoming/{label}/record',
-    tags=['Incoming delete records'],
+    tags=['Incoming area: delete records'],
 )
 async def incoming_delete_record_with_pid(
     collection: str,
@@ -340,20 +339,25 @@ async def authorize_zones(
 
 
 def create_incoming_endpoints(
-    app: FastAPI,
-    global_dict: dict,
+        app: FastAPI,
+        tag_info: list[dict[str, str]],
+        placeholder: str,
+        global_dict: dict,
 ):
     # Create endpoints for all classes in all collections
     logger.info('Creating dynamic incoming endpoints...')
     serial_number = count()
 
     instance_config = get_config()
+    generated_tags = []
 
     for collection, (
             model,
             classes,
             model_var_name,
     ) in instance_config.model_info.items():
+
+        tag_name = f'Incoming area: write records to collection "{collection}"'
 
         if model_var_name not in global_dict:
             global_dict[model_var_name] = model
@@ -377,10 +381,18 @@ def create_incoming_endpoints(
                 path=f'/{collection}/incoming/{{label}}/record/{class_name}',
                 endpoint=global_dict[endpoint_name],
                 methods=['POST'],
-                name=f'incoming store for "{class_name}" object (schema: {model.linkml_meta["id"]})',
+                name=f'incoming area: store "{class_name}" object (schema: {model.linkml_meta["id"]})',
                 response_model=None,
-                tags=[f'Incoming write records to "{collection}"']
+                tags=[tag_name]
             )
+
+        generated_tags.append({
+            'name': tag_name,
+            'description': f'Incoming area: write records to collection "{collection}" (requires **curator token**)',
+        })
+
+    index = tag_info.index({'name': placeholder, 'description': ''})
+    tag_info[index:index + 1] = generated_tags
 
     logger.info(
         'Creation of %d incoming endpoints completed.',
