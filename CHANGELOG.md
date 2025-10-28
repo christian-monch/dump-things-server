@@ -1,3 +1,11 @@
+# 5.0.3 (2025-10-28)
+
+## Bugfixes
+
+-  Improve auto-generated API docs. This solves [issue 165](
+   https://github.com/christian-monch/dump-things-server/issues/165)
+
+
 # 5.0.2 (2025-10-27)
 
 ## Bugfixes
