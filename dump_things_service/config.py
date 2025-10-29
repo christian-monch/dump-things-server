@@ -454,6 +454,20 @@ def process_config_object(
 
     # Store the ignored class blacklist for each collection
     for collection_name, collection_info in config_object.collections.items():
+        model_info = instance_config.model_info[collection_name]
+        undefined = [
+            name
+            for name in collection_info.ignored_classes
+            if name not in model_info[1]
+        ]
+        if undefined:
+            msg = (
+                'ignored class(es): '
+                + ', '.join(undefined)
+                + ' not defined in schema: '
+                + model_info[0].linkml_meta.root['id']
+            )
+            raise ConfigError(msg)
         instance_config.ignored_classes[collection_name] = collection_info.ignored_classes[:]
 
     # Read info for tokens from the configuration
