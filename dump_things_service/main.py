@@ -287,7 +287,7 @@ def store_record(
     if not final_permissions.incoming_write:
         raise HTTPException(
             status_code=HTTP_403_FORBIDDEN,
-            detail=f'Not authorized to submit to collection "{collection}".',
+            detail=f"Not authorized to submit to collection '{collection}'.",
         )
 
     if input_format == Format.ttl:
@@ -367,7 +367,7 @@ def validate_record(
     if not final_permissions.incoming_write:
         raise HTTPException(
             status_code=HTTP_403_FORBIDDEN,
-            detail=f'Not authorized to validate records for collection "{collection}".',
+            detail=f"Not authorized to validate records for collection '{collection}'.",
         )
 
     if input_format == Format.ttl:
@@ -608,7 +608,7 @@ async def _read_records_of_type(
     if class_name not in get_classes(model):
         raise HTTPException(
             status_code=HTTP_404_NOT_FOUND,
-            detail=f'No "{class_name}"-class in collection "{collection}".',
+            detail=f"No '{class_name}'-class in collection '{collection}'.",
         )
 
     final_permissions, token_store = await process_token(
@@ -677,11 +677,14 @@ async def delete_record(
             status_code=HTTP_403_FORBIDDEN,
             detail=f"No write access to incoming data in collection '{collection}'.",
         )
-
-    if not token_store.delete_object(pid):
+    with wrap_http_exception(Exception):
+        result = token_store.delete_object(pid)
+    if not result:
         raise HTTPException(
             status_code=HTTP_404_NOT_FOUND,
-            detail=f"Could not remove record with PID '{pid}' from collection '{collection}'.",
+            detail=f"Could not remove record with PID '{pid}' from the "
+                   "token associated incoming area of collection "
+                   f"'{collection}'.",
         )
     return True
 

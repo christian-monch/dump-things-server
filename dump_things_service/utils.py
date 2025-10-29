@@ -134,7 +134,7 @@ def check_collection(
     if collection not in instance_config.collections:
         raise HTTPException(
             status_code=HTTP_404_NOT_FOUND,
-            detail=f'No such collection: "{collection}".',
+            detail=f"No such collection: '{collection}'.",
         )
 
 
@@ -150,7 +150,7 @@ def check_label(
     ):
         raise HTTPException(
             status_code=HTTP_404_NOT_FOUND,
-            detail=f'No incoming label: "{label}" in collection: "{collection}".',
+            detail=f"No incoming label: '{label}' in collection: '{collection}'.",
         )
 
 
@@ -216,7 +216,7 @@ async def process_token(
     if not final_permissions.incoming_read and not final_permissions.curated_read:
         raise HTTPException(
             status_code=HTTP_403_FORBIDDEN,
-            detail=f'No read access to curated or incoming data in collection "{collection}".',
+            detail=f"No read access to curated or incoming data in collection '{collection}'.",
         )
     return final_permissions, token_store
 
@@ -356,9 +356,9 @@ def create_token_store(
             and instance_config.schemas[existing_collection_name] != instance_config.schemas[collection_name]
         ):
             msg = (
-                f'collections "{existing_collection_name}" and {collection_name}"'
-                f' with different schemas map onto the same storage directory: '
-                f'"<incoming_path>/{store_dir.name}"'
+                f"collections '{existing_collection_name}' and "
+                f"'{collection_name}' with different schemas map onto the same"
+                f" storage directory: '<incoming_path>/{store_dir.name}'"
             )
             raise HTTPException(
                 status_code=HTTP_500_INTERNAL_SERVER_ERROR,

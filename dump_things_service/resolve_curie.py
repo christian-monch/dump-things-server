@@ -29,7 +29,7 @@ def resolve_curie(
     prefix_value = model.linkml_meta.root.get('prefixes', {}).get(prefix)
     if prefix_value is None:
         msg = (
-            f'cannot resolve CURIE "{curie_or_iri}". No such prefix: "{prefix}" in '
+            f"cannot resolve CURIE '{curie_or_iri}'. No such prefix: '{prefix}' in "
             f'schema: {model.linkml_meta.root["id"]}'
         )
         raise CurieResolutionError(msg)

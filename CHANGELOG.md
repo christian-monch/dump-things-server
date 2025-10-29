@@ -1,3 +1,12 @@
+# 5.1.1 (2025-10-29)
+
+## Bugfixes
+
+-  Catch CURIE resolution problems in delete-operations and report them in
+   HTTP-4xx responses. This solves [issue 168](
+   https://github.com/christian-monch/dump-things-server/issues/168)
+
+
 # 5.1.0 (2025-10-29)
 
 ## New features
