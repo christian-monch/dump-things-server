@@ -259,13 +259,16 @@ async def _incoming_delete_record(
     api_key: str | None = None,
 ) -> bool:
     model_store, backend = await _get_store_and_backend(collection, label, api_key)
-    if not backend.remove_record(model_store.pid_to_iri(pid)):
+    with wrap_http_exception(Exception):
+        result = backend.remove_record(model_store.pid_to_iri(pid))
+    if not result:
         raise HTTPException(
             status_code=HTTP_404_NOT_FOUND,
             detail=f"Could not remove record with PID '{pid}' from incoming "
                    f"area '{label}' of collection '{collection}'.",
         )
     return True
+
 
 async def _get_store_and_backend(
     collection: str,
