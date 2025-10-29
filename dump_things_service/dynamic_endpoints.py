@@ -41,11 +41,7 @@ def create_store_endpoints(
         tag_name = f'Write records to collection "{collection}"'
 
         global_dict[model_var_name] = model
-        for class_name in classes:
-
-            if class_name in instance_config.ignore_classes[collection]:
-                logger.info(f'skipping blacklisted class: {class_name}')
-                continue
+        for class_name in instance_config.use_classes[collection]:
 
             # Create an endpoint to dump data of type `class_name` in version
             # `version` of schema `application`.
@@ -104,11 +100,7 @@ def create_validate_endpoints(
         tag_name = f'Validate records for collection "{collection}"'
 
         global_dict[model_var_name] = model
-        for class_name in classes:
-
-            if class_name in instance_config.ignore_classes[collection]:
-                logger.info(f'skipping blacklisted class: {class_name}')
-                continue
+        for class_name in instance_config.use_classes[collection]:
 
             # Create an endpoint to dump data of type `class_name` in version
             # `version` of schema `application`.

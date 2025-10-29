@@ -605,7 +605,7 @@ async def _read_records_of_type(
 
     check_collection(g_instance_config, collection)
     model = g_instance_config.model_info[collection][0]
-    if class_name not in get_classes(model):
+    if class_name not in g_instance_config.use_classes[collection]:
         raise HTTPException(
             status_code=HTTP_404_NOT_FOUND,
             detail=f"No '{class_name}'-class in collection '{collection}'.",

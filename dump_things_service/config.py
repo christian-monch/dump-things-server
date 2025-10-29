@@ -140,6 +140,7 @@ class CollectionConfig(StrictModel):
     backend: BackendConfigRecordDir | BackendConfigSQLite | None = None
     auth_sources: list[ForgejoAuthConfig | ConfigAuthConfig] = [ConfigAuthConfig()]
     submission_tags: TagConfig = TagConfig()
+    use_classes: list[str] = dataclasses.field(default_factory=list)
     ignore_classes: list[str] = dataclasses.field(default_factory=list)
 
 
@@ -170,7 +171,7 @@ class InstanceConfig:
     tokens: dict = dataclasses.field(default_factory=dict)
     hashed_tokens: dict = dataclasses.field(default_factory=dict)
     validators: dict = dataclasses.field(default_factory=dict)
-    ignore_classes: dict = dataclasses.field(default_factory=dict)
+    use_classes: dict = dataclasses.field(default_factory=dict)
 
 
 mode_mapping = {
@@ -452,23 +453,51 @@ def process_config_object(
             output_format=Format.ttl,
         )
 
-    # Store the ignored class blacklist for each collection
+    # Resolve classes-blacklist and -whitelist
     for collection_name, collection_info in config_object.collections.items():
+
         model_info = instance_config.model_info[collection_name]
+
+        # If the whitelist is present, get all whitelisted classes
+        if collection_info.use_classes:
+            # Check that the whitelisted classes exist
+            undefined = [
+                name
+                for name in collection_info.use_classes
+                if name not in model_info[1]
+            ]
+            if undefined:
+                msg = (
+                        'used class(es): '
+                        + ', '.join(undefined)
+                        + ' not defined in schema: '
+                        + model_info[0].linkml_meta.root['id']
+                )
+                raise ConfigError(msg)
+            use_classes = collection_info.use_classes
+        else:
+            use_classes = model_info[1]
+
+        # Check for blacklisted classes
         undefined = [
             name
             for name in collection_info.ignore_classes
-            if name not in model_info[1]
+            if name not in use_classes
         ]
         if undefined:
             msg = (
                 'ignored class(es): '
                 + ', '.join(undefined)
-                + ' not defined in schema: '
+                + ' not defined in schema or in `used_classes`: '
                 + model_info[0].linkml_meta.root['id']
             )
             raise ConfigError(msg)
-        instance_config.ignore_classes[collection_name] = collection_info.ignore_classes[:]
+
+        instance_config.use_classes[collection_name] = [
+            name
+            for name in use_classes
+            if name not in collection_info.ignore_classes
+        ]
 
     # Read info for tokens from the configuration
     for token_name, token_info in config_object.tokens.items():
