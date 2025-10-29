@@ -140,7 +140,7 @@ class CollectionConfig(StrictModel):
     backend: BackendConfigRecordDir | BackendConfigSQLite | None = None
     auth_sources: list[ForgejoAuthConfig | ConfigAuthConfig] = [ConfigAuthConfig()]
     submission_tags: TagConfig = TagConfig()
-    ignored_classes: list[str] = dataclasses.field(default_factory=list)
+    ignore_classes: list[str] = dataclasses.field(default_factory=list)
 
 
 class GlobalConfig(StrictModel):
@@ -170,7 +170,7 @@ class InstanceConfig:
     tokens: dict = dataclasses.field(default_factory=dict)
     hashed_tokens: dict = dataclasses.field(default_factory=dict)
     validators: dict = dataclasses.field(default_factory=dict)
-    ignored_classes: dict = dataclasses.field(default_factory=dict)
+    ignore_classes: dict = dataclasses.field(default_factory=dict)
 
 
 mode_mapping = {
@@ -457,7 +457,7 @@ def process_config_object(
         model_info = instance_config.model_info[collection_name]
         undefined = [
             name
-            for name in collection_info.ignored_classes
+            for name in collection_info.ignore_classes
             if name not in model_info[1]
         ]
         if undefined:
@@ -468,7 +468,7 @@ def process_config_object(
                 + model_info[0].linkml_meta.root['id']
             )
             raise ConfigError(msg)
-        instance_config.ignored_classes[collection_name] = collection_info.ignored_classes[:]
+        instance_config.ignore_classes[collection_name] = collection_info.ignore_classes[:]
 
     # Read info for tokens from the configuration
     for token_name, token_info in config_object.tokens.items():

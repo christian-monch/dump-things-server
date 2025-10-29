@@ -372,7 +372,7 @@ def create_incoming_endpoints(
 
         for class_name in classes:
 
-            if class_name in instance_config.ignored_classes[collection]:
+            if class_name in instance_config.ignore_classes[collection]:
                 logger.info(f'skipping blacklisted class: {class_name}')
                 continue
 

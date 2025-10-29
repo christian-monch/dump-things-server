@@ -393,7 +393,7 @@ def test_server(fastapi_client_simple):
     }
 
 
-def test_ignored_classes(fastapi_client_simple):
+def test_ignore_classes(fastapi_client_simple):
     test_client, _ = fastapi_client_simple
 
     for class_name in ('Organization', 'Project'):

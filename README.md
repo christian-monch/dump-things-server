@@ -97,7 +97,7 @@ collections:
 
     # Optionally a list of classes that will be ignored when store- or validate-endpoints
     # are created.
-    ignored_classes:
+    ignore_classes:
       - Person
       - Project
 
