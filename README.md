@@ -95,8 +95,22 @@ collections:
     # Different collections should have different curated- and incoming-paths
     incoming: /tmp/personal_records/incoming
 
+    # Optionally a list of classes that should receive store- or validate-endpoints,
+    # if this list is present, all other classes defined in the schema will be ignored,
+    # i.e., they will not receive store- and validation-endpoints. The classes listed
+    # here must be in the schema.
+    use_classes:
+      - Organization
+      - Person
+      - Project
+      - Agent
+
     # Optionally a list of classes that will be ignored when store- or validate-endpoints
-    # are created.
+    # are created. If `use_classes` is present, the entries of this list will further reduce
+    # the classes that will receive endpoints. If `use_classes` is not present, the entries
+    # of this list will reduce the classes from the schema, the will receive endpoints.
+    # The classes listed here must be listed in `use_classes` if that is defined. If
+    # `use_classes` is not defined, they must be listed in the schema.
     ignore_classes:
       - Person
       - Project
