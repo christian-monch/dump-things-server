@@ -98,6 +98,9 @@ collections:
     backend:
       type: sqlite
       schema: https://concepts.datalad.org/s/flat-social/unreleased.yaml
+    ignore_classes:
+      - Organization
+      - Project
 
 tokens:
   basic_access:

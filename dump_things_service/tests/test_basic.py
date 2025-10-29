@@ -391,3 +391,21 @@ def test_server(fastapi_client_simple):
     assert response.json() == {
         'version': __version__,
     }
+
+
+def test_ignore_classes(fastapi_client_simple):
+    test_client, _ = fastapi_client_simple
+
+    for class_name in ('Organization', 'Project'):
+        response = test_client.post(
+            f'/collection_dlflatsocial-1/record/{class_name}',
+            headers={'x-dumpthings-token': 'token-1'},
+            json={'pid': f'dlflatsocial:c_{class_name}'},
+        )
+        assert response.status_code == HTTP_200_OK
+        response = test_client.post(
+            f'/collection_dlflatsocial-2/record/{class_name}',
+            headers={'x-dumpthings-token': 'token-1'},
+            json={'pid': f'dlflatsocial:c_{class_name}'},
+        )
+        assert response.status_code == HTTP_404_NOT_FOUND

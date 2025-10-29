@@ -42,6 +42,11 @@ def create_store_endpoints(
 
         global_dict[model_var_name] = model
         for class_name in classes:
+
+            if class_name in instance_config.ignore_classes[collection]:
+                logger.info(f'skipping blacklisted class: {class_name}')
+                continue
+
             # Create an endpoint to dump data of type `class_name` in version
             # `version` of schema `application`.
             endpoint_name = f'_endpoint_{next(serial_number)}'
@@ -100,6 +105,11 @@ def create_validate_endpoints(
 
         global_dict[model_var_name] = model
         for class_name in classes:
+
+            if class_name in instance_config.ignore_classes[collection]:
+                logger.info(f'skipping blacklisted class: {class_name}')
+                continue
+
             # Create an endpoint to dump data of type `class_name` in version
             # `version` of schema `application`.
             endpoint_name = f'_endpoint_validate_{next(serial_number)}'

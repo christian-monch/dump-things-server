@@ -290,6 +290,11 @@ def create_curated_endpoints(
             global_dict[model_var_name] = model
 
         for class_name in classes:
+
+            if class_name in instance_config.ignore_classes[collection]:
+                logger.info(f'skipping blacklisted class: {class_name}')
+                continue
+
             # Create an endpoint to dump data of type `class_name` of schema
             # `application`.
             endpoint_name = f'_endpoint_curated_{next(serial_number)}'

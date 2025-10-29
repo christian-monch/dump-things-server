@@ -95,6 +95,12 @@ collections:
     # Different collections should have different curated- and incoming-paths
     incoming: /tmp/personal_records/incoming
 
+    # Optionally a list of classes that will be ignored when store- or validate-endpoints
+    # are created.
+    ignore_classes:
+      - Person
+      - Project
+
   # The following entry defines the collection "rooms_and_buildings"
   rooms_and_buildings:
     default_token: basic_access

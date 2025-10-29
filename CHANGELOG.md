@@ -1,3 +1,13 @@
+# 5.1.0 (2025-10-29)
+
+## New features
+
+-  Add the key `ignore_classes` to the collection configuration mapping. All
+   classes listed under this key will be ignored when store- and
+   validate-endpoints are created.  This solves [issue 100](
+   https://github.com/christian-monch/dump-things-server/issues/100)
+
+
 # 5.0.3 (2025-10-28)
 
 ## Bugfixes
