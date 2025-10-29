@@ -98,6 +98,10 @@ collections:
     backend:
       type: sqlite
       schema: https://concepts.datalad.org/s/flat-social/unreleased.yaml
+    use_classes:
+      - Organization
+      - Person
+      - Project
     ignore_classes:
       - Organization
       - Project

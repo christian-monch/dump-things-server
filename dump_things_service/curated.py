@@ -76,6 +76,13 @@ async def read_curated_records_of_type(
     matching: str | None = None,
     api_key: str | None = Depends(api_key_header_scheme),
 ):
+    instance_config = get_config()
+    if class_name not in instance_config.use_classes[collection]:
+        raise HTTPException(
+            status_code=HTTP_404_NOT_FOUND,
+            detail=f"No '{class_name}'-class in collection '{collection}'.",
+        )
+
     return await _read_curated_records(
         collection=collection,
         class_name=class_name,
@@ -97,6 +104,14 @@ async def read_curated_records_of_type_paginated(
     matching: str | None = None,
     api_key: str | None = Depends(api_key_header_scheme),
 ) -> Page[dict]:
+
+    instance_config = get_config()
+    if class_name not in instance_config.use_classes[collection]:
+        raise HTTPException(
+            status_code=HTTP_404_NOT_FOUND,
+            detail=f"No '{class_name}'-class in collection '{collection}'.",
+        )
+
     record_list = await _read_curated_records(
         collection=collection,
         class_name=class_name,
@@ -291,11 +306,7 @@ def create_curated_endpoints(
         if model_var_name not in global_dict:
             global_dict[model_var_name] = model
 
-        for class_name in classes:
-
-            if class_name in instance_config.ignore_classes[collection]:
-                logger.info(f'skipping blacklisted class: {class_name}')
-                continue
+        for class_name in instance_config.use_classes[collection]:
 
             # Create an endpoint to dump data of type `class_name` of schema
             # `application`.

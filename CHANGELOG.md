@@ -1,3 +1,13 @@
+# 5.2.0 (2025-10-29)
+
+## New features
+
+-  Add the key `use_classes` to the collection configuration mapping. If that
+   key is present, only the classes listed under this key will receive store-
+   and validate-endpoints. This solves [issue 100](
+   https://github.com/christian-monch/dump-things-server/issues/100)
+
+
 # 5.1.1 (2025-10-29)
 
 ## Bugfixes
