@@ -1,0 +1,13 @@
+{
+  "pid": "thing_1",
+  "multislot": [
+    {
+      "pid": "pid_a_1",
+      "name_a": "name_a_1"
+    },
+    {
+      "pid": "pid_a_2",
+      "name_a": "name_a_2"
+    }
+  ]
+}
