@@ -75,24 +75,6 @@ DEFAULT_ = ABC
 
 Any = Any
 
-@dataclass(repr=False)
-class Thing(YAMLRoot):
-    _inherited_slots: ClassVar[list[str]] = []
-
-    class_class_uri: ClassVar[URIRef] = ABC["Thing"]
-    class_class_curie: ClassVar[str] = "abc:Thing"
-    class_name: ClassVar[str] = "Thing"
-    class_model_uri: ClassVar[URIRef] = ABC.Thing
-
-    pid: Optional[str] = None
-    multislot: Optional[list[Union["ClassA", "ClassB", "ClassC"]]] = empty_list()
-
-    def __post_init__(self, *_: str, **kwargs: Any):
-        if self.pid is not None and not isinstance(self.pid, str):
-            self.pid = str(self.pid)
-
-        super().__post_init__(**kwargs)
-
 
 @dataclass(repr=False)
 class ClassA(YAMLRoot):
@@ -156,6 +138,25 @@ class ClassC(YAMLRoot):
 
         if self.name_c is not None and not isinstance(self.name_c, str):
             self.name_c = str(self.name_c)
+
+        super().__post_init__(**kwargs)
+
+
+@dataclass(repr=False)
+class Thing(YAMLRoot):
+    _inherited_slots: ClassVar[list[str]] = []
+
+    class_class_uri: ClassVar[URIRef] = ABC["Thing"]
+    class_class_curie: ClassVar[str] = "abc:Thing"
+    class_name: ClassVar[str] = "Thing"
+    class_model_uri: ClassVar[URIRef] = ABC.Thing
+
+    pid: Optional[str] = None
+    multislot: Optional[list[Union[ClassA, ClassB, ClassC]]] = empty_list()
+
+    def __post_init__(self, *_: str, **kwargs: Any):
+        if self.pid is not None and not isinstance(self.pid, str):
+            self.pid = str(self.pid)
 
         super().__post_init__(**kwargs)
 
