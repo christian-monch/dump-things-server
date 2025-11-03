@@ -1,0 +1,55 @@
+id: http://example.org/any-of-test-schema
+name: any_of_test_schema
+prefixes:
+  abc: http://example.org/person-schema/abc/
+  linkml: https://w3id.org/linkml/
+imports:
+  - linkml:types
+default_range: string
+default_prefix: abc
+
+slots:
+  pid:
+    range: string
+
+  name_a:
+    range: string
+
+  name_b:
+    range: string
+
+  name_c:
+    range: string
+
+  multislot:
+    multivalued: true
+    inlined: true
+    inlined_as_list: true
+    range: Any
+    any_of:
+      - range: ClassA
+      - range: ClassB
+
+classes:
+  Any:
+    class_uri: "linkml:Any"
+
+  Thing:
+    slots:
+      - pid
+      - multislot
+
+  ClassA:
+    slots:
+      - pid
+      - name_a
+
+  ClassB:
+    slots:
+      - pid
+      - name_b
+
+  ClassC:
+    slots:
+      - pid
+      - name_c
