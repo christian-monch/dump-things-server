@@ -85,7 +85,7 @@ class Thing(YAMLRoot):
     class_model_uri: ClassVar[URIRef] = ABC.Thing
 
     pid: Optional[str] = None
-    multislot: Optional[Union[Union[dict, Any], list[Union[dict, Any]]]] = empty_list()
+    multislot: Optional[list[Union["ClassA", "ClassB", "ClassC"]]] = empty_list()
 
     def __post_init__(self, *_: str, **kwargs: Any):
         if self.pid is not None and not isinstance(self.pid, str):
@@ -180,5 +180,4 @@ slots.name_c = Slot(uri=ABC.name_c, name="name_c", curie=ABC.curie('name_c'),
                    model_uri=ABC.name_c, domain=None, range=Optional[str])
 
 slots.multislot = Slot(uri=ABC.multislot, name="multislot", curie=ABC.curie('multislot'),
-                   model_uri=ABC.multislot, domain=None, range=Optional[Union[Union[dict, Any], list[Union[dict, Any]]]])
-
+                   model_uri=ABC.multislot, domain=None, range=Optional[list[Union[ClassA, ClassB, ClassC]]])
