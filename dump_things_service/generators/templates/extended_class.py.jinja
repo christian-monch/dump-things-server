@@ -1,0 +1,31 @@
+class {{ name }}({% if bases is string %}{{ bases }}{% else %}{{ bases | join(', ') }}{% endif %}):
+{% if description %}
+    """
+    {{ description | indent(width=4) }}
+    """
+    {% endif -%}
+    {% if meta %}
+    linkml_meta: ClassVar[LinkMLMeta] = LinkMLMeta({{ meta | pprint | indent(width=8) }})
+
+    {% endif %}
+
+    class_class_uri: ClassVar[URIRef] = {{ class_class_uri }}
+    class_class_curie: ClassVar[str] = {{ class_class_curie }}
+    class_name: ClassVar[str] = {{ class_name }}
+    class_model_uri: ClassVar[URIRef] = {{ class_model_uri }}
+
+    {%  if attributes or validators %}
+    {% if attributes %}
+    {% for attr in attributes.values() %}
+    {{ attr }}
+    {% endfor -%}
+    {% endif %}
+    {% if validators %}
+    {% for validator in validators.values() %}
+
+    {{ validator }}
+    {% endfor -%}
+    {% endif %}
+    {% else %}
+    pass
+{% endif %}
