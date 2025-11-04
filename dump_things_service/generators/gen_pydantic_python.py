@@ -8,7 +8,7 @@ from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
 from types import ModuleType
-from typing import ClassVar, Literal, Optional, TypeVar, Union, overload
+from typing import Any, ClassVar, Literal, Optional, TypeVar, Union, overload
 
 import click
 from jinja2 import ChoiceLoader, Environment, FileSystemLoader, PackageLoader, Template
@@ -44,12 +44,23 @@ from linkml.generators.pydanticgen.template import (
 from linkml.generators.python.python_ifabsent_processor import PythonIfAbsentProcessor
 from linkml.utils import deprecation_warning
 from linkml.utils.generator import shared_arguments
+from rdflib import URIRef
 
 logger = logging.getLogger(__name__)
 
 
 if int(PYDANTIC_VERSION[0]) == 1:
     deprecation_warning("pydantic-v1")
+
+
+if int(PYDANTIC_VERSION[0]) >= 2:
+    from pydantic import computed_field
+else:
+    deprecation_warning("pydantic-v1")
+
+    def computed_field(f):
+        """No-op decorator to allow this module to not break imports until 1.9.0"""
+        return f
 
 
 EXTENDED_TEMPLATE_DIR = Path(__file__).parent / 'templates'
@@ -105,13 +116,14 @@ DEFAULT_IMPORTS = (
 DEFAULT_INJECTS = [includes.LinkMLMeta]
 
 
-#from linkml.generators.pydanticgen.template import PydanticClass
-
-
 class ExtendedPydanticClass(PydanticClass):
     """
     A `PydanticClass` that uses the `extended_class.py.jinja`-template
     """
+    class_class_uri: str
+    class_class_curie: str
+    class_name: str
+    class_model_uri: str
 
     template: ClassVar[str] = "extended_class.py.jinja"
     _environment: ClassVar[Environment] = Environment(
@@ -453,6 +465,10 @@ class PydanticGenerator(OOCodeGenerator, LifecycleMixin):
 
     def generate_class(self, cls: ClassDefinition) -> ClassResult:
         pyclass = ExtendedPydanticClass(
+            class_name=cls.name,
+            class_class_uri=f"{cls.class_uri}, {cls.definition_uri}",
+            class_class_curie='SOME CURIE',
+            class_model_uri='model_uri',
             name=camelcase(cls.name),
             bases=self.class_bases.get(camelcase(cls.name), PydanticBaseModel.default_name),
             description=cls.description.replace('"', '\\"') if cls.description is not None else None,
@@ -987,6 +1003,11 @@ class PydanticGenerator(OOCodeGenerator, LifecycleMixin):
         injected_classes = DEFAULT_INJECTS.copy()
         if self.injected_classes is not None:
             injected_classes += self.injected_classes.copy()
+
+        # injected fields
+        self.injected_fields = [
+            'cm_injected: Optional[str] = Field(None, description="Inject Test")',
+        ]
 
         # enums
         enums = self.before_generate_enums(list(sv.all_enums().values()), sv)
