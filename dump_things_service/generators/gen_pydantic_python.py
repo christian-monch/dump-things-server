@@ -8,7 +8,9 @@ from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
 from types import ModuleType
-from typing import Any, ClassVar, Literal, Optional, TypeVar, Union, overload
+from typing import ClassVar, Literal, Optional, TypeVar, Union, overload
+
+import dump_things_service.patches.enabled  # noqa -- patch linkml code before importing it
 
 import click
 from jinja2 import ChoiceLoader, Environment, FileSystemLoader, PackageLoader, Template
@@ -32,6 +34,7 @@ from linkml.generators.pydanticgen import includes
 from linkml.generators.pydanticgen.array import ArrayRangeGenerator, ArrayRepresentation
 from linkml.generators.pydanticgen.build import ClassResult, SlotResult, SplitResult
 from linkml.generators.pydanticgen.template import (
+    ConditionalImport,
     Import,
     Imports,
     ObjectImport,
@@ -44,7 +47,11 @@ from linkml.generators.pydanticgen.template import (
 from linkml.generators.python.python_ifabsent_processor import PythonIfAbsentProcessor
 from linkml.utils import deprecation_warning
 from linkml.utils.generator import shared_arguments
-from rdflib import URIRef
+
+from dump_things_service.resolve_curie import (
+    get_curie,
+    get_uri,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -109,6 +116,12 @@ DEFAULT_IMPORTS = (
         ObjectImport(name="Field"),
         ObjectImport(name="RootModel"),
         ObjectImport(name="field_validator"),
+    ],
+)
+        + Import(
+    module='rdflib',
+    objects=[
+        ObjectImport(name="URIRef")
     ],
 )
 )
@@ -397,14 +410,14 @@ class PydanticGenerator(OOCodeGenerator, LifecycleMixin):
             'class_model_uri',
         ]
 
-    def compile_module(self, **kwargs) -> ModuleType:
+    def compile_module(self, module_name: str, **kwargs) -> ModuleType:
         """
         Compiles generated python code to a module
         :return:
         """
         pycode = self.serialize(**kwargs)
         try:
-            return compile_python(pycode)
+            return compile_python(pycode, module_name=module_name)
         except NameError as e:
             logger.error(f"Code:\n{pycode}")
             logger.error(f"Error compiling generated python code: {e}")
@@ -466,8 +479,8 @@ class PydanticGenerator(OOCodeGenerator, LifecycleMixin):
     def generate_class(self, cls: ClassDefinition) -> ClassResult:
         pyclass = ExtendedPydanticClass(
             class_name=cls.name,
-            class_class_uri=f"{cls.class_uri}, {cls.definition_uri}",
-            class_class_curie='SOME CURIE',
+            class_class_uri=get_uri(self.schemaview, cls.name),
+            class_class_curie=get_curie(self.schemaview, cls.name),
             class_model_uri='model_uri',
             name=camelcase(cls.name),
             bases=self.class_bases.get(camelcase(cls.name), PydanticBaseModel.default_name),
@@ -1005,9 +1018,7 @@ class PydanticGenerator(OOCodeGenerator, LifecycleMixin):
             injected_classes += self.injected_classes.copy()
 
         # injected fields
-        self.injected_fields = [
-            'cm_injected: Optional[str] = Field(None, description="Inject Test")',
-        ]
+        self.injected_fields = None
 
         # enums
         enums = self.before_generate_enums(list(sv.all_enums().values()), sv)
@@ -1054,7 +1065,11 @@ class PydanticGenerator(OOCodeGenerator, LifecycleMixin):
         module = self.before_render_template(module, self.schemaview)
         return module
 
-    def serialize(self, rendered_module: Optional[PydanticModule] = None) -> str:
+    def serialize(
+            self,
+            rendered_module: Optional[PydanticModule] = None,
+            **_,
+    ) -> str:
         """
         Serialize the schema to a pydantic module as a string
 
