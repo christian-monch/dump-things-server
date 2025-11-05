@@ -3,6 +3,8 @@ from __future__ import annotations
 import re
 from typing import TYPE_CHECKING
 
+from linkml_runtime import SchemaView
+
 from dump_things_service.exceptions import CurieResolutionError
 
 if TYPE_CHECKING:
@@ -39,8 +41,48 @@ def resolve_curie(
 
 def is_curie(
     curie_or_iri: str,
-):
+) -> bool:
     if ':' not in curie_or_iri:
         return False
+    return not is_uri(curie_or_iri)
 
-    return url_regex.match(curie_or_iri) is None
+
+def is_uri(
+        curie_or_iri: str,
+) -> bool:
+    return url_regex.match(curie_or_iri) is not None
+
+
+def get_curie(
+        schemaview: SchemaView,
+        name_curie_or_uri: str,
+) -> str:
+    if is_uri(name_curie_or_uri):
+        x = schemaview.namespaces().curie_for(name_curie_or_uri)
+        return x
+
+    return ensure_prefix(schemaview, name_curie_or_uri)
+
+
+def get_uri(
+        schemaview: SchemaView,
+        name_curie_or_uri: str,
+) -> str:
+    if is_uri(name_curie_or_uri):
+        return name_curie_or_uri
+
+    name_curie_or_uri = ensure_prefix(schemaview, name_curie_or_uri)
+    x = schemaview.namespaces().uri_for(name_curie_or_uri)
+    return x
+
+
+def ensure_prefix(
+        schemaview: SchemaView,
+        name: str,
+) -> str:
+
+    if ':' not in name:
+        default_prefix = schemaview.schema.default_prefix
+        if default_prefix is None:
+            raise ValueError('default prefix missing')
+        return default_prefix + ':' + name

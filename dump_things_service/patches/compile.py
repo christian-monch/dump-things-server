@@ -42,7 +42,9 @@ def patched_compile_python(
         else:
             warning(f"There is no established path to {package_path} - compile_python may or may not work")
             path_from_tests_parent = os.path.relpath(package_path, os.path.join(os.getcwd(), '..'))
-        module.__package__ = os.path.dirname(os.path.relpath(path_from_tests_parent, os.getcwd())).replace(os.path.sep, '.')
+        module.__package__ = os.path.dirname(os.path.relpath(path_from_tests_parent, os.getcwd())).replace(
+            os.path.sep, '.'
+        )
     sys.modules[module.__name__] = module
     exec(spec, module.__dict__)
     return module
@@ -66,3 +68,8 @@ logger.info('patching linkml.generators.pydanticgen.pydanticgen.PydanticGenerato
 
 mod = import_module('linkml.generators.pydanticgen.pydanticgen')
 mod.PydanticGenerator.compile_module = patched_compile_module
+
+
+logger.info('patching linkml_runtime.utils.compile_python.compile_python')
+mod = import_module('linkml_runtime.utils.compile_python')
+mod.compile_python = patched_compile_python

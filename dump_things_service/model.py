@@ -15,7 +15,6 @@ import annotated_types  # noqa F401 -- used by generated code
 import pydantic  # noqa F401 -- used by generated code
 import pydantic_core  # noqa F401 -- used by generated code
 from linkml.generators import (
-    PydanticGenerator,
     PythonGenerator,
 )
 from linkml_runtime import SchemaView
@@ -23,6 +22,8 @@ from pydantic._internal._model_construction import ModelMetaclass
 
 # Ensure linkml is patched
 import dump_things_service.patches.enabled  # noqa F401 -- apply patches
+
+from dump_things_service.generators.gen_pydantic_python import PydanticGenerator
 
 if TYPE_CHECKING:
     from types import ModuleType
@@ -125,7 +126,9 @@ def get_schema_model_for_schema(
     schema_location: str,
 ) -> ModuleType:
     if schema_location not in _schema_model_cache:
-        _schema_model_cache[schema_location] = PythonGenerator(
-            schema_location
-        ).compile_module()
+        pydantic_generator = PydanticGenerator(schema_location)
+        _schema_model_cache[schema_location] = compile_module_with_increasing_recursion_limit(
+            pydantic_generator,
+            schema_location,
+        )
     return _schema_model_cache[schema_location]
