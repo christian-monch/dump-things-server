@@ -657,10 +657,6 @@ class Generator(metaclass=abc.ABCMeta):
             else self.schema.classes[ClassDefinitionName(cls_or_clsname)]
         )
 
-        # Determine whether it is an `linkml:Any`-class
-        #if self.is_any(cls):
-        #    return ['linkml:Any']
-
         # Determine whether the class has a key
         identifier_slot = None
         if not force_non_key:

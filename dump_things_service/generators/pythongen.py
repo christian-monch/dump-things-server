@@ -653,10 +653,11 @@ version = {'"' + self.schema.version + '"' if self.schema.version else None}
 
         range_type, parent_type, _ = self.class_reference_type(slot, cls)
 
-        # Hardcoded any
+        # Hardcoded handling of `linkml:Any and `any_of`-elements. This is
+        # kept simple to support loading by `dacite`.
         if range_type == 'Union[dict, Any]':
             range_type = 'Union[' + ','.join(
-                f'Union[dict, {anon_se.range}]' for anon_se in slot.any_of
+                anon_se.range for anon_se in slot.any_of
             ) + ']'
 
         pkey = self.class_identifier(slot.range)
