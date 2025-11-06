@@ -27,6 +27,7 @@ classifiers = [
 dependencies = [
     "aiohttp",
     "click",
+    "dacite",
     "fastapi[standard]",
     "fastapi-pagination",
     "fsspec",

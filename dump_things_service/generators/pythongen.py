@@ -135,6 +135,10 @@ class PythonGenerator(Generator):
         # generic imports
         all_imports = (
             all_imports
+            + Import(
+                module='__future__',
+                objects=[ObjectImport(name='annotations')],
+            )
             + Import(module="dataclasses")
             + Import(module="re")
             + Import(
@@ -648,6 +652,13 @@ version = {'"' + self.schema.version + '"' if self.schema.version else None}
         positional_allowed = False  # Force everything to be tag values
 
         range_type, parent_type, _ = self.class_reference_type(slot, cls)
+
+        # Hardcoded any
+        if range_type == 'Union[dict, Any]':
+            range_type = 'Union[' + ','.join(
+                f'Union[dict, {anon_se.range}]' for anon_se in slot.any_of
+            ) + ']'
+
         pkey = self.class_identifier(slot.range)
         # Special case, inlined, identified range
         if pkey and slot.inlined and slot.multivalued:

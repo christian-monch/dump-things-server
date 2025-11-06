@@ -658,8 +658,8 @@ class Generator(metaclass=abc.ABCMeta):
         )
 
         # Determine whether it is an `linkml:Any`-class
-        if self.is_any(cls):
-            return ['linkml:Any']
+        #if self.is_any(cls):
+        #    return ['linkml:Any']
 
         # Determine whether the class has a key
         identifier_slot = None
