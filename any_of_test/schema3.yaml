@@ -1,0 +1,99 @@
+id: http://example.org/person-schema
+name: person_schema
+prefixes:
+  abc: http://example.org/person-schema/abc/
+  dlflatsocial: https://concepts.datalad.org/s/flat-social/unreleased/
+  linkml: https://w3id.org/linkml/
+  oxo: http://purl.obolibrary.org/obo/
+  shex: http://www.w3.org/ns/shex#
+  schema: http://schema.org/
+  trr379: http://example.org/person-schema/trr379/
+  xsd: http://www.w3.org/2001/XMLSchema#
+  xyz: http://example.org/person-schema/xyz/
+imports:
+  - linkml:types
+default_range: string
+default_prefix: abc
+
+slots:
+  pid:
+    identifier: true
+    range: uriorcurie
+    required: true
+
+  relations:
+    range: Thing
+    multivalued: true
+    inlined: true
+    inlined_as_list: false
+
+  acted_on_behalf_of:
+    multivalued: true
+
+  annotations:
+    range: Any
+    any_of:
+      - range: Annotation
+      - range: Bemerkung
+    inlined: true
+    multivalued: true
+    inlined_as_list: true
+
+  annotation_tag:
+    description: A tag identifying an annotation.
+    range: Thing
+
+  annotation_value:
+    description: The actual annotation.
+    range: string
+
+  bemerkung_id:
+    description: The identifier of a "Bemerkung"
+    range: Thing
+
+  bemerkung_inhalt:
+    description: The content of a "Bemerkung"
+    range: string
+
+classes:
+  Any:
+    class_uri: "linkml:Any"
+
+  Thing:
+    slots:
+      - pid
+      - relations
+      - annotations
+    attributes:
+      schema_type:
+        range: string
+
+  Annotation:
+    slots:
+      - annotation_tag
+      - annotation_value
+    slot_usage:
+      annotation_tag:
+        key: true
+
+  Bemerkung:
+    slots:
+      - bemerkung_id
+      - bemerkung_inhalt
+    slot_usage:
+      bemerkung_id:
+        key: true
+
+  Agent:
+    is_a: Thing
+    slots: acted_on_behalf_of
+
+  InstantaneousEvent:
+    is_a: Thing
+    attributes:
+      at_time:
+
+  Person:
+    is_a: Agent
+    attributes:
+      given_name:

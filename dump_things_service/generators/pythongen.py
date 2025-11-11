@@ -654,8 +654,9 @@ version = {'"' + self.schema.version + '"' if self.schema.version else None}
 
         range_type, parent_type, _ = self.class_reference_type(slot, cls)
 
-        # Hardcoded handling of `linkml:Any and `any_of`-elements. This is
-        # kept simple to support loading by `dacite`.
+        # Hardcoded handling of `Any` and `any_of`-elements. We remove `dict` from the
+        # resulting `Union` to enforce proper class instances instead of simple
+        # dictionaries or `JsonObj`s.
         if range_type == 'Union[dict, Any]':
             range_type = 'Union[' + ', '.join(
                 f'"{anon_se.range}"' for anon_se in slot.any_of
@@ -690,8 +691,27 @@ version = {'"' + self.schema.version + '"' if self.schema.version else None}
                         dflt,
                     )
 
+        # Another special case is Any-range, inlined, multivalued.
+        if slot.inlined and slot.multivalued and parent_type == 'Any':
+            if slot.inlined_as_list:
+                if slot.required:
+                    return f"list[{range_type}]", (None if positional_allowed else "None")
+                else:
+                    return (
+                        f"Optional[list[{range_type}]]",
+                        "empty_list()",
+                    )
+            else:
+                if slot.required:
+                    return f"dict[str, {range_type}]", (None if positional_allowed else "None")
+                else:
+                    return (
+                        f"Optional[dict[str, {range_type}]]",
+                        "empty_dict()",
+                    )
+
         # All other cases
-        if slot.multivalued:
+        elif slot.multivalued:
             if slot.required:
                 return f"Union[{range_type}, list[{range_type}]]", (None if positional_allowed else "None")
             else:
