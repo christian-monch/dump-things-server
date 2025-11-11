@@ -1,5 +1,7 @@
 
-import dump_things_service.patches.compile
+# Compilation patches generate problems with adapted generators
+# import dump_things_service.patches.compile
+
 import dump_things_service.patches.enumerations
 import dump_things_service.patches.rdflib_loader
 import dump_things_service.patches.yamlutils

@@ -74,7 +74,7 @@ def test_delete(fastapi_client_simple):
         headers={'x-dumpthings-token': 'token-1'},
         json=delete_record,
     )
-    assert response.status_code == HTTP_200_OK
+    assert response.status_code == HTTP_200_OK, response.text
 
     # Check that the record exists
     response = test_client.get(

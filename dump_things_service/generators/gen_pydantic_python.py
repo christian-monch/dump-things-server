@@ -410,14 +410,14 @@ class PydanticGenerator(OOCodeGenerator, LifecycleMixin):
             'class_model_uri',
         ]
 
-    def compile_module(self, module_name: str, **kwargs) -> ModuleType:
+    def compile_module(self, **kwargs) -> ModuleType:
         """
         Compiles generated python code to a module
         :return:
         """
         pycode = self.serialize(**kwargs)
         try:
-            return compile_python(pycode, module_name=module_name)
+            return compile_python(pycode)
         except NameError as e:
             logger.error(f"Code:\n{pycode}")
             logger.error(f"Error compiling generated python code: {e}")

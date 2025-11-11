@@ -52,7 +52,7 @@ def test_validate_record(fastapi_client_simple):
             headers={'x-dumpthings-token': 'token-1'},
             json=record,
         )
-        assert response.status_code == expected_status
+        assert response.status_code == expected_status, response.text
 
     for record, expected_status in ttl_records:
         response = test_client.post(
@@ -60,4 +60,4 @@ def test_validate_record(fastapi_client_simple):
             headers={'x-dumpthings-token': 'token-1'},
             json=record,
         )
-        assert response.status_code == expected_status
+        assert response.status_code == expected_status, response.text
