@@ -37,7 +37,7 @@ slots:
       - range: Bemerkung
     inlined: true
     multivalued: true
-    inlined_as_list: false
+    inlined_as_list: true
 
   annotation_tag:
     description: A tag identifying an annotation.

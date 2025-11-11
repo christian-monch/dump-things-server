@@ -1,37 +1,42 @@
 from __future__ import annotations
 
-from schema_python_new import Thing
+import sys
 
 from linkml_runtime.utils.schemaview import SchemaView
 from dacite import from_dict, Config
 
+from dump_things_service.model import get_schema_model_for_schema
 
-sv = SchemaView('schema.yaml')
+schema = 'schema2.yaml'
 
 
+model = get_schema_model_for_schema(schema)
+sv = SchemaView(schema)
+
+Thing = model.Thing
 
 
 json_obj_1 = {
     "pid": "thing_1",
-    "multislot": [],
+    "annotations": [],
 }
 
 json_obj_2 = {
     "pid": "thing_2",
-    "multislot": [
+    "annotations": [
         {
-            "pid": "pid_a_1",
-            "name_a": "name_a_1"
+            "annotation_tag": "pid_1",
+            "annotation_value": "v_1",
         },
         {
-            "pid": "pid_a_2",
-            "name_a": "name_a_2"
+            "annotation_tag": "pid_2",
+            "annotation_value": "v_2"
         },
         {
-            "pid": "pid_b_1",
-            "name_b": "name_b_1"
-        }
-    ]
+            "bemerkung_id": "pid_3",
+            "bemerkung_inhalt": "v_3",
+        },
+    ],
 }
 
 from linkml.utils.datautils import (
@@ -40,7 +45,7 @@ from linkml.utils.datautils import (
 )
 
 loader = get_loader('json')
-data_obj_0 = loader.loads(
+data_obj_0 = loader.load(
     source=json_obj_2,
     target_class=Thing,
     schemaview=sv,
@@ -55,6 +60,12 @@ data_obj = from_dict(
 )
 
 print(data_obj)
+
+dumper = get_dumper('json')
+ttl_object = dumper.dumps(data_obj)
+print(ttl_object)
+
+sys.exit(0)
 
 dumper = get_dumper('ttl')
 ttl_object = dumper.dumps(data_obj, schemaview=sv)
