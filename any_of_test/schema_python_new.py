@@ -1,12 +1,10 @@
 # Auto generated from schema.yaml by pythongen.py version: 0.0.1
-# Generation date: 2025-11-06T21:22:47
+# Generation date: 2025-11-11T16:44:03
 # Schema: any_of_test_schema
 #
 # id: http://example.org/any-of-test-schema
 # description:
 # license: https://creativecommons.org/publicdomain/zero/1.0/
-
-from __future__ import annotations
 
 import dataclasses
 import re
@@ -87,7 +85,7 @@ class Thing(YAMLRoot):
     class_model_uri: ClassVar[URIRef] = ABC.Thing
 
     pid: Optional[str] = None
-    multislot: Optional[Union[Union[ClassA,ClassB], list[Union[ClassA,ClassB]]]] = empty_list()
+    multislot: Optional[list[Union["ClassA", "ClassB"]]] = empty_list()
 
     def __post_init__(self, *_: str, **kwargs: Any):
         if self.pid is not None and not isinstance(self.pid, str):
@@ -170,16 +168,17 @@ class slots:
     pass
 
 slots.pid = Slot(uri=ABC.pid, name="pid", curie=ABC.curie('pid'),
-                 model_uri=ABC.pid, domain=None, range=Optional[str])
+                   model_uri=ABC.pid, domain=None, range=Optional[str])
 
 slots.name_a = Slot(uri=ABC.name_a, name="name_a", curie=ABC.curie('name_a'),
-                    model_uri=ABC.name_a, domain=None, range=Optional[str])
+                   model_uri=ABC.name_a, domain=None, range=Optional[str])
 
 slots.name_b = Slot(uri=ABC.name_b, name="name_b", curie=ABC.curie('name_b'),
-                    model_uri=ABC.name_b, domain=None, range=Optional[str])
+                   model_uri=ABC.name_b, domain=None, range=Optional[str])
 
 slots.name_c = Slot(uri=ABC.name_c, name="name_c", curie=ABC.curie('name_c'),
-                    model_uri=ABC.name_c, domain=None, range=Optional[str])
+                   model_uri=ABC.name_c, domain=None, range=Optional[str])
 
 slots.multislot = Slot(uri=ABC.multislot, name="multislot", curie=ABC.curie('multislot'),
-                       model_uri=ABC.multislot, domain=None, range=Optional[Union[Union[ClassA,ClassB], list[Union[ClassA,ClassB]]]])
+                   model_uri=ABC.multislot, domain=None, range=Optional[list[Union["ClassA", "ClassB"]]])
+

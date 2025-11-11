@@ -7,7 +7,7 @@ from dacite import from_dict, Config
 
 from dump_things_service.model import get_schema_model_for_schema
 
-schema = 'schema2.yaml'
+schema = 'schema3.yaml'
 
 
 model = get_schema_model_for_schema(schema)
@@ -18,39 +18,31 @@ Thing = model.Thing
 
 json_obj_1 = {
     "pid": "thing_1",
-    "annotations": [],
+    "annotations": {},
 }
+
 
 json_obj_2 = {
     "pid": "thing_2",
-    "annotations": [
-        {
+    "relations": {
+        'pid_a': {
+            'pid': 'pid_a'
+        }
+    },
+    "annotations": {
+        'pid_1': {
             "annotation_tag": "pid_1",
             "annotation_value": "v_1",
         },
-        {
+        'pid_2': {
             "annotation_tag": "pid_2",
             "annotation_value": "v_2"
         },
-        {
+        'pid_3': {
             "bemerkung_id": "pid_3",
             "bemerkung_inhalt": "v_3",
         },
-    ],
-   # "annotations": {
-   #     'pid_1': {
-   #         "annotation_tag": "pid_1",
-   #         "annotation_value": "v_1",
-   #     },
-   #     'pid_2': {
-   #         "annotation_tag": "pid_2",
-   #         "annotation_value": "v_2"
-   #     },
-   #     'pid_3': {
-   #         "bemerkung_id": "pid_3",
-   #         "bemerkung_inhalt": "v_3",
-   #     },
-   # },
+    },
 }
 
 from linkml.utils.datautils import (
@@ -70,7 +62,7 @@ print(data_obj_0)
 data_obj = from_dict(
     Thing,
     json_obj_2,
-    Config(strict=True, strict_unions_match=True),
+    Config(strict=True, strict_unions_match=False),
 )
 
 print(data_obj)
