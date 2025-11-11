@@ -31,7 +31,10 @@ slots:
     multivalued: true
 
   annotations:
-    range: Annotation
+    range: Any
+    any_of:
+      - range: Annotation
+      - range: Bemerkung
     inlined: true
     multivalued: true
 
@@ -43,6 +46,13 @@ slots:
     description: The actual annotation.
     range: string
 
+  bemerkung_id:
+    description: The identifier of a "Bemerkung"
+    range: Thing
+
+  bemerkung_inhalt:
+    description: The content of a "Bemerkung"
+    range: string
 
 classes:
   Any:
@@ -63,6 +73,14 @@ classes:
       - annotation_value
     slot_usage:
       annotation_tag:
+        key: true
+
+  Bemerkung:
+    slots:
+      - bemerkung_id
+      - bemerkung_inhalt
+    slot_usage:
+      bemerkung_id:
         key: true
 
   Agent:

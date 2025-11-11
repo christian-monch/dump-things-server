@@ -107,7 +107,7 @@ def test_ttl_json_ttl(fastapi_client_simple):
         },
         data=ttl_record,
     )
-    assert response.status_code == HTTP_200_OK
+    assert response.status_code == HTTP_200_OK, response.text
 
     # Retrieve JSON records
     response = test_client.get(
