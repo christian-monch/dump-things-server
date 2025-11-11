@@ -1,5 +1,5 @@
 # Auto generated from schema2.yaml by pythongen.py version: 0.0.1
-# Generation date: 2025-11-11T16:43:41
+# Generation date: 2025-11-11T17:03:03
 # Schema: person_schema
 #
 # id: http://example.org/person-schema
