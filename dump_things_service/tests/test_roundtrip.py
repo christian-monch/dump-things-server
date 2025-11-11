@@ -62,14 +62,14 @@ def test_json_ttl_json(fastapi_client_simple):
         headers={'x-dumpthings-token': 'token-1'},
         json=json_record,
     )
-    assert response.status_code == HTTP_200_OK
+    assert response.status_code == HTTP_200_OK, response.text
 
     # Retrieve TTL records
     response = test_client.get(
         f'/collection_1/record?pid={json_record["pid"]}&format=ttl',
         headers={'x-dumpthings-token': 'token-1'},
     )
-    assert response.status_code == HTTP_200_OK
+    assert response.status_code == HTTP_200_OK, response.text
     ttl = response.text
 
     # modify the pid
@@ -80,7 +80,7 @@ def test_json_ttl_json(fastapi_client_simple):
         headers={'content-type': 'text/turtle', 'x-dumpthings-token': 'token-1'},
         data=ttl,
     )
-    assert response.status_code == HTTP_200_OK
+    assert response.status_code == HTTP_200_OK, response.text
 
     # Retrieve JSON record
     response = test_client.get(

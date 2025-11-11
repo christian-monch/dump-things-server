@@ -328,4 +328,17 @@ def test_dont_extract_empty_things_on_service(fastapi_client_simple):
             headers={'x-dumpthings-token': 'token-1'},
             json=empty_inlined_json_record,
         )
-        assert response.status_code == HTTP_200_OK
+        assert response.status_code == HTTP_200_OK, f'i: {i}: ' + response.text
+
+
+# a: Optional[
+#     Union[
+#         dict[
+#             Union[str, ThingPid],
+#             Union[dict, "Thing"]
+#         ],
+#         list[
+#             Union[dict, "Thing"]
+#         ]
+#     ]
+# ]

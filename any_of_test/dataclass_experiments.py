@@ -40,6 +40,13 @@ from linkml.utils.datautils import (
 )
 
 loader = get_loader('json')
+data_obj_0 = loader.loads(
+    source=json_obj_2,
+    target_class=Thing,
+    schemaview=sv,
+)
+print(data_obj_0)
+
 
 data_obj = from_dict(
     Thing,
