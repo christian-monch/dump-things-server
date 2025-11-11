@@ -657,8 +657,8 @@ version = {'"' + self.schema.version + '"' if self.schema.version else None}
         # Hardcoded handling of `linkml:Any and `any_of`-elements. This is
         # kept simple to support loading by `dacite`.
         if range_type == 'Union[dict, Any]':
-            range_type = 'Union[' + ','.join(
-                anon_se.range for anon_se in slot.any_of
+            range_type = 'Union[' + ', '.join(
+                f'"{anon_se.range}"' for anon_se in slot.any_of
             ) + ']'
 
         pkey = self.class_identifier(slot.range)
