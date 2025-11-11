@@ -64,10 +64,10 @@ def patched_compile_module(self, module_name, **kwargs) -> ModuleType:
         raise e
 
 
-#logger.info('patching linkml.generators.pydanticgen.pydanticgen.PydanticGenerator.compile_module')
-#mod = import_module('linkml.generators.pydanticgen.pydanticgen')
-#mod.PydanticGenerator.compile_module = patched_compile_module
+logger.info('patching linkml.generators.pydanticgen.pydanticgen.PydanticGenerator.compile_module')
+mod = import_module('linkml.generators.pydanticgen.pydanticgen')
+mod.PydanticGenerator.compile_module = patched_compile_module
 
-#logger.info('patching linkml_runtime.utils.compile_python.compile_python')
-#mod = import_module('linkml_runtime.utils.compile_python')
-#mod.compile_python = patched_compile_python
+logger.info('patching linkml_runtime.utils.compile_python.compile_python')
+mod = import_module('linkml_runtime.utils.compile_python')
+mod.compile_python = patched_compile_python
