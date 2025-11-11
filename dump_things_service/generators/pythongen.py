@@ -706,8 +706,7 @@ version = {'"' + self.schema.version + '"' if self.schema.version else None}
                     return f"dict[str, {range_type}]", (None if positional_allowed else "None")
                 else:
                     return (
-                        f"Optional[dict[str, {range_type}]]",
-                        "empty_dict()",
+                        f"Optional[dict[str, {range_type}]]", (None if positional_allowed else "None")
                     )
 
         # All other cases
