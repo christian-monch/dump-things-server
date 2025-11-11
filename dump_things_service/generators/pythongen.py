@@ -693,20 +693,20 @@ version = {'"' + self.schema.version + '"' if self.schema.version else None}
 
         # Another special case is Any-range, inlined, multivalued.
         if slot.inlined and slot.multivalued and parent_type == 'Any':
+            none_default = (None if positional_allowed else "None")
             if slot.inlined_as_list:
                 if slot.required:
-                    return f"list[{range_type}]", (None if positional_allowed else "None")
+                    return f"list[{range_type}]", none_default
                 else:
                     return (
-                        f"Optional[list[{range_type}]]",
-                        "empty_list()",
+                        f"Optional[list[{range_type}]]", "empty_list()"
                     )
             else:
                 if slot.required:
-                    return f"dict[str, {range_type}]", (None if positional_allowed else "None")
+                    return f"dict[str, {range_type}]", none_default
                 else:
                     return (
-                        f"Optional[dict[str, {range_type}]]", (None if positional_allowed else "None")
+                        f"Optional[dict[str, {range_type}]]", "empty_dict()"
                     )
 
         # All other cases
