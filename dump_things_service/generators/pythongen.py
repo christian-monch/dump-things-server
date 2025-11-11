@@ -654,12 +654,12 @@ version = {'"' + self.schema.version + '"' if self.schema.version else None}
 
         range_type, parent_type, _ = self.class_reference_type(slot, cls)
 
-        #X # Hardcoded handling of `linkml:Any and `any_of`-elements. This is
-        #X # kept simple to support loading by `dacite`.
-        #X if range_type == 'Union[dict, Any]':
-        #X     range_type = 'Union[' + ','.join(
-        #X         anon_se.range for anon_se in slot.any_of
-        #X     ) + ']'
+        # Hardcoded handling of `linkml:Any and `any_of`-elements. This is
+        # kept simple to support loading by `dacite`.
+        if range_type == 'Union[dict, Any]':
+            range_type = 'Union[' + ','.join(
+                anon_se.range for anon_se in slot.any_of
+            ) + ']'
 
         pkey = self.class_identifier(slot.range)
         # Special case, inlined, identified range
@@ -716,9 +716,9 @@ version = {'"' + self.schema.version + '"' if self.schema.version else None}
             self.class_identifier_path(cls, False) if slot.key or slot.identifier else self.slot_range_path(slot)
         )
 
-        #X # Handle any classes
-        #X if rangelist == ['linkml:Any']:
-        #X     pass
+        # Handle any classes
+        if rangelist == ['linkml:Any']:
+            pass
 
         prox_type = self.slot_range_path(slot)[-1].rsplit(".")[-1]
         prox_type_name = rangelist[-1]
