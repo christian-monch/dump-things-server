@@ -64,7 +64,6 @@ from linkml.cli.logging import DEFAULT_LOG_LEVEL_INT, log_level_option
 from linkml.utils.mergeutils import alias_root
 from linkml.utils.schemaloader import SchemaLoader
 from linkml.utils.typereferences import References
-from typing_inspection.typing_objects import is_any
 
 logger = logging.getLogger(__name__)
 
