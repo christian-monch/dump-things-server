@@ -1,5 +1,5 @@
 # Auto generated from schema.yaml by pythongen.py version: 0.0.1
-# Generation date: 2025-11-11T16:44:03
+# Generation date: 2025-11-11T17:03:14
 # Schema: any_of_test_schema
 #
 # id: http://example.org/any-of-test-schema

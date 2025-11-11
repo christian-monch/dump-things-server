@@ -62,7 +62,7 @@ print(data_obj_0)
 data_obj = from_dict(
     Thing,
     json_obj_2,
-    Config(strict=True, strict_unions_match=False),
+    Config(strict=True, strict_unions_match=True),
 )
 
 print(data_obj)

@@ -1,5 +1,5 @@
 # Auto generated from schema3.yaml by pythongen.py version: 0.0.1
-# Generation date: 2025-11-11T16:43:31
+# Generation date: 2025-11-11T17:03:07
 # Schema: person_schema
 #
 # id: http://example.org/person-schema
@@ -115,7 +115,7 @@ class Thing(YAMLRoot):
 
     pid: Union[str, ThingPid] = None
     relations: Optional[Union[dict[Union[str, ThingPid], Union[dict, "Thing"]], list[Union[dict, "Thing"]]]] = empty_dict()
-    annotations: Optional[dict[str, Union["Annotation", "Bemerkung"]]] = None
+    annotations: Optional[dict[str, Union["Annotation", "Bemerkung"]]] = empty_dict()
     schema_type: Optional[str] = None
 
     def __post_init__(self, *_: str, **kwargs: Any):
