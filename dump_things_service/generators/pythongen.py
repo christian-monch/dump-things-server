@@ -694,19 +694,29 @@ version = {'"' + self.schema.version + '"' if self.schema.version else None}
         # Another special case is Any-range, inlined, multivalued.
         if slot.inlined and slot.multivalued and pkey is None and parent_type == 'Any':
             none_default = (None if positional_allowed else "None")
-            if slot.inlined_as_list:
+            if slot.inlined_as_list is True:
                 if slot.required:
-                    return f"list[{range_type}]", "empty_list"
+                    return f"list[{range_type}]", "empty_list()"
                 else:
-                    return (
-                        f"Optional[list[{range_type}]]", none_default
-                    )
-            else:
+                    return f"Optional[list[{range_type}]]", none_default
+            elif slot.inlined_as_list is False:
+                # TODO: check for key or identifier slot in all ranges
                 if slot.required:
                     return f"dict[str, {range_type}]", "empty_dict()"
                 else:
+                    return f"Optional[dict[str, {range_type}]]", none_default
+            else:
+                # TODO: check for key or identifier slot in all ranges
+                assert slot.inlined_as_list is None, 'inlined_as_list should be `true` or `false`'
+                if slot.required:
                     return (
-                        f"Optional[dict[str, {range_type}]]", none_default
+                        f"Union[dict[str, {range_type}], list[{range_type}]]",
+                        "empty_list()",
+                    )
+                else:
+                    return (
+                        f"Optional[Union[dict[str, {range_type}], list[{range_type}]]]",
+                        none_default,
                     )
 
         # All other cases
