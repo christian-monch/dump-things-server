@@ -43,12 +43,22 @@ slots:
     description: The actual annotation.
     range: string
 
-  multislot:
+  multislot_list:
     range: Any
     any_of:
       - range: Fruit
       - range: Car
     inlined: true
+    inlined_as_list: true
+    multivalued: true
+
+  multislot_dict:
+    range: Any
+    any_of:
+      - range: Fruit
+      - range: Car
+    inlined: true
+    inlined_as_list: false
     multivalued: true
 
   fruit_id:
@@ -118,4 +128,5 @@ classes:
     attributes:
       given_name:
     slots:
-      - multislot
+      - multislot_list
+      - multislot_dict

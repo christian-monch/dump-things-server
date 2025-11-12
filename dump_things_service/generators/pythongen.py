@@ -698,13 +698,13 @@ version = {'"' + self.schema.version + '"' if self.schema.version else None}
                 if slot.required:
                     return f"list[{range_type}]", "empty_list()"
                 else:
-                    return f"Optional[list[{range_type}]]", none_default
+                    return f"Optional[list[{range_type}]]", "empty_list()"
             elif slot.inlined_as_list is False:
                 # TODO: check for key or identifier slot in all ranges
                 if slot.required:
                     return f"dict[str, {range_type}]", "empty_dict()"
                 else:
-                    return f"Optional[dict[str, {range_type}]]", none_default
+                    return f"Optional[dict[str, {range_type}]]", "empty_dict()"
             else:
                 # TODO: check for key or identifier slot in all ranges
                 assert slot.inlined_as_list is None, 'inlined_as_list should be `true` or `false`'
@@ -716,7 +716,7 @@ version = {'"' + self.schema.version + '"' if self.schema.version else None}
                 else:
                     return (
                         f"Optional[Union[dict[str, {range_type}], list[{range_type}]]]",
-                        none_default,
+                        "empty_list()",
                     )
 
         # All other cases
