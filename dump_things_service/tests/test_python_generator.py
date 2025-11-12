@@ -21,7 +21,7 @@ json_objects = [
     {
         'pid': 'pid_x',
         'given_name': 'p_x',
-        'multislot': [
+        'multislot_list': [
             {
                 'fruit_id': 'banana_1',
                 'color': 'yellow',
@@ -39,7 +39,7 @@ json_objects = [
     {
         'pid': 'pid_x',
         'given_name': 'p_x',
-        'multislot': {
+        'multislot_dict': {
             'banana_1': {
                 'fruit_id': 'banana_1',
                 'color': 'yellow',
@@ -57,7 +57,7 @@ json_objects = [
     {
         'pid': 'pid_x',
         'given_name': 'p_x',
-        'multislot': {
+        'multislot_dict': {
             'banana_1': 'yellow',
             'banana_2': 'brown',
             'car_1': 4,
@@ -66,7 +66,7 @@ json_objects = [
     {
         'pid': 'pid_x',
         'given_name': 'p_x',
-        'multislot': {
+        'multislot_dict': {
             'banana_1': {
                 'color': 'yellow',
             },
@@ -80,10 +80,8 @@ json_objects = [
     },
 ]
 
-list_object = 0
-dict_object = 1
-simple_dict_object = 2
-reducted_dict_object = 3
+should_pass_old = (0, 1, 2, 3)
+should_pass_new = (0, 1)
 
 schema_view = SchemaView(schema_file)
 
@@ -100,14 +98,13 @@ def test_old_basic():
             target_class=old_model.Person,
         )
         print('LinkML loader:', data_obj)
-        if index == simple_dict_object:
-            continue
         data_obj = from_dict(
             old_model.Person,
             json_object,
             Config(strict=True, strict_unions_match=False),
         )
         print('dacite loader:', data_obj)
+        print('----------------')
 
 
 def test_new_basic():
@@ -119,7 +116,7 @@ def test_new_basic():
             target_class=new_model.Person,
         )
         print('LinkML loader:', data_obj)
-        if index in (simple_dict_object, reducted_dict_object):
+        if index not in should_pass_new:
             continue
         data_obj = from_dict(
             new_model.Person,
