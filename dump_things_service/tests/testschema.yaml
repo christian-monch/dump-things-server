@@ -31,10 +31,7 @@ slots:
     multivalued: true
 
   annotations:
-    range: Any
-    any_of:
-      - range: Annotation
-      - range: Bemerkung
+    range: Annotation
     inlined: true
     multivalued: true
 
@@ -46,13 +43,29 @@ slots:
     description: The actual annotation.
     range: string
 
-  bemerkung_id:
-    description: The identifier of a "Bemerkung"
+  multislot:
+    range: Any
+    any_of:
+      - range: Fruit
+      - range: Car
+    inlined: true
+    multivalued: true
+
+  fruit_id:
+    description: The identifier of a fruit
     range: Thing
 
-  bemerkung_inhalt:
-    description: The content of a "Bemerkung"
+  color:
+    description: The color of an object
     range: string
+
+  car_id:
+    description: The identifier of a car
+    range: Thing
+
+  wheels:
+    description: The number of wheels on an object
+    range: integer
 
 classes:
   Any:
@@ -75,12 +88,20 @@ classes:
       annotation_tag:
         key: true
 
-  Bemerkung:
+  Fruit:
     slots:
-      - bemerkung_id
-      - bemerkung_inhalt
+      - fruit_id
+      - color
     slot_usage:
-      bemerkung_id:
+      fruit_id:
+        key: true
+
+  Car:
+    slots:
+      - car_id
+      - wheels
+    slot_usage:
+      car_id:
         key: true
 
   Agent:
@@ -96,3 +117,5 @@ classes:
     is_a: Agent
     attributes:
       given_name:
+    slots:
+      - multislot
