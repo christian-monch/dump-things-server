@@ -109,7 +109,8 @@ def create_collection(
         collection_config_file = curated_dir / config_file_name
         collection_config_file.write_text(
             collection_config_template.format(
-                schema=schema_url, mapping_function=mapping_function
+                schema=schema_url,
+                mapping_function=mapping_function
             )
         )
 
