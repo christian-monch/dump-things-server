@@ -4,14 +4,14 @@ from dacite import (
     Config,
     from_dict,
 )
-from linkml.generators.pythongen import PythonGenerator as PythonGeneratorOld
+from linkml.generators.pythongen import PythonGenerator
 from linkml.utils.datautils import (
     get_dumper,
     get_loader,
 )
 from linkml_runtime import SchemaView
 
-from ..generators.pythongen import PythonGenerator as PythonGeneratorNew
+from ..generators.dump_things_pythongen import DumpThingsPythonGenerator
 
 
 schema_file = Path(__file__).parent / "testschema.yaml"
@@ -85,12 +85,11 @@ should_pass_new = (0, 1)
 
 schema_view = SchemaView(schema_file)
 
-new_model = PythonGeneratorNew(schema_file).compile_module()
-old_model = PythonGeneratorOld(schema_file).compile_module()
+new_model = DumpThingsPythonGenerator(schema_file).compile_module()
+old_model = PythonGenerator(schema_file).compile_module()
 
 
 def test_old_basic():
-
     loader = get_loader('json')
     for index, json_object in enumerate(json_objects):
         data_obj = loader.load(
@@ -125,34 +124,3 @@ def test_new_basic():
         )
         print('dacite loader:', data_obj)
         print('----------------')
-
-x = """
-@pytest.mark.parametrize('model', [old_model, new_model])
-@pytest.mark.parametrize('json_object_index', [0, 1, 2])
-def test_basic(model, json_object_index):
-
-    #if model == new_model and json_object_index == 2:
-    #    raise pytest.skip('simplified ')
-
-    loader = get_loader('json')
-    data_obj = loader.load(
-        source=json_objects[json_object_index],
-        target_class=model.Person,
-    )
-    print('LinkML loader:', data_obj)
-    data_obj = from_dict(
-        old_model.Person,
-        json_objects[json_object_index],
-        Config(strict=True, strict_unions_match=False),
-    )
-    print('dacite loader:', data_obj)
-"""
-
-
-x = """
-typing.Union[
-    dict[test.ThingPid, typing.Union[test.Annotation, test.Bemerkung]],
-    list[typing.Union[test.Annotation, test.Bemerkung]],
-    NoneType
-]
-"""

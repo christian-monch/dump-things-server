@@ -36,19 +36,22 @@ from linkml.utils.generator import shared_arguments
 
 from dump_things_service.generators.generator import Generator
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('dump_things_service')
 
 
 @dataclass
-class PythonGenerator(Generator):
+class DumpThingsPythonGenerator(Generator):
     """
     Generates Python dataclasses from a LinkML model
+
+    This is a copy of `linkml.generators.PythonGenerator` with addtional code
+    to handle `any_of` range specifications.
 
     See `Python Generator Docs <https://linkml.io/linkml/generators/python.html>`_
     """
 
     # ClassVars
-    generatorname = os.path.basename(__file__)
+    generatorname = __file__
     generatorversion = "0.0.1"
     valid_formats = ["py"]
     file_extension = "py"
@@ -135,11 +138,6 @@ class PythonGenerator(Generator):
         # generic imports
         all_imports = (
             all_imports
-            #Y # The following does NOT work with some loaders
-            #X + Import(
-            #X     module='__future__',
-            #X     objects=[ObjectImport(name='annotations')],
-            #X )
             + Import(module="dataclasses")
             + Import(module="re")
             + Import(
@@ -264,6 +262,7 @@ class PythonGenerator(Generator):
 {all_imports.render()}
 {self.gen_imports()}
 
+created_by = "{self.generatorname}", "{self.generatorversion}"
 metamodel_version = "{self.schema.metamodel_version}"
 version = {'"' + self.schema.version + '"' if self.schema.version else None}
 
@@ -698,13 +697,13 @@ version = {'"' + self.schema.version + '"' if self.schema.version else None}
                 if slot.required:
                     return f"list[{range_type}]", "empty_list()"
                 else:
-                    return f"Optional[list[{range_type}]]", "empty_list()"
+                    return f"Optional[list[{range_type}]]", none_default
             elif slot.inlined_as_list is False:
                 # TODO: check for key or identifier slot in all ranges
                 if slot.required:
                     return f"dict[str, {range_type}]", "empty_dict()"
                 else:
-                    return f"Optional[dict[str, {range_type}]]", "empty_dict()"
+                    return f"Optional[dict[str, {range_type}]]", none_default
             else:
                 # TODO: check for key or identifier slot in all ranges
                 assert slot.inlined_as_list is None, 'inlined_as_list should be `true` or `false`'
@@ -716,7 +715,7 @@ version = {'"' + self.schema.version + '"' if self.schema.version else None}
                 else:
                     return (
                         f"Optional[Union[dict[str, {range_type}], list[{range_type}]]]",
-                        "empty_list()",
+                        none_default,
                     )
 
         # All other cases
@@ -1312,7 +1311,7 @@ class {enum_name}(EnumDefinitionImpl):
         return dflt
 
 
-@shared_arguments(PythonGenerator)
+@shared_arguments(DumpThingsPythonGenerator)
 @click.command(name="python")
 @click.option("--head/--no-head", default=True, show_default=True, help="Emit metadata heading")
 @click.option(
@@ -1350,7 +1349,7 @@ def cli(
     **args,
 ):
     """Generate python classes to represent a LinkML model"""
-    gen = PythonGenerator(
+    gen = DumpThingsPythonGenerator(
         yamlfile,
         emit_metadata=head,
         genmeta=genmeta,

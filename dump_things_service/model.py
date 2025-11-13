@@ -14,14 +14,14 @@ from urllib.parse import urlparse
 import annotated_types  # noqa F401 -- used by generated code
 import pydantic  # noqa F401 -- used by generated code
 import pydantic_core  # noqa F401 -- used by generated code
+from linkml.generators import PydanticGenerator
 from linkml_runtime import SchemaView
 from pydantic._internal._model_construction import ModelMetaclass
 
 # Ensure linkml is patched
 import dump_things_service.patches.enabled  # noqa F401 -- apply patches
 
-from dump_things_service.generators.gen_pydantic_python import PydanticGenerator
-from dump_things_service.generators.pythongen import PythonGenerator
+from dump_things_service.generators.dump_things_pythongen import DumpThingsPythonGenerator
 
 if TYPE_CHECKING:
     from types import ModuleType
@@ -66,7 +66,7 @@ def get_subclasses(
 
 
 def compile_module_with_increasing_recursion_limit(
-    pydantic_generator: PydanticGenerator | PythonGenerator,
+    generator: PydanticGenerator | DumpThingsPythonGenerator,
     schema_location: str,
 ) -> ModuleType:
     global current_recursion_limit
@@ -80,7 +80,7 @@ def compile_module_with_increasing_recursion_limit(
     )
     while module is None:
         try:
-            module = pydantic_generator.compile_module()
+            module = generator.compile_module()
         except RecursionError:
             if current_recursion_limit >= max_recursion_limit:
                 lgr.error(
@@ -125,7 +125,7 @@ def get_schema_model_for_schema(
 ) -> ModuleType:
     if schema_location not in _schema_model_cache:
         _schema_model_cache[schema_location] = compile_module_with_increasing_recursion_limit(
-            PythonGenerator(schema_location),
+            DumpThingsPythonGenerator(schema_location),
             schema_location,
         )
     return _schema_model_cache[schema_location]
