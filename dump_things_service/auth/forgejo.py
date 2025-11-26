@@ -43,9 +43,9 @@ class MethodCache:
 
     @staticmethod
     def cache_temporary(
-        duration: int = 3600,
+        duration: int = 300,
     ) -> Callable:
-        """ Cache results for a given time (default: 3600 seconds) """
+        """ Cache results for a given time (default: 300 seconds) """
         def decorator(func: Callable) -> Callable:
             @wraps(func)
             def wrapper(*args, **kwargs):
@@ -132,6 +132,7 @@ class ForgejoAuthenticationSource(AuthenticationSource, MethodCache):
             raise InvalidTokenError(msg)
         return r.json()
 
+    @MethodCache.cache_temporary(duration=120)
     def _get_user(
             self,
             token: str,
@@ -145,6 +146,7 @@ class ForgejoAuthenticationSource(AuthenticationSource, MethodCache):
             token,
         )
 
+    @MethodCache.cache_temporary(duration=120)
     def _get_teams_for_user(self, token: str) -> dict:
         r = self._get_json_from_endpoint('user/teams', token)
         return {team['name']: team for team in r}
@@ -208,6 +210,7 @@ class ForgejoAuthenticationSource(AuthenticationSource, MethodCache):
             )
         return permissions
 
+    @MethodCache.cache_temporary(duration=60)
     def authenticate(
         self,
         token: str,
