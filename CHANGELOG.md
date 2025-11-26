@@ -1,3 +1,13 @@
+# 5.2.1 (2025-11-26)
+
+## Changes
+
+- Improve caching in Forgejo authentication sources. All calls to a
+  Forgejo-authentication source are now cached with expiration duration
+  between one and five minutes. Authentication-related changes in Forgejo
+  instances might therefore become visible after up to five minutes.
+
+
 # 5.2.0 (2025-10-29)
 
 ## New features
