@@ -102,8 +102,12 @@ class _ModelStore:
             json_object['annotations'] = {}
         submitter_curie_or_iri = self.get_curie(self.tags['id'])
         time_curie_or_iri = self.get_curie(self.tags['time'])
-        json_object['annotations'][submitter_curie_or_iri] = submitter
-        json_object['annotations'][time_curie_or_iri] = datetime.now().isoformat()
+        if submitter_curie_or_iri not in json_object['annotations']:
+            json_object['annotations'][submitter_curie_or_iri] = []
+        if time_curie_or_iri not in json_object['annotations']:
+            json_object['annotations'][time_curie_or_iri] = []
+        json_object['annotations'][submitter_curie_or_iri].append(submitter)
+        json_object['annotations'][time_curie_or_iri].append(datetime.now().isoformat())
 
     def get_curie(
         self,
