@@ -1,3 +1,10 @@
+# 5.2.2 (2025-11-26)
+
+## Bugfixes
+
+- Fix an issue in the annotation creation code. 
+
+
 # 5.2.1 (2025-11-26)
 
 ## Changes
