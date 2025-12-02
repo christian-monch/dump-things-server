@@ -97,8 +97,18 @@ class TokenCapabilityRequest(BaseModel):
     token: str | None
 
 
+class ServerCollectionResponse(BaseModel):
+    name: str
+    schema: str
+
+
+class ServerCollectionCountedResponse(ServerCollectionResponse):
+    records: int
+
+
 class ServerResponse(BaseModel):
     version: str
+    collections: list[ServerCollectionResponse|ServerCollectionCountedResponse]
 
 
 logging.basicConfig(level=logging.WARNING)
@@ -393,9 +403,16 @@ def validate_record(
     tags=['Server info'],
     name='get server information'
 )
-async def get_server() -> ServerResponse:
+async def server() -> ServerResponse:
     return ServerResponse(
         version = __version__,
+        collections = [
+            ServerCollectionResponse(
+                name=collection_name,
+                schema=g_instance_config.schemas[collection_name],
+            )
+            for collection_name in g_instance_config.collections
+        ]
     )
 
 
