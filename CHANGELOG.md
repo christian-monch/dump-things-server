@@ -1,3 +1,11 @@
+# 5.3.0 (2025-12-02)
+
+## New features
+
+- The `/server`-endpoint result now contains the name of collections and the 
+  schemas that are used by the collections.
+
+
 # 5.2.1 (2025-11-26)
 
 ## Changes

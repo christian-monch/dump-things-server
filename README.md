@@ -701,7 +701,17 @@ The service provides the following user endpoints (in addition to user-endpoints
   The response is a JSON object with the following structure:
 ```json
 {
-  "version": "<version of the server>"
+  "version": "<version of the server>",
+  "collections": [
+    {
+      "name": "collection_1",
+      "schema": "https://example.org/schema_1.yaml"
+    },
+    {
+      "name": "collection_2",
+      "schema": "https://example.org/schema_2.yaml"
+    },
+  ]
 }
 ```
 
