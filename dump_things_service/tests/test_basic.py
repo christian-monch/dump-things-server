@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import pytest  # F401
 
 from .. import (
@@ -13,6 +15,9 @@ from .create_store import (
     pid,
 )
 from .test_utils import basic_write_locations
+
+# Path to a local simple test schema
+schema_file = Path(__file__).parent / 'testschema.yaml'
 
 extra_record = {
     'schema_type': 'abc:Person',
@@ -390,6 +395,48 @@ def test_server(fastapi_client_simple):
     assert response.status_code == HTTP_200_OK
     assert response.json() == {
         'version': __version__,
+        'collections': [
+            {
+                'name': 'collection_1',
+                'schema': str(schema_file),
+            },
+            {
+                'name': 'collection_2',
+                'schema': str(schema_file),
+            },
+            {
+                'name': 'collection_3',
+                'schema': str(schema_file),
+            },
+            {
+                'name': 'collection_4',
+                'schema': str(schema_file),
+            },
+            {
+                'name': 'collection_5',
+                'schema': str(schema_file),
+            },
+            {
+                'name': 'collection_6',
+                'schema': str(schema_file),
+            },
+            {
+                'name': 'collection_7',
+                'schema': str(schema_file),
+            },
+            {
+                'name': 'collection_8',
+                'schema': str(schema_file),
+            },
+            {
+                'name': 'collection_dlflatsocial-1',
+                'schema': 'https://concepts.datalad.org/s/flat-social/unreleased.yaml',
+            },
+            {
+                'name': 'collection_dlflatsocial-2',
+                'schema': 'https://concepts.datalad.org/s/flat-social/unreleased.yaml',
+            },
+        ],
     }
 
 
