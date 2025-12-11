@@ -189,6 +189,7 @@ async def incoming_read_all_records_paginated(
         pid=None,
         matching=matching,
         api_key=api_key,
+        upper_bound=None,
     )
     return paginate(record_list)
 
