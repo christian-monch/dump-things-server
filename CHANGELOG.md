@@ -1,3 +1,11 @@
+# 5.3.1 (2025-12-11)
+
+## Bugfixes
+
+- paginated curated- and incoming-reads failed if the respective result
+  set was larger or equal to 1000 records.
+
+
 # 5.3.0 (2025-12-02)
 
 ## New features
