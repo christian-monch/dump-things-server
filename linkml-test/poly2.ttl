@@ -1,0 +1,15 @@
+@prefix dlidentifiers: <https://concepts.datalad.org/s/identifiers/unreleased/> .
+@prefix dlsocialmx: <https://concepts.datalad.org/s/social-mixin/unreleased/> .
+@prefix xyzrse: <https://concepts.datalad.org/s/demo-rse-group/unreleased/> .
+
+<https://concepts.datalad.org/s/demo-rse-group/ns/person/herbert> a xyzrse:XYZPerson ;
+    dlidentifiers:identifier [ a xyzrse:ORCID ;
+            dlidentifiers:notation "0000-0000-0000-0000" ;
+            dlidentifiers:schema_agency "Open Researcher and Contributor ID" ],
+        [ a xyzrse:ORCID ;
+            dlidentifiers:notation "1000-0000-0000-0001" ;
+            dlidentifiers:schema_agency "Open Researcher and Contributor ID" ] ;
+    dlsocialmx:family_name "Mann" ;
+    dlsocialmx:given_name "Herbert" .
+
+

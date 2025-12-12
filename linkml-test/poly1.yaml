@@ -1,0 +1,12 @@
+# ❱ linkml-convert -t ttl -s "https://concepts.datalad.org/s/demo-rse-group/unreleased.yaml" -C Identifier tmp/poly1.yaml                                                                                                                                                      1 !
+# @prefix dlidentifiers: <https://concepts.datalad.org/s/identifiers/unreleased/> .
+# @prefix xyzrse: <https://concepts.datalad.org/s/demo-rse-group/unreleased/> .
+#
+# [] a xyzrse:ORCID ;
+#    dlidentifiers:notation "0000-0000-0000-0000" ;
+#    dlidentifiers:schema_agency "Open Researcher and Contributor ID" .
+
+
+schema_type: xyzrse:ORCID
+notation: 0000-0000-0000-0000
+schema_agency: Open Researcher and Contributor ID
