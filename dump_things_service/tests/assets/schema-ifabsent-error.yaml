@@ -1,0 +1,31 @@
+id: https://example.org/ifabsent-error-trigger
+name: if-absent-error-trigger
+version: UNRELEASED
+title: ifabsent error trigger
+
+
+prefixes:
+  xsd: http://www.w3.org/2001/XMLSchema#
+  xyzrse: https://concepts.datalad.org/s/demo-rse-group/unreleased/
+
+
+types:
+  uriorcurie:
+    name: uriorcurie
+    uri: xsd:anyURI
+    repr: str
+
+
+slots:
+  creator:
+    slot_uri: xyzrse:creator
+    range: uriorcurie
+
+
+classes:
+  ORCID:
+    slots:
+    - creator
+    slot_usage:
+      creator:
+        ifabsent: uriorcurie(xsd:04fa4r544)
