@@ -22,8 +22,14 @@ jobs:
 
       - name: run tests
         run: |
-          hatch run tests:run --ignore=dump_things_service/tests/test_generators.py
+          hatch run tests:run \
+            --ignore=dump_things_service/tests/test_generators.py \
+            --ignore=dump_things_service/tests/test_ifabsent_patch.py
 
       - name: run generator tests
         run: |
           hatch run tests:run dump_things_service/tests/test_generators.py
+
+      - name: run ifabsent-patch tests
+        run: |
+          hatch run tests:run dump_things_service/tests/test_ifabsent_patch.py

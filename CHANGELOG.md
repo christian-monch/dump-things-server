@@ -1,3 +1,10 @@
+# 5.3.2 (2025-12-15)
+
+## Bugfixes
+
+- add a patch for faulty `ifabsent`-code generation in LinkML's Pydantic-code generator.
+
+
 # 5.3.1 (2025-12-11)
 
 ## Bugfixes
