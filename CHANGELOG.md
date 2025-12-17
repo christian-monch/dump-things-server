@@ -1,3 +1,12 @@
+# 5.3.3 (2025-12-16)
+
+## Bugfixes
+
+- fix type designator handling in `RDFLibLoader.from_rdf_graph`. This fixes an
+  issue where subclasses of ranges, e.g. `dlidentifiers:Identifier`, were not
+  properly handled.
+
+
 # 5.3.2 (2025-12-15)
 
 ## Bugfixes
