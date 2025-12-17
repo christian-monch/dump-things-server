@@ -125,8 +125,9 @@ def from_rdf_graph(
                 logger.info(f'Replacing {subject_class} with {type_classes}')
                 subject_class = type_classes[0].name
                 # PATCH >>>>>
-                if type_classes[0].class_uri is not None:
-                    dict_obj[type_designator_slot.name] = type_classes[0].class_uri
+                type_class_iri = schemaview.get_uri(type_classes[0])
+                if type_class_iri is not None:
+                    dict_obj[type_designator_slot.name] = type_class_iri
                 # PATCH <<<<<
         # process all triples for this node
         for (_, p, o) in graph.triples((subject, None, None)):
