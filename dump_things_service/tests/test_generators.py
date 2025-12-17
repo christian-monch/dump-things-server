@@ -17,3 +17,7 @@ def test_gen_pydantic():
 
 def test_gen_python():
     get_schema_model_for_schema(str(schema_dir / 'schema-merged.yaml'))
+
+
+def test_subclass_id():
+    get_schema_model_for_schema(str(schema_dir / 'schema-subclass-id-error.yaml'))
