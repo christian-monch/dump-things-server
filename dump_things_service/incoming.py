@@ -246,7 +246,10 @@ async def _incoming_read_records(
     model_store, backend = await _get_store_and_backend(collection, label, api_key)
 
     if pid:
-        return backend.get_record_by_iri(model_store.pid_to_iri(pid))
+        record_info = backend.get_record_by_iri(model_store.pid_to_iri(pid))
+        if record_info:
+            return record_info.json_object
+        return None
     if class_name:
         result_list = backend.get_records_of_classes([class_name], matching)
     else:
