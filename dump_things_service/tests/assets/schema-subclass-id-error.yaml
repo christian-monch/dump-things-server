@@ -1,0 +1,33 @@
+id: https://example.org/subclass-id-error-trigger
+name: subclass-error-trigger
+version: UNRELEASED
+title: subclass ID error trigger
+
+prefixes:
+  linkml: https://w3id.org/linkml/
+
+imports:
+  - linkml:types
+
+slots:
+  pid:
+    identifier: true
+    range: uriorcurie
+    required: true
+
+  annotation_tag:
+    description: A tag identifying an annotation.
+    range: Thing
+
+classes:
+
+  Annotation:
+    slots:
+      - annotation_tag
+    slot_usage:
+      annotation_tag:
+        key: true
+
+  Thing:
+    slots:
+      - pid
