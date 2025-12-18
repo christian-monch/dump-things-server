@@ -88,7 +88,7 @@ def test_curated_delete(fastapi_client_simple):
         headers={'x-dumpthings-token': 'token_1_xxxxx'},
     )
     assert response.status_code == HTTP_200_OK
-    assert response.json()['json_object']['pid'] == 'abc:delete-me'
+    assert response.json()['pid'] == 'abc:delete-me'
 
     response = test_client.delete(
         '/collection_8/curated/record?pid=abc:delete-me',
