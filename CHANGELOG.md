@@ -1,3 +1,11 @@
+# 5.3.5 (2025-12-18)
+
+## Bugfixes
+
+- Curator- and Incoming-endpoints now return only the requested record and
+  no additional surrounding structures.
+
+
 # 5.3.4 (2025-12-17)
 
 ## Bugfixes
