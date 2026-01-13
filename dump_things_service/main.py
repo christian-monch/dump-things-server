@@ -35,6 +35,7 @@ from pydantic import (
 from starlette.responses import (
     JSONResponse,
     PlainTextResponse,
+    RedirectResponse,
 )
 
 from dump_things_service import (
@@ -396,6 +397,11 @@ def validate_record(
             g_instance_config.validators[collection].validate(data)
 
     return JSONResponse(True)
+
+
+@app.get('/', response_class=RedirectResponse)
+async def root() -> RedirectResponse:
+    return RedirectResponse('/docs')
 
 
 @app.get(

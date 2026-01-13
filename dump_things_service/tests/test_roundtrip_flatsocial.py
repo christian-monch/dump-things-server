@@ -22,7 +22,7 @@ ttl_record = """@prefix dlflatsocial: <https://concepts.datalad.org/s/flat-socia
 
 dlflatsocial:test_john_ttl a dlflatsocial:Person ;
     dlsocialmx:given_name "Johnöüß" ;
-    dlthings:annotations [ a dlthings:Annotation ;
+    dlthings:annotations [ a dlflat:Annotation ;
             dlthings:annotation_tag <http://purl.obolibrary.org/obo/NCIT_C54269> ;
             dlthings:annotation_value "test_user_1" ] .
 """
@@ -35,35 +35,39 @@ dlflatsocial:test_john_ttl a dlflatsocial:Person ;
     dlsocialmx:given_name "Johnöüß" .
 """
 
-ttl_output_record_a = """@prefix dlflatsocial: <https://concepts.datalad.org/s/flat-social/unreleased/> .
+ttl_output_record_a = """@prefix dlflat: <https://concepts.datalad.org/s/flat/unreleased/> .
+@prefix dlflatsocial: <https://concepts.datalad.org/s/flat-social/unreleased/> .
 @prefix dlsocialmx: <https://concepts.datalad.org/s/social-mixin/unreleased/> .
 @prefix dlthings: <https://concepts.datalad.org/s/things/v1/> .
 @prefix obo: <http://purl.obolibrary.org/obo/> .
 
-dlflatsocial:test_john_ttl a dlflatsocial:Person ;
+dlflatsocial:another_john_ttl a dlflatsocial:Person ;
     dlsocialmx:given_name "Johnöüß" ;
-    dlthings:annotations [ a dlthings:Annotation ;
+    dlthings:annotations [ a dlflat:FlatAnnotation ;
             dlthings:annotation_tag <http://semanticscience.org/resource/SIO_001083> ;
             dlthings:annotation_value "1970-01-01T00:00:00" ],
-        [ a dlthings:Annotation ;
+        [ a dlflat:FlatAnnotation ;
             dlthings:annotation_tag obo:NCIT_C54269 ;
             dlthings:annotation_value "test_user_1" ] .
 """
 
-ttl_output_record_b = """@prefix dlflatsocial: <https://concepts.datalad.org/s/flat-social/unreleased/> .
+
+ttl_output_record_b = """@prefix dlflat: <https://concepts.datalad.org/s/flat/unreleased/> .
+@prefix dlflatsocial: <https://concepts.datalad.org/s/flat-social/unreleased/> .
 @prefix dlsocialmx: <https://concepts.datalad.org/s/social-mixin/unreleased/> .
 @prefix dlthings: <https://concepts.datalad.org/s/things/v1/> .
 @prefix obo: <http://purl.obolibrary.org/obo/> .
 
-dlflatsocial:test_john_ttl a dlflatsocial:Person ;
+dlflatsocial:another_john_ttl a dlflatsocial:Person ;
     dlsocialmx:given_name "Johnöüß" ;
-    dlthings:annotations [ a dlthings:Annotation ;
+    dlthings:annotations [ a dlflat:FlatAnnotation ;
             dlthings:annotation_tag obo:NCIT_C54269 ;
             dlthings:annotation_value "test_user_1" ],
-        [ a dlthings:Annotation ;
+        [ a dlflat:FlatAnnotation ;
             dlthings:annotation_tag <http://semanticscience.org/resource/SIO_001083> ;
             dlthings:annotation_value "1970-01-01T00:00:00" ] .
 """
+
 
 new_json_pid = 'dlflatsocial:another_john_ttl'
 
