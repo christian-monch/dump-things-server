@@ -112,7 +112,7 @@ extra-dependencies = [
 ]
 
 [tool.hatch.envs.tests.scripts]
-run = 'python -m pytest {args}'
+run = 'python -m pytest {args:dump_things_service/tests dump_things_service/backends/tests}'
 
 [tool.ruff]
 extend-exclude = [
