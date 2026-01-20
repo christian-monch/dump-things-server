@@ -104,7 +104,6 @@ python = ["3.11", "3.12"]
 
 [tool.hatch.envs.tests]
 extra-dependencies = [
-    "dump_things_service",
     "freezegun",
     "httpx",
     "pytest",
