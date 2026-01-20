@@ -103,7 +103,6 @@ run = "python -m dump_things_service.main {args}"
 python = ["3.11", "3.12"]
 
 [tool.hatch.envs.tests]
-default-args = ["dump_things_service"]
 extra-dependencies = [
     "dump_things_service",
     "freezegun",
