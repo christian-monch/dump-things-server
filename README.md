@@ -13,7 +13,7 @@ The service supports schemas that are based on Datalad's *Thing* schema, i.e. on
 It assumes that the classes of stored records are subclasses of `Thing`, and inherit the properties `pid` and `schema_type` from the `Thing`-baseclass.
 
 The general workflow in the service is as follows.
-We distinguish between two areas of a collection, an **incoming** are and a **curated** area.
+We distinguish between two areas of a collection, an **incoming** area and a **curated** area.
 Data written to a collection is stored in a collection-specific **incoming** area.
 A curation process, which is outside the scope of the service, moves data from the incoming area of a collection to the **curated** area of the collection.
 
