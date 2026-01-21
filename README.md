@@ -26,7 +26,7 @@ So any read- and write-operations on an incoming area are actually restricted to
 Multiple tokens can share the same zone.
 That allows multiple submitters to work together when storing records in the service.
 
-The service provides a HTTP-based API to store and retrieve data objects, and to verify token capabilities.
+The service provides an HTTP-based API to store and retrieve data objects, and to verify token capabilities.
 
 ### Installing the service
 
