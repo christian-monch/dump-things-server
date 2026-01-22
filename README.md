@@ -86,7 +86,7 @@ collections:
 
     # The path to the curated data of the collection. This path should contain the
     # ".dumpthings.yaml"-configuration for  collections that is described
-    # here: <https://concepts.datalad.org/dump-things/>.
+    # here: <https://concepts.datalad.org/dump-things-storage-v0/>.
     # A relative path is interpreted relative to the storage root, which is provided on
     # service start. An absolute path is interpreted as an absolute path.
     curated: curated/personal_records
