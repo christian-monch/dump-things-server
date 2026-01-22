@@ -108,7 +108,7 @@ collections:
     # Optionally a list of classes that will be ignored when store- or validate-endpoints
     # are created. If `use_classes` is present, the entries of this list will further reduce
     # the classes that will receive endpoints. If `use_classes` is not present, the entries
-    # of this list will reduce the classes from the schema, the will receive endpoints.
+    # of this list will reduce the classes from the schema that will receive endpoints.
     # The classes listed here must be listed in `use_classes` if that is defined. If
     # `use_classes` is not defined, they must be listed in the schema.
     ignore_classes:
