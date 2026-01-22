@@ -136,7 +136,7 @@ tokens:
   # access to the two collections: "rooms_and_buildings" and "fixed_data".
   basic_access:
 
-    # The value of "user-id" will be added as an annotation to each record that is
+    # The value of "user_id" will be added as an annotation to each record that is
     # uploaded with this token.
     user_id: anonymous
 
