@@ -291,10 +291,10 @@ collections:
         # `forgejo-user-<user-login>`
         label_type: team
         # An optional repository. The token will only be authorized
-        # if the team has access to the repository. Note: if `repo`
+        # if the team has access to the repository. Note: if `repository`
         # is set, the token must have at least repository read
         # permissions.
-        repo: reference-repository
+        repository: reference-repository
 
       # Fallback to the config file.
       - type: config    # check tokens from the configuration file
@@ -385,10 +385,10 @@ collections:
           # `forgejo-user-<user-login>`
           label_type: team
           # An optional repository. The token will only be authorized
-          # if the team has access to the repository. Note: if `repo`
+          # if the team has access to the repository. Note: if `repository`
           # is set, the token must have at least repository read
           # permissions.
-          repo: reference-repository
+          repository: reference-repository
     
         # Fallback to the config file.
         - type: config    # check tokens from the configuration file
@@ -566,10 +566,10 @@ collections:
         # `forgejo-user-<user-login>`
         label_type: team
         # An optional repository. The token will only be authorized
-        # if the team has access to the repository. Note: if `repo`
+        # if the team has access to the repository. Note: if `repository`
         # is set, the token must have at least repository read
         # permissions.
-        repo: reference-repository
+        repository: reference-repository
 
       # Fallback to the config file.
       - type: config    # check tokens from the configuration file
