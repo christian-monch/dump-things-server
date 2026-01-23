@@ -238,7 +238,7 @@ The backend will be used for the curated area and for the incoming areas of the 
 If no backend is defined for a collection, the `record_dir+stl`-backend is used by default.
 The `+stl`-backends can be useful if an endpoint returns records of multiple classes, because it allows clients to determine the class of each result record.
 
-The service guarantees that backends of all types can co-exist independently in the same directory, i.e., there are no name collisions in files that are used for different backends (as long as no class name starts with `.` or `_`)).
+The service guarantees that backends of all types can co-exist independently in the same directory, i.e., there are no name collisions in files that are used for different backends (as long as no class name starts with `.` or `_`).
 
 The following configuration snippet shows how to define a backend for a collection:
 
