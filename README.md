@@ -310,8 +310,8 @@ collections:
     default_token: anon_read
     curated: collection_3/curated
     backend:
-      # The record_dir-backend is identified by the
-      # type: "record_dir". No more attributes are
+      # The record_dir+stl backend is identified by the
+      # type: "record_dir+stl". No more attributes are
       # defined for this backend.
       type: record_dir+stl
 
