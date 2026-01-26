@@ -673,7 +673,7 @@ For example, to migrate from a `record_dir+stl` backend, the command is similar,
 ```
 (Note: a `record_dir:<path>` can be used to copy without the schema type layer from a `record_dir+stl` backend. But in this case the copied records will not have a `schema_type` attribute, because the `record_dir` backend does not "put it back in", unlike a `record_dir+stl` backend.)
 
-If the source backend is a `record_dir` or `record_dir+stl` backend and the store was manually modified outside the service (for example, by adding or removing files), it is recommended to run the command `dump-things-rebuild-index` on the source store before copying. This ensures that the index is up to date and all records will be copied.
+If the source backend is a `record_dir` or `record_dir+stl` backend, and the store was manually modified outside the service (for example, by adding or removing files), it is recommended to run the command `dump-things-rebuild-index` on the source store before copying. This ensures that the index is up to date and all records will be copied.
 
 If any backend is a `record_dir+stl` backend, a schema has to be supplied via the `-s/--schema` command line parameter. The schema is used to determine the `schema_type` attribute of the records that are copied.
 
