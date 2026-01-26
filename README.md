@@ -478,7 +478,7 @@ The default annotation tag classes can be overridden in the configuration on a p
 To override the defaults tags, add a `submission_tags`-attribute to a collection definition.
 The `submission_tags`-attribute should contain a mapping that maps either `submitter_id_tag`, or `submitter_time_tag` or both to an IRI or a CURIE.
 If the schema defines a matching prefix, IRIs are automatically converted to CURIEs before storing the record.
-The service validates that the prefix of a CURIE is defined in the schema of the collection.
+If a tag is given as a CURIE, the service validates that the prefix of the CURIE is defined in the schema of the collection.
 
 ```yaml
 type: collections
