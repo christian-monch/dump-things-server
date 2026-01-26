@@ -702,7 +702,7 @@ If any backend is a `record_dir+stl` backend, a schema has to be supplied via th
 #### Delete a record manually
 
 If a schema is changed, for example a prefix-definition changed, the service may not be able to delete a record anymore.
-In this case the record can be deleted manually if you have access to the storage root.
+In this case, the record can be deleted manually if you have access to the storage root.
 
 To delete the record, open a shell and navigate (`cd`) to the directory where the store is located.
 The location can be determined from the configuration file.
