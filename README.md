@@ -502,7 +502,7 @@ collections:
 
 Most endpoints require a *collection*. These correspond to the names of the "data record collection"-directories (for example `myschema-v3-fmta` in [Dump Things Service](https://concepts.datalad.org/dump-things-storage-v0/)) in the stores.
 
-The service provides the following user endpoints (in addition to user-endpoints there exist endpoints for curators, to view them check the `/docs`-path in an installed service):
+The service provides the following user endpoints (In addition to user-endpoints, there exist endpoints for curators. To view them, check the `/docs`-path in an installed service):
 
 - `POST /<collection>/record/<class>`: an object of type `<class>` (defined by the schema associated with `<collection>`) can be posted to this endpoint.
  It will be stored in the incoming area for this collection and the user defined by the provided token.
