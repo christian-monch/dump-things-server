@@ -608,7 +608,7 @@ The service provides the following user endpoints (In addition to user endpoints
  The result is either `True` if the object was deleted or `False` if the object did not exists or was not deleted.
 
 
-- `GET /docs`: provides information about the API of the service, i.e. about all endpoints.
+- `GET /docs`: provides information about the service's API, i.e. about all endpoints.
 
 #### Curation endpoints
 
