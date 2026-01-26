@@ -527,7 +527,7 @@ The service provides the following user endpoints (In addition to user endpoints
   The list may contain more than one record if the posted object contains inlined records.
 
 - `GET /<collection>/records/<class>`: retrieve all readable objects from collection `<collection>` that are of type `<class>` or any of its subclasses.
- Objects are readable if the default token for the collection allows reading of objects or if a token is provided that allows reading of objects in the collection.
+ Objects are readable if the default token or the token provided has the permission to read the objects in the collection.
  Objects from incoming spaces will take precedence over objects from curated spaces, i.e. if there are two objects with identical `pid` in the curated space and in the incoming space, the object from the incoming space will be returned.
  The endpoint supports the query parameter `format`, which determines the format of the query result.
  It can be set to `json` (the default) or to `ttl`,
@@ -578,7 +578,7 @@ The service provides the following user endpoints (In addition to user endpoints
 
 
 - `GET /<collection>/records/`:  retrieve all readable objects from collection `<collection>`.
-  Objects are readable if the default token for the collection allows reading of objects or if a token is provided that allows reading of objects in the collection.
+  Objects are readable if the default token or the token provided has the permission to read the objects in the collection.
   Objects from incoming spaces will take precedence over objects from curated spaces, i.e. if there are two objects with identical `pid` in the curated space and in the incoming space, the object from the incoming space will be returned.
   The endpoint supports the query parameter `format`, which determines the format of the query result.
   It can be set to `json` (the default) or to `ttl`,
