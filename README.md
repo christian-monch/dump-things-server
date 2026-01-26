@@ -500,7 +500,7 @@ collections:
 
 ### Endpoints
 
-Most endpoints require a *collection*. These correspond to the names of the "data record collection"-directories (for example `myschema-v3-fmta` in [Dump Things Service](https://concepts.datalad.org/dump-things/)) in the stores.
+Most endpoints require a *collection*. These correspond to the names of the "data record collection"-directories (for example `myschema-v3-fmta` in [Dump Things Service](https://concepts.datalad.org/dump-things-storage-v0/)) in the stores.
 
 The service provides the following user endpoints (in addition to user-endpoints there exist endpoints for curators, to view them check the `/docs`-path in an installed service):
 
@@ -511,7 +511,7 @@ The service provides the following user endpoints (in addition to user-endpoints
  It can be set to `json` (the default) or to `ttl` (Terse RDF Triple Language, a.k.a. Turtle).
  If the `json`-format is selected, the content-type should be `application/json`.
  If the `ttl`-format is selected, the content-type should be `text/turtle`.  
- The service supports extraction of inlined records as described in [Dump Things Service](https://concepts.datalad.org/dump-things/).
+ The service supports extraction of inlined records as described in [Dump Things Service](https://concepts.datalad.org/dump-things-storage-v0/).
  On success, the endpoint will return a list of all stored records.
  This might be more than one record if the posted object contains inlined records.
 
@@ -522,7 +522,7 @@ The service provides the following user endpoints (in addition to user-endpoints
   It can be set to `json` (the default) or to `ttl` (Terse RDF Triple Language, a.k.a. Turtle).
   If the `json`-format is selected, the content-type should be `application/json`.
   If the `ttl`-format is selected, the content-type should be `text/turtle`.  
-  The service supports extraction of inlined records as described in [Dump Things Service](https://concepts.datalad.org/dump-things/).
+  The service supports extraction of inlined records as described in [Dump Things Service](https://concepts.datalad.org/dump-things-storage-v0/).
   On success, the endpoint will return a list of all stored records.
   This might be more than one record if the posted object contains inlined records.
 
