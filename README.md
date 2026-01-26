@@ -689,7 +689,7 @@ If any backend is a `record_dir+stl` backend, a schema has to be supplied via th
       sqlite:<path-to-data>/penguis/curated
   ```
   The copy command will add the copied records to any existing records in the destination store.
-  Note: when records are copied from a `record-dir` store, the index is used to locate the records in the source store. If the index is not up-to-date, the copied records might not be complete. In this case, it is recommended to run `dump-things-rebuild-index` on the source store before copying.
+  Note: when records are copied from a `record-dir` store, the index is used to locate the records in the source store. If the index is not up-to-date, some records may not be copied. To ensure all records are copied, it is recommended to run `dump-things-rebuild-index` on the source store before copying.
 
 - `dump-things-pid-check`: this command checks the pids in all collections of a store to verify that they can be resolved (if they are in CURIE form).
   This is useful to validate the proper definition of prefixes after schema-changes.
