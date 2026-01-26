@@ -304,7 +304,7 @@ collections:
       # permissions for a token, those permissions will be used and no other
       # authorization sources will be queried.
       # The default authorization source is `config`, which reads the token 
-      # permissions, user-id, and incoming
+      # permissions, user-id, and incoming from the config file.
   
   collection_with_explicit_record_dir+stl_backend:
     default_token: anon_read
@@ -351,7 +351,7 @@ If an identical authentication source is listed multiple time in the configurati
 
 These authentication sources are available:
 
-- config: use the configuration file to 
+- config: use the configuration file to authenticate tokens
 - forgejo: use a Forgejo-instance to authenticate tokens
 
 All authentication source configurations contain the key `type`.
@@ -398,7 +398,7 @@ collections:
         # permissions for a token, those permissions will be used and no other
         # authorization sources will be queried.
         # The default authorization source is `config`, which reads the token 
-        # permissions, user-id, and incoming
+        # permissions, user-id, and incoming from the config file.
 
 ...
 
@@ -579,7 +579,7 @@ collections:
       # permissions for a token, those permissions will be used and no other
       # authorization sources will be queried.
       # The default authorization source is `config`, which reads the token 
-      # permissions, user-id, and incoming
+      # permissions, user-id, and incoming from the config file.
   
   collection_with_explicit_record_dir+stl_backend:
     default_token: anon_read
