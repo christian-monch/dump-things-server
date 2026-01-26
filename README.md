@@ -612,9 +612,9 @@ The service provides the following user endpoints (In addition to user endpoints
 
 #### Curation endpoints
 
-The service support a set of curation-endpoints that give direct access to the curated area as well as to existing incoming areas.
+The service support a set of curation endpoints that give direct access to the curated area as well as to existing incoming areas.
 This access requires a `CURATOR`-token.
-Details about the curation-endpoints can be found in [this issue](https://github.com/christian-monch/dump-things-server/issues/118).
+Details about the curation endpoints can be found in [this issue](https://github.com/christian-monch/dump-things-server/issues/118).
 
 
 ### Tips & Tricks
