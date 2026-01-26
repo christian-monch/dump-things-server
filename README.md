@@ -706,7 +706,7 @@ In this case, the record can be deleted manually if you have access to the stora
 
 To delete the record, open a shell and navigate (`cd`) to the directory where the store is located.
 The location can be determined from the configuration file.
-Depending on the storage backend, the next steps are different.
+Depending on the storage backend, the subsequent steps are different.
 
 ##### `record-dir` backend
 
