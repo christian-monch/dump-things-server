@@ -513,7 +513,7 @@ The service provides the following user endpoints (In addition to user endpoints
  If the `ttl`-format is selected, the content-type should be `text/turtle`.  
  The service supports extraction of inlined records as described in [Dump Things Service](https://concepts.datalad.org/dump-things-storage-v0/).
  On success, the endpoint will return a list of all stored records.
- This might be more than one record if the posted object contains inlined records.
+ The list may contain more than one record if the posted object contains inlined records.
 
 - `POST /<collection>/validate/record/<class>`: an object of type `<class>` (defined by the schema associated with `<collection>`) can be posted to this endpoint.
   It will validate the posted data.
@@ -524,7 +524,7 @@ The service provides the following user endpoints (In addition to user endpoints
   If the `ttl`-format is selected, the content-type should be `text/turtle`.  
   The service supports extraction of inlined records as described in [Dump Things Service](https://concepts.datalad.org/dump-things-storage-v0/).
   On success, the endpoint will return a list of all stored records.
-  This might be more than one record if the posted object contains inlined records.
+  The list may contain more than one record if the posted object contains inlined records.
 
 - `GET /<collection>/records/<class>`: retrieve all readable objects from collection `<collection>` that are of type `<class>` or any of its subclasses.
  Objects are readable if the default token for the collection allows reading of objects or if a token is provided that allows reading of objects in the collection.
