@@ -553,7 +553,7 @@ The service provides the following user endpoints (In addition to user endpoints
 }
 ```
 
-- `GET /<collection>/record?pid=<pid>`: retrieve an object with the pid `<pid>` from the collection `<collection>`, if the provided token allows reading. If the provided token allows reading of incoming and curated spaces, objects from incoming spaces will take precedence.
+- `GET /<collection>/record?pid=<pid>`: retrieve an object with the pid `<pid>` from the collection `<collection>` if the provided token allows reading. If the provided token allows reading of incoming and curated spaces, objects from incoming spaces will take precedence.
   The endpoint supports the query parameter `format`, which determines the format of the query result.
   It can be set to `json` (the default) or to `ttl`,
 
@@ -604,7 +604,7 @@ The service provides the following user endpoints (In addition to user endpoints
 ```
 
 
-- `DELETE /<collection>/record?pid=<pid>`: delete an object with the pid `<pid>` from the incoming area of the collection `<collection>`, if the provided token allows writing to the incoming area.
+- `DELETE /<collection>/record?pid=<pid>`: delete an object with the pid `<pid>` from the incoming area of the collection `<collection>` if the provided token allows writing to the incoming area.
  The result is either `True` if the object was deleted or `False` if the object did not exists or was not deleted.
 
 
