@@ -53,6 +53,13 @@ The following command line parameters are supported:
 
 - `--root-path <path>`: Set the ASGI 'root_path' for applications submounted below a given URL path.
 
+- `--log-level`: set the log level for the service, allowed values are `ERROR`, `WARNING`, `INFO`, `DEBUG`. The default-level is `WARNING`.
+
+```bash
+dump-things-service /data-storage/store --host 127.0.0.1 --port 8000
+```
+
+The above command runs the service on the network location `127.0.0.1:8000` and provides access to the store under `/data-storage/store`.
 
 ### Configuration file
 
@@ -489,41 +496,6 @@ collections:
 
   ...
 
-```
-
-
-### Command line parameters:
-
-The service supports the following command line parameters:
-
-- `<storage root>`: this is a mandatory parameter that defines the directory that serves as root for relative `curated`- and `incoming`-paths. Unless the `-c/--config` option is given, the configuration is loaded from `<storage root>/.dumpthings.yaml`.
-
-- `--host`: (optional): the IP address of the host the service should run on
-
-
-- `--port`: the port number the service should listen on
-
-
-- `-c/--config`: if set, the service will read the configuration from the given path. Otherwise it will try to read the configuration from `<storage root>/.dumpthings.yaml`.
-
-
-- `--log-level`: set the log level for the service, allowed values are `ERROR`, `WARNING`, `INFO`, `DEBUG`. The default-level is `WARNING`.
-
-
-- `--root-path`: set the ASGI `root_path` for applications sub-mounted below a given URL path.
-
-
-The service can be started with the following command:
-
-```bash
-dump-things-service
-```
-In this example the service will run on the network location `0.0.0.0:8000` and provide access to the stores under `/data-storage/store`.
-
-To run the service on a specific host and port, use the command line options `--host` and `--port`, for example:
-
-```bash
-dump-things-service /data-storage/store --host 127.0.0.1 --port 8000
 ```
 
 ### Endpoints
