@@ -208,7 +208,7 @@ tokens:
   # to `True`. A hashed token has the structure
   # `<id>-<sha256>`. It will match an incoming token if the incoming token has
   # the structure `<id>-<content>` and if sha256(`<content>`) equals `<sha256>`.
-  # In this example, if the client present sthe token `bob-hello`, he will be
+  # In this example, if the client presents the token `bob-hello`, he will be
   # granted access because `sha256('hello')` equals
   # `2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824`
   bob-2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824:
