@@ -1,3 +1,12 @@
+# 5.x.x (2026-01-28)
+
+## New features
+
+- The `/server`-endpoint result now contains the name of classes that are
+  supported by the collections, i.e., classes for which storage- and
+  validation-endpoints exist.
+
+
 # 5.3.6 (2026-01-13)
 
 ## Changes

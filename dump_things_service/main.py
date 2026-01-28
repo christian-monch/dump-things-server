@@ -101,6 +101,7 @@ class TokenCapabilityRequest(BaseModel):
 class ServerCollectionResponse(BaseModel):
     name: str
     schema: str
+    classes: list[str]
 
 
 class ServerCollectionCountedResponse(ServerCollectionResponse):
@@ -416,6 +417,7 @@ async def server() -> ServerResponse:
             ServerCollectionResponse(
                 name=collection_name,
                 schema=g_instance_config.schemas[collection_name],
+                classes=g_instance_config.model_info[collection_name][1],
             )
             for collection_name in g_instance_config.collections
         ]
