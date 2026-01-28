@@ -392,50 +392,40 @@ def test_server(fastapi_client_simple):
     response = test_client.get(
         '/server',
     )
+    test_schema_classes = [
+        'Thing',
+        'Agent',
+        'InstantaneousEvent',
+        'Person',
+    ]
+    flat_social_classes = [
+        'Thing',
+        'Property',
+        'ValueSpecification',
+        'FlatThing',
+        'FlatProperty',
+        'AnnotationTag',
+        'Organization',
+        'Person',
+        'Project',
+    ]
     assert response.status_code == HTTP_200_OK
     assert response.json() == {
         'version': __version__,
         'collections': [
             {
-                'name': 'collection_1',
+                'name': f'collection_{i}',
                 'schema': str(schema_file),
-            },
+                'classes': test_schema_classes,
+            }
+            for i in range(1, 9)
+        ] + [
             {
-                'name': 'collection_2',
-                'schema': str(schema_file),
-            },
-            {
-                'name': 'collection_3',
-                'schema': str(schema_file),
-            },
-            {
-                'name': 'collection_4',
-                'schema': str(schema_file),
-            },
-            {
-                'name': 'collection_5',
-                'schema': str(schema_file),
-            },
-            {
-                'name': 'collection_6',
-                'schema': str(schema_file),
-            },
-            {
-                'name': 'collection_7',
-                'schema': str(schema_file),
-            },
-            {
-                'name': 'collection_8',
-                'schema': str(schema_file),
-            },
-            {
-                'name': 'collection_dlflatsocial-1',
+                'name': f'collection_dlflatsocial-{i}',
                 'schema': 'https://concepts.datalad.org/s/flat-social/unreleased.yaml',
-            },
-            {
-                'name': 'collection_dlflatsocial-2',
-                'schema': 'https://concepts.datalad.org/s/flat-social/unreleased.yaml',
-            },
+                'classes': flat_social_classes,
+            }
+            for i in range(1, 3)
         ],
     }
 
