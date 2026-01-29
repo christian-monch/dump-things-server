@@ -20,6 +20,7 @@ from dump_things_service import (
     HTTP_403_FORBIDDEN,
     HTTP_404_NOT_FOUND,
     HTTP_413_CONTENT_TOO_LARGE,
+    HTTP_503_SERVICE_UNAVAILABLE,
 )
 from dump_things_service.auth import (
     AuthenticationError,
@@ -213,6 +214,19 @@ async def process_token(
     final_permissions = join_default_token_permissions(
         instance_config, token_permissions, collection
     )
+
+    # Check for maintenance mode
+    if collection in instance_config.maintenance_mode:
+        if not (
+                final_permissions.curated_read
+                and final_permissions.curated_write
+                and final_permissions.zones_access
+        ):
+            raise HTTPException(
+                status_code=HTTP_503_SERVICE_UNAVAILABLE,
+                detail=f"Collection '{collection}' is in maintenance mode",
+            )
+
     if not final_permissions.incoming_read and not final_permissions.curated_read:
         raise HTTPException(
             status_code=HTTP_403_FORBIDDEN,

@@ -12,6 +12,7 @@ from starlette.status import (
     HTTP_403_FORBIDDEN,
     HTTP_404_NOT_FOUND,
     HTTP_500_INTERNAL_SERVER_ERROR,
+    HTTP_503_SERVICE_UNAVAILABLE,
 )
 from starlette.status import (
     HTTP_413_REQUEST_ENTITY_TOO_LARGE as HTTP_413_CONTENT_TOO_LARGE,
@@ -31,6 +32,7 @@ __all__ = [
     'HTTP_413_CONTENT_TOO_LARGE',
     'HTTP_422_UNPROCESSABLE_CONTENT',
     'HTTP_500_INTERNAL_SERVER_ERROR',
+    'HTTP_503_SERVICE_UNAVAILABLE',
     'JSON',
     'YAML',
     'config_file_name',

@@ -80,6 +80,7 @@ from dump_things_service.model import (
     get_subclasses,
 )
 from dump_things_service.utils import (
+    authenticate_token,
     check_bounds,
     check_collection,
     combine_ttl,
@@ -166,8 +167,8 @@ of the project.
 
 tag_info = [
     {
-        'name': 'Server info',
-        'description': 'Get general information about the server',
+        'name': 'Server management',
+        'description': 'General server operations',
     },
     {
         'name': 'Read records',
@@ -407,7 +408,7 @@ async def root() -> RedirectResponse:
 
 @app.get(
     '/server',
-    tags=['Server info'],
+    tags=['Server management'],
     name='get server information'
 )
 async def server() -> ServerResponse:
@@ -422,6 +423,45 @@ async def server() -> ServerResponse:
             for collection_name in g_instance_config.collections
         ]
     )
+
+
+@app.get(
+    '/maintenance',
+    tags=['Server management'],
+    name='put a collection in maintenance mode'
+)
+async def maintenance(
+        collection: str,
+        active: bool,
+        api_key: str | None = Depends(api_key_header_scheme),
+):
+
+    if api_key is None:
+        raise HTTPException(
+            status_code=HTTP_400_BAD_REQUEST,
+            detail=f'Token required for this operation',
+        )
+
+    # Try to authenticate the token with the authentication providers that
+    # are associated with the collection.
+    auth_info = authenticate_token(g_instance_config, collection, api_key)
+    permissions = auth_info.token_permission
+
+    if not (
+            permissions.curated_write
+            and permissions.curated_read
+            and permissions.zones_access
+    ):
+        raise HTTPException(
+            status_code=HTTP_400_BAD_REQUEST,
+            detail=f'Curator permissions required for this operation',
+        )
+
+    if active:
+        g_instance_config.maintenance_mode.add(collection)
+    else:
+        g_instance_config.maintenance_mode.remove(collection)
+    return
 
 
 @app.get(

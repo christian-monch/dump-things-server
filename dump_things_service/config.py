@@ -172,7 +172,7 @@ class InstanceConfig:
     hashed_tokens: dict = dataclasses.field(default_factory=dict)
     validators: dict = dataclasses.field(default_factory=dict)
     use_classes: dict = dataclasses.field(default_factory=dict)
-
+    maintenance_mode: set = dataclasses.field(default_factory=set)
 
 mode_mapping = {
     TokenModes.READ_CURATED: TokenPermission(curated_read=True),
