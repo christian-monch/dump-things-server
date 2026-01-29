@@ -281,12 +281,6 @@ def get_token_store(
 ) -> tuple[ModelStore, str, TokenPermission, str] | tuple[None, None, None, None]:
     check_collection(instance_config, collection_name)
 
-    # Check whether a store for this collection and token does already exist.
-    # If the token is a hashed token, we have to
-    store_info = instance_config.token_stores[collection_name].get(plain_token)
-    if store_info:
-        return store_info
-
     # Try to authenticate the token with the authentication providers that
     # are associated with the collection.
     auth_info = authenticate_token(instance_config, collection_name, plain_token)
@@ -318,6 +312,11 @@ def get_token_store(
             status_code=HTTP_401_UNAUTHORIZED,
             detail='No incoming area for collection ' +  collection_name
         )
+
+    # Check whether a store for this collection and token does already exist.
+    store_info = instance_config.token_stores[collection_name].get(plain_token)
+    if store_info:
+        return store_info
 
     store_dir = instance_config.store_path / incoming / auth_info.incoming_label
     token_store = create_token_store(
