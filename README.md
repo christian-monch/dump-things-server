@@ -1,3 +1,5 @@
+## Note: this repo has moved to [https://hub.psychoinformatics.de/datalink/dump-things-server.git](https://hub.psychoinformatics.de/datalink/dump-things-server.git)
+
 ### Dump Things Service
 
 [![PyPI version fury.io](https://badge.fury.io/py/dump-things-service.svg)](https://pypi.python.org/pypi/dump-things-service/)
